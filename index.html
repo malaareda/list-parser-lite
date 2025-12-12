@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>List Parser Lite v2.5</title>
+    <title>List Parser Lite v2.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script type="module">
@@ -19,18 +19,12 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
         
-        /* Critical Alert Animation */
-        .pulse-red { animation: pulse-red 1.5s infinite; }
-        @keyframes pulse-red {
-            0% { background-color: #fee2e2; color: #dc2626; }
-            50% { background-color: #fca5a5; color: #7f1d1d; }
-            100% { background-color: #fee2e2; color: #dc2626; }
-        }
-        .dark .pulse-red { animation: pulse-red-dark 1.5s infinite; }
-        @keyframes pulse-red-dark {
-            0% { background-color: #7f1d1d; color: #fecaca; }
-            50% { background-color: #991b1b; color: #ffffff; }
-            100% { background-color: #7f1d1d; color: #fecaca; }
+        /* Subtle pulse for critical time only */
+        .timer-critical { animation: text-pulse 1s infinite; color: #ef4444; font-weight: 800; }
+        @keyframes text-pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
         }
     </style>
 </head>
@@ -38,148 +32,143 @@
 
 <div id="app" class="h-full flex flex-col" @mousemove="resetActivity" @keydown="resetActivity" @click="resetActivity">
     
-    <header class="bg-white dark:bg-gray-800 p-3 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shadow-sm z-20 shrink-0 h-16">
+    <div class="flex justify-between items-center bg-white dark:bg-gray-800 p-4 border-b border-gray-200 dark:border-gray-700 shadow-sm z-20 shrink-0">
+        <div>
+            <h1 class="text-xl font-bold flex items-center gap-3 text-gray-800 dark:text-white">
+                🛡️ Security Manager <span class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded-full border border-blue-200 dark:border-blue-700">v2.6</span>
+            </h1>
+            <p v-if="token" class="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                <span class="w-2 h-2 rounded-full bg-green-500"></span>
+                {{ targetRepo }}
+            </p>
+        </div>
         
         <div class="flex items-center gap-4">
-            <div>
-                <h1 class="text-xl font-bold flex items-center gap-2 text-gray-800 dark:text-white">
-                    🛡️ Security Manager <span class="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-600 dark:text-gray-300">v2.5</span>
-                </h1>
-                <p v-if="token" class="text-xs text-gray-400 font-mono hidden md:block">Target: {{ targetRepo }}</p>
-            </div>
-        </div>
-
-        <div class="flex items-center gap-3">
-            
-            <div v-if="token" 
-                 class="px-3 py-1.5 rounded-lg font-mono text-sm font-bold border transition-colors flex items-center gap-2"
-                 :class="timeLeft < 120 ? 'pulse-red border-red-500' : 'bg-indigo-50 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 border-indigo-200 dark:border-indigo-800'">
+            <div v-if="token" class="font-mono text-sm border-r pr-4 dark:border-gray-600 flex items-center gap-2" :class="timeLeft < 120 ? 'timer-critical' : 'text-gray-500 dark:text-gray-400'">
                 <span>⏱️</span>
                 <span>{{ formattedTime }}</span>
             </div>
 
-            <button @click="toggleTheme" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition text-lg" title="Toggle Theme">
+            <button @click="toggleTheme" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition" title="Toggle Theme">
                 <span v-if="isDark">☀️</span><span v-else>🌙</span>
             </button>
-            
-            <div v-if="token" class="flex gap-2 border-l pl-3 dark:border-gray-600">
-                <button @click="saveChanges" :disabled="loading" 
-                    class="text-white text-sm font-bold py-2 px-4 rounded-lg shadow flex items-center gap-2 transition disabled:opacity-50"
-                    :class="hasUnsavedChanges ? 'bg-amber-600 hover:bg-amber-700 animate-pulse' : 'bg-indigo-600 hover:bg-indigo-700'">
-                    <span v-if="loading">Saving...</span>
-                    <span v-else-if="hasUnsavedChanges">⚠ Commit</span>
+
+            <div v-if="token" class="flex gap-3 border-l pl-4 dark:border-gray-600">
+                <button @click="logout(false)" class="text-sm text-gray-500 hover:text-red-500 underline transition">Disconnect</button>
+                <button @click="manualSave" :disabled="loading" 
+                    class="text-white text-sm font-bold py-2 px-5 rounded shadow flex items-center gap-2 transition disabled:opacity-50"
+                    :class="hasUnsavedChanges ? 'bg-amber-600 hover:bg-amber-700' : 'bg-green-600 hover:bg-green-700'">
+                    <span v-if="loading">⏳ Saving...</span>
+                    <span v-else-if="hasUnsavedChanges">⚠ Commit Changes</span>
                     <span v-else>💾 Commit</span>
-                </button>
-                <button @click="logout(false)" class="text-gray-400 hover:text-red-500 p-2 transition" title="Disconnect">
-                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"></path></svg>
                 </button>
             </div>
         </div>
-    </header>
+    </div>
 
-    <div v-if="!token" class="flex-grow flex items-center justify-center p-6 bg-gray-50 dark:bg-gray-900">
-        <div class="bg-white dark:bg-gray-800 p-8 md:p-12 rounded-xl shadow-xl border border-gray-200 dark:border-gray-700 text-center max-w-lg w-full">
-            <div class="bg-indigo-100 dark:bg-indigo-900/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl">🔑</div>
-            <h2 class="text-2xl font-bold mb-2 text-gray-800 dark:text-white">Authentication</h2>
-            <p class="mb-6 text-sm text-gray-500 dark:text-gray-400">
-                Auto-disconnect enabled: <b>{{ inactivityMinutes }} mins</b>.<br>
-                <span class="text-xs text-amber-600 dark:text-amber-400">Unsaved work auto-commits on timeout.</span>
+    <div v-if="!token" class="flex-grow flex items-center justify-center p-6">
+        <div class="bg-white dark:bg-gray-800 p-8 md:p-12 rounded-xl shadow-lg border border-gray-200 dark:border-gray-700 text-center max-w-lg w-full">
+            <h2 class="text-2xl font-bold mb-3 text-gray-800 dark:text-white">Authentication Required</h2>
+            <p class="mb-8 text-sm text-gray-500 dark:text-gray-400">
+                Auto-disconnect: <b>{{ inactivityMinutes }} mins</b>.<br>
+                <span class="text-xs text-amber-500">Unsaved work is auto-saved on timeout.</span>
             </p>
-            <input type="password" v-model="tokenInput" class="w-full p-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 outline-none transition text-center font-mono text-sm mb-4" placeholder="ghp_...">
-            <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition transform hover:-translate-y-0.5">Access Dashboard</button>
+            <input type="password" v-model="tokenInput" class="w-full p-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-blue-500 outline-none transition text-center font-mono text-sm mb-4" placeholder="ghp_...">
+            <button @click="setToken" class="w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition">Load Configuration</button>
         </div>
     </div>
 
     <div v-else class="flex-grow p-4 overflow-hidden relative">
-        <div v-if="error" class="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-100 dark:bg-red-900/90 border-l-4 border-red-500 text-red-700 dark:text-red-200 p-4 rounded shadow-xl flex items-center gap-4 backdrop-blur-sm min-w-[300px]">
-            <span class="text-2xl">⚠️</span>
-            <div class="flex-grow"><p class="font-bold text-sm">Error</p><p class="text-xs">{{ error }}</p></div>
-            <button @click="error = ''" class="font-bold opacity-50 hover:opacity-100 text-lg">×</button>
+        
+        <div v-if="error" class="absolute top-4 left-1/2 transform -translate-x-1/2 z-50 bg-red-100 dark:bg-red-900/90 border-l-4 border-red-500 text-red-700 dark:text-red-200 p-4 rounded shadow-xl flex items-center gap-3 backdrop-blur-sm">
+            <span class="text-xl">⚠️</span>
+            <div><p class="font-bold text-sm">Error</p><p class="text-xs">{{ error }}</p></div>
+            <button @click="error = ''" class="ml-4 font-bold opacity-50 hover:opacity-100">×</button>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 h-full">
-            
+
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 flex flex-col h-full overflow-hidden">
-                <div class="p-3 bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <div class="p-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                     <h2 class="font-bold text-green-600 dark:text-green-400 flex items-center gap-2">🌍 Allowed IPs</h2>
-                    <span class="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-700 dark:text-gray-300">{{ data.GOOD_IPS.length }}</span>
+                    <span class="text-xs bg-white dark:bg-gray-600 px-2 py-0.5 rounded border dark:border-gray-500 text-gray-500 dark:text-gray-300">{{ data.GOOD_IPS.length }}</span>
                 </div>
-                <div class="p-3 border-b border-gray-100 dark:border-gray-700 flex gap-2">
+                <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
                     <input v-model="inputs.goodIp" @keyup.enter="add('GOOD_IPS', 'goodIp')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-green-500 outline-none" placeholder="Add IP...">
-                    <button @click="add('GOOD_IPS', 'goodIp')" class="bg-green-600 hover:bg-green-700 text-white px-3 rounded font-bold text-xl leading-none">+</button>
+                    <button @click="add('GOOD_IPS', 'goodIp')" class="bg-green-600 hover:bg-green-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
                 </div>
                 <div class="flex-grow overflow-y-auto custom-scrollbar p-2">
-                    <div v-for="(item, index) in data.GOOD_IPS" :key="index" class="flex justify-between items-center p-2 mb-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 group border border-transparent hover:border-gray-200 dark:hover:border-gray-600">
-                        <span class="font-mono text-sm text-gray-700 dark:text-gray-300">{{ item }}</span>
-                        <button @click="remove('GOOD_IPS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 px-2 transition">✕</button>
+                    <div v-for="(item, index) in data.GOOD_IPS" :key="index" class="flex justify-between items-center p-2 mb-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 group border border-transparent hover:border-gray-100 dark:hover:border-gray-600 transition">
+                        <span class="font-mono text-sm text-gray-600 dark:text-gray-300">{{ item }}</span>
+                        <button @click="remove('GOOD_IPS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 px-2">✕</button>
                     </div>
                 </div>
             </div>
 
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 flex flex-col h-full overflow-hidden">
-                <div class="p-3 bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <div class="p-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                     <h2 class="font-bold text-red-600 dark:text-red-400 flex items-center gap-2">⛔ Blocked IPs</h2>
-                    <span class="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-700 dark:text-gray-300">{{ data.BLOCKED_IPS.length }}</span>
+                    <span class="text-xs bg-white dark:bg-gray-600 px-2 py-0.5 rounded border dark:border-gray-500 text-gray-500 dark:text-gray-300">{{ data.BLOCKED_IPS.length }}</span>
                 </div>
-                <div class="p-3 border-b border-gray-100 dark:border-gray-700 flex gap-2">
+                <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
                     <input v-model="inputs.blockedIp" @keyup.enter="add('BLOCKED_IPS', 'blockedIp')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-red-500 outline-none" placeholder="Block IP...">
-                    <button @click="add('BLOCKED_IPS', 'blockedIp')" class="bg-red-600 hover:bg-red-700 text-white px-3 rounded font-bold text-xl leading-none">+</button>
+                    <button @click="add('BLOCKED_IPS', 'blockedIp')" class="bg-red-600 hover:bg-red-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
                 </div>
                 <div class="flex-grow overflow-y-auto custom-scrollbar p-2">
-                    <div v-for="(item, index) in data.BLOCKED_IPS" :key="index" class="flex justify-between items-center p-2 mb-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 group border border-transparent hover:border-gray-200 dark:hover:border-gray-600">
-                        <span class="font-mono text-sm text-gray-700 dark:text-gray-300">{{ item }}</span>
-                        <button @click="remove('BLOCKED_IPS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 px-2 transition">✕</button>
+                    <div v-for="(item, index) in data.BLOCKED_IPS" :key="index" class="flex justify-between items-center p-2 mb-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 group border border-transparent hover:border-gray-100 dark:hover:border-gray-600 transition">
+                        <span class="font-mono text-sm text-gray-600 dark:text-gray-300">{{ item }}</span>
+                        <button @click="remove('BLOCKED_IPS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 px-2">✕</button>
                     </div>
                 </div>
             </div>
 
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 flex flex-col h-full overflow-hidden">
-                <div class="p-3 bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <div class="p-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                     <h2 class="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">🔗 Referrers</h2>
-                    <span class="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-700 dark:text-gray-300">{{ data.GOOD_REFERRERS.length }}</span>
+                    <span class="text-xs bg-white dark:bg-gray-600 px-2 py-0.5 rounded border dark:border-gray-500 text-gray-500 dark:text-gray-300">{{ data.GOOD_REFERRERS.length }}</span>
                 </div>
-                <div class="p-3 border-b border-gray-100 dark:border-gray-700 flex gap-2">
+                <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
                     <input v-model="inputs.ref" @keyup.enter="add('GOOD_REFERRERS', 'ref')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Add Domain...">
-                    <button @click="add('GOOD_REFERRERS', 'ref')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 rounded font-bold text-xl leading-none">+</button>
+                    <button @click="add('GOOD_REFERRERS', 'ref')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
                 </div>
                 <div class="flex-grow overflow-y-auto custom-scrollbar p-2">
-                    <div v-for="(item, index) in data.GOOD_REFERRERS" :key="index" class="flex justify-between items-center p-2 mb-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 group border border-transparent hover:border-gray-200 dark:hover:border-gray-600">
-                        <span class="font-mono text-sm text-gray-700 dark:text-gray-300 truncate max-w-[200px]">{{ item }}</span>
-                        <button @click="remove('GOOD_REFERRERS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 px-2 transition">✕</button>
+                    <div v-for="(item, index) in data.GOOD_REFERRERS" :key="index" class="flex justify-between items-center p-2 mb-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 group border border-transparent hover:border-gray-100 dark:hover:border-gray-600 transition">
+                        <span class="font-mono text-sm text-gray-600 dark:text-gray-300 truncate max-w-[200px]">{{ item }}</span>
+                        <button @click="remove('GOOD_REFERRERS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 px-2">✕</button>
                     </div>
                 </div>
             </div>
 
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 flex flex-col h-full overflow-hidden">
-                <div class="p-3 bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <div class="p-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                     <h2 class="font-bold text-purple-600 dark:text-purple-400 flex items-center gap-2">🤖 Search Bots</h2>
-                    <span class="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-700 dark:text-gray-300">{{ data.GOOD_BOTS.SEARCH_BOTS.length }}</span>
+                    <span class="text-xs bg-white dark:bg-gray-600 px-2 py-0.5 rounded border dark:border-gray-500 text-gray-500 dark:text-gray-300">{{ data.GOOD_BOTS.SEARCH_BOTS.length }}</span>
                 </div>
-                <div class="p-3 border-b border-gray-100 dark:border-gray-700 flex gap-2">
+                <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
                     <input v-model="inputs.searchBot" @keyup.enter="addBot('SEARCH_BOTS', 'searchBot')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Bot User-Agent...">
-                    <button @click="addBot('SEARCH_BOTS', 'searchBot')" class="bg-purple-600 hover:bg-purple-700 text-white px-3 rounded font-bold text-xl leading-none">+</button>
+                    <button @click="addBot('SEARCH_BOTS', 'searchBot')" class="bg-purple-600 hover:bg-purple-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
                 </div>
                 <div class="flex-grow overflow-y-auto custom-scrollbar p-2">
-                    <div v-for="(item, index) in data.GOOD_BOTS.SEARCH_BOTS" :key="index" class="flex justify-between items-center p-2 mb-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 group border border-transparent hover:border-gray-200 dark:hover:border-gray-600">
-                        <span class="font-mono text-sm text-gray-700 dark:text-gray-300 truncate max-w-[200px]">{{ item }}</span>
-                        <button @click="removeBot('SEARCH_BOTS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 px-2 transition">✕</button>
+                    <div v-for="(item, index) in data.GOOD_BOTS.SEARCH_BOTS" :key="index" class="flex justify-between items-center p-2 mb-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 group border border-transparent hover:border-gray-100 dark:hover:border-gray-600 transition">
+                        <span class="font-mono text-sm text-gray-600 dark:text-gray-300 truncate max-w-[200px]">{{ item }}</span>
+                        <button @click="removeBot('SEARCH_BOTS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 px-2">✕</button>
                     </div>
                 </div>
             </div>
 
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 flex flex-col h-full overflow-hidden">
-                <div class="p-3 bg-gray-50 dark:bg-gray-800/80 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
+                <div class="p-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                     <h2 class="font-bold text-pink-600 dark:text-pink-400 flex items-center gap-2">🧠 AI Agents</h2>
-                    <span class="text-xs bg-gray-200 dark:bg-gray-700 px-2 py-0.5 rounded text-gray-700 dark:text-gray-300">{{ data.GOOD_BOTS.AI_BOTS.length }}</span>
+                    <span class="text-xs bg-white dark:bg-gray-600 px-2 py-0.5 rounded border dark:border-gray-500 text-gray-500 dark:text-gray-300">{{ data.GOOD_BOTS.AI_BOTS.length }}</span>
                 </div>
-                <div class="p-3 border-b border-gray-100 dark:border-gray-700 flex gap-2">
+                <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
                     <input v-model="inputs.aiBot" @keyup.enter="addBot('AI_BOTS', 'aiBot')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-pink-500 outline-none" placeholder="AI User-Agent...">
-                    <button @click="addBot('AI_BOTS', 'aiBot')" class="bg-pink-600 hover:bg-pink-700 text-white px-3 rounded font-bold text-xl leading-none">+</button>
+                    <button @click="addBot('AI_BOTS', 'aiBot')" class="bg-pink-600 hover:bg-pink-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
                 </div>
                 <div class="flex-grow overflow-y-auto custom-scrollbar p-2">
-                    <div v-for="(item, index) in data.GOOD_BOTS.AI_BOTS" :key="index" class="flex justify-between items-center p-2 mb-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 group border border-transparent hover:border-gray-200 dark:hover:border-gray-600">
-                        <span class="font-mono text-sm text-gray-700 dark:text-gray-300 truncate max-w-[200px]">{{ item }}</span>
-                        <button @click="removeBot('AI_BOTS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 px-2 transition">✕</button>
+                    <div v-for="(item, index) in data.GOOD_BOTS.AI_BOTS" :key="index" class="flex justify-between items-center p-2 mb-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 group border border-transparent hover:border-gray-100 dark:hover:border-gray-600 transition">
+                        <span class="font-mono text-sm text-gray-600 dark:text-gray-300 truncate max-w-[200px]">{{ item }}</span>
+                        <button @click="removeBot('AI_BOTS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 px-2">✕</button>
                     </div>
                 </div>
             </div>
@@ -269,8 +258,7 @@
             async handleTimeout() {
                 clearInterval(this.countdownInterval);
                 if (this.hasUnsavedChanges) {
-                    console.log("⏳ Auto-saving before disconnect...");
-                    await this.performSave(true); // Auto-Save
+                    await this.performSave(true);
                 }
                 this.logout(true);
             },
@@ -319,8 +307,7 @@
                 }
             },
             
-            // SAVE
-            async saveChanges() {
+            async manualSave() {
                 await this.performSave(false);
             },
             async performSave(isAuto) {
