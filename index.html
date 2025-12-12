@@ -20,11 +20,11 @@
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
         
         /* Pulse animation for low time */
-        .urgent-pulse { animation: pulse-red 2s infinite; font-weight: 800; color: #ef4444; }
+        .urgent-pulse { animation: pulse-red 2s infinite; }
         @keyframes pulse-red {
-            0% { opacity: 1; }
-            50% { opacity: 0.5; }
-            100% { opacity: 1; }
+            0% { color: #f87171; }
+            50% { color: #ef4444; text-shadow: 0 0 5px rgba(239, 68, 68, 0.5); }
+            100% { color: #f87171; }
         }
     </style>
 </head>
@@ -44,8 +44,7 @@
         </div>
         <div class="flex gap-4 items-center">
             
-            <div v-if="token" class="text-sm font-mono flex items-center gap-2 px-3 py-1 rounded border transition-colors" 
-                 :class="timeLeft < 120 ? 'urgent-pulse border-red-500' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300'">
+            <div v-if="token" class="text-sm font-mono flex items-center gap-2 px-3 py-1 rounded bg-gray-50 dark:bg-gray-700/50 border border-gray-200 dark:border-gray-600" :class="{ 'urgent-pulse border-red-500 dark:border-red-900': timeLeft < 120 }">
                 <span>⏱️</span>
                 <span class="font-bold">{{ formattedTime }}</span>
             </div>
@@ -150,7 +149,7 @@
                     <span class="text-xs bg-white dark:bg-gray-600 px-2 py-0.5 rounded border dark:border-gray-500">{{ data.GOOD_BOTS.SEARCH_BOTS.length }}</span>
                 </div>
                 <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
-                    <input v-model="inputs.searchBot" @keyup.enter="addBot('SEARCH_BOTS', 'searchBot')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Bot User-Agent...">
+                    <input v-model="inputs.searchBot" @keyup.enter="addBot('SEARCH_BOTS', 'searchBot')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Bot UA...">
                     <button @click="addBot('SEARCH_BOTS', 'searchBot')" class="bg-purple-600 hover:bg-purple-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
                 </div>
                 <div class="flex-grow overflow-y-auto custom-scrollbar p-2">
@@ -167,7 +166,7 @@
                     <span class="text-xs bg-white dark:bg-gray-600 px-2 py-0.5 rounded border dark:border-gray-500">{{ data.GOOD_BOTS.AI_BOTS.length }}</span>
                 </div>
                 <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
-                    <input v-model="inputs.aiBot" @keyup.enter="addBot('AI_BOTS', 'aiBot')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-pink-500 outline-none" placeholder="AI User-Agent...">
+                    <input v-model="inputs.aiBot" @keyup.enter="addBot('AI_BOTS', 'aiBot')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-pink-500 outline-none" placeholder="AI UA...">
                     <button @click="addBot('AI_BOTS', 'aiBot')" class="bg-pink-600 hover:bg-pink-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
                 </div>
                 <div class="flex-grow overflow-y-auto custom-scrollbar p-2">
@@ -202,6 +201,7 @@
                 targetRepo: `${TARGET_OWNER}/${TARGET_REPO}`,
                 isDark: true,
                 
+                // Countdown & State
                 timeLeft: INACTIVITY_MINUTES * 60,
                 countdownInterval: null,
                 hasUnsavedChanges: false,
@@ -245,31 +245,32 @@
                 else document.documentElement.classList.remove('dark');
             },
             
-            // TIMER & AUTO-SAVE
+            // --- TIMER LOGIC ---
             startCountdown() {
                 if (this.countdownInterval) clearInterval(this.countdownInterval);
                 this.countdownInterval = setInterval(() => {
                     if (this.timeLeft > 0) {
                         this.timeLeft--;
                     } else {
+                        // TIME IS UP: Trigger Auto-Save & Logout
                         this.handleTimeout();
                     }
                 }, 1000);
             },
             resetActivity() {
                 if (!this.token) return;
-                this.timeLeft = INACTIVITY_MINUTES * 60; 
+                this.timeLeft = INACTIVITY_MINUTES * 60; // Reset to max
             },
             async handleTimeout() {
                 clearInterval(this.countdownInterval);
                 if (this.hasUnsavedChanges) {
-                    console.log("⏳ Auto-saving before disconnect...");
-                    await this.performSave(true); // Auto-Save
+                    console.log("⏳ Timeout reached with unsaved changes. Auto-saving...");
+                    await this.performSave(true); // true = auto mode
                 }
                 this.logout(true);
             },
 
-            // DATA
+            // --- DATA LOGIC ---
             setToken() {
                 if(!this.tokenInput.trim()) return;
                 this.token = this.tokenInput;
@@ -313,6 +314,7 @@
                 }
             },
             
+            // --- SAVE LOGIC ---
             async manualSave() {
                 await this.performSave(false);
             },
@@ -335,7 +337,7 @@
 
                     if (!isAuto) alert('✅ Saved! Changes committed.');
                     this.hasUnsavedChanges = false;
-                    this.fetchData(); 
+                    this.fetchData(); // Refresh SHA
                     this.resetActivity();
                 } catch (e) {
                     console.error(e);
@@ -345,7 +347,7 @@
                 }
             },
 
-            // LOCAL EDITING
+            // --- LOCAL EDITING ---
             markDirty() {
                 this.hasUnsavedChanges = true;
                 this.resetActivity();
@@ -354,7 +356,7 @@
                 const val = this.inputs[inputKey].trim();
                 if(val) {
                     this.data[key].unshift(val); 
-                    this.inputs[inputKey] = ''; 
+                    this.inputs[inputKey] = '';
                     this.markDirty();
                 }
             },
