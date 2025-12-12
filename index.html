@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>List Parser Lite v2.3</title>
+    <title>List Parser Lite v2.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script type="module">
@@ -14,35 +14,55 @@
         tailwind.config = { darkMode: 'class' }
     </script>
     <style>
-        /* Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { width: 6px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
+        
+        /* Pulse animation for low time */
+        .urgent-pulse { animation: pulse-red 2s infinite; font-weight: 800; color: #ef4444; }
+        @keyframes pulse-red {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300 h-screen overflow-hidden flex flex-col">
 
-<div id="app" class="h-full flex flex-col" @mousemove="resetTimer" @keydown="resetTimer" @click="resetTimer">
+<div id="app" class="h-full flex flex-col" @mousemove="resetActivity" @keydown="resetActivity" @click="resetActivity">
     
     <header class="bg-white dark:bg-gray-800 p-4 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center shadow-sm z-20 shrink-0">
         <div>
             <h1 class="text-xl font-bold flex items-center gap-3 text-gray-800 dark:text-white">
-                🛡️ Security Manager <span class="text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-700">v2.3</span>
+                🛡️ Security Manager <span class="text-xs bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200 px-2 py-0.5 rounded-full border border-indigo-200 dark:border-indigo-700">v2.4</span>
             </h1>
             <p v-if="token" class="text-xs text-gray-500 mt-1 flex items-center gap-1">
                 <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
                 {{ targetRepo }}
             </p>
         </div>
-        <div class="flex gap-3 items-center">
+        <div class="flex gap-4 items-center">
+            
+            <div v-if="token" class="text-sm font-mono flex items-center gap-2 px-3 py-1 rounded border transition-colors" 
+                 :class="timeLeft < 120 ? 'urgent-pulse border-red-500' : 'bg-gray-50 dark:bg-gray-700/50 border-gray-200 dark:border-gray-600 text-gray-600 dark:text-gray-300'">
+                <span>⏱️</span>
+                <span class="font-bold">{{ formattedTime }}</span>
+            </div>
+
             <button @click="toggleTheme" class="p-2 rounded-lg bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 transition" title="Toggle Theme">
                 <span v-if="isDark">☀️</span><span v-else>🌙</span>
             </button>
+            
             <div v-if="token" class="flex gap-3 border-l pl-4 dark:border-gray-600">
-                <button @click="logout" class="text-sm text-gray-500 hover:text-red-500 font-medium transition">Disconnect</button>
-                <button @click="saveChanges" :disabled="loading" class="bg-indigo-600 hover:bg-indigo-700 text-white text-sm font-bold py-2 px-5 rounded-lg shadow-md flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed">
-                    <span v-if="loading">⏳ Saving...</span>
+                <button @click="logout(false)" class="text-sm text-gray-500 hover:text-red-500 font-medium transition">Disconnect</button>
+                
+                <button @click="manualSave" :disabled="loading" 
+                    class="text-white text-sm font-bold py-2 px-5 rounded-lg shadow-md flex items-center gap-2 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    :class="hasUnsavedChanges ? 'bg-amber-600 hover:bg-amber-700 animate-pulse' : 'bg-indigo-600 hover:bg-indigo-700'">
+                    <span v-if="loading" class="animate-spin">⏳</span>
+                    <span v-if="loading">Saving...</span>
+                    <span v-else-if="hasUnsavedChanges">⚠ Unsaved Changes</span>
                     <span v-else>💾 Commit</span>
                 </button>
             </div>
@@ -56,15 +76,15 @@
             </div>
             <h2 class="text-2xl font-bold mb-3 text-gray-800 dark:text-white">Access Required</h2>
             <p class="mb-8 text-sm text-gray-500 dark:text-gray-400">
-                Please enter a GitHub Personal Access Token with <code>repo</code> scope.
+                Auto-disconnect enabled ({{ inactivityMinutes }} mins).<br>
+                <span class="text-xs text-amber-500">Unsaved work will be auto-committed before timeout.</span>
             </p>
-            <input type="password" v-model="tokenInput" class="w-full p-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 outline-none transition text-center font-mono text-sm mb-4" placeholder="ghp_...">
+            <input type="password" v-model="tokenInput" class="w-full p-4 rounded-lg bg-gray-50 dark:bg-gray-900 border border-gray-300 dark:border-gray-600 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 outline-none transition text-center font-mono text-sm mb-4" placeholder="ghp_...">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 px-6 rounded-lg shadow-md transition transform hover:-translate-y-0.5">Load Configuration</button>
         </div>
     </div>
 
     <div v-else class="flex-grow p-4 overflow-hidden relative">
-        
         <div v-if="error" class="absolute top-4 left-4 right-4 z-50 bg-red-100 dark:bg-red-900/90 border-l-4 border-red-500 text-red-700 dark:text-red-200 p-4 rounded shadow-lg flex items-start gap-3 backdrop-blur-sm">
             <span class="text-xl">⚠️</span>
             <div><p class="font-bold">Error</p><p class="text-sm">{{ error }}</p></div>
@@ -72,22 +92,20 @@
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4 h-full">
-
+            
             <div class="bg-white dark:bg-gray-800 rounded-lg shadow border border-gray-200 dark:border-gray-700 flex flex-col h-full overflow-hidden">
                 <div class="p-3 bg-gray-50 dark:bg-gray-700/50 border-b border-gray-200 dark:border-gray-700 flex justify-between items-center">
                     <h2 class="font-bold text-green-600 dark:text-green-400 flex items-center gap-2">🌍 Allowed IPs</h2>
                     <span class="text-xs bg-white dark:bg-gray-600 px-2 py-0.5 rounded border dark:border-gray-500">{{ data.GOOD_IPS.length }}</span>
                 </div>
-                <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
-                    <div class="flex gap-2">
-                        <input v-model="inputs.goodIp" @keyup.enter="add('GOOD_IPS', 'goodIp')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-green-500 outline-none" placeholder="Add IP...">
-                        <button @click="add('GOOD_IPS', 'goodIp')" class="bg-green-600 hover:bg-green-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
-                    </div>
+                <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
+                    <input v-model="inputs.goodIp" @keyup.enter="add('GOOD_IPS', 'goodIp')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-green-500 outline-none" placeholder="Add IP...">
+                    <button @click="add('GOOD_IPS', 'goodIp')" class="bg-green-600 hover:bg-green-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
                 </div>
                 <div class="flex-grow overflow-y-auto custom-scrollbar p-2">
                     <div v-for="(item, index) in data.GOOD_IPS" :key="index" class="flex justify-between items-center p-2 mb-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 group border border-transparent hover:border-gray-100 dark:hover:border-gray-600">
                         <span class="font-mono text-sm text-gray-600 dark:text-gray-300">{{ item }}</span>
-                        <button @click="remove('GOOD_IPS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition px-2">✕</button>
+                        <button @click="remove('GOOD_IPS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 px-2">✕</button>
                     </div>
                 </div>
             </div>
@@ -97,16 +115,14 @@
                     <h2 class="font-bold text-red-600 dark:text-red-400 flex items-center gap-2">⛔ Blocked IPs</h2>
                     <span class="text-xs bg-white dark:bg-gray-600 px-2 py-0.5 rounded border dark:border-gray-500">{{ data.BLOCKED_IPS.length }}</span>
                 </div>
-                <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
-                    <div class="flex gap-2">
-                        <input v-model="inputs.blockedIp" @keyup.enter="add('BLOCKED_IPS', 'blockedIp')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-red-500 outline-none" placeholder="Block IP...">
-                        <button @click="add('BLOCKED_IPS', 'blockedIp')" class="bg-red-600 hover:bg-red-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
-                    </div>
+                <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
+                    <input v-model="inputs.blockedIp" @keyup.enter="add('BLOCKED_IPS', 'blockedIp')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-red-500 outline-none" placeholder="Block IP...">
+                    <button @click="add('BLOCKED_IPS', 'blockedIp')" class="bg-red-600 hover:bg-red-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
                 </div>
                 <div class="flex-grow overflow-y-auto custom-scrollbar p-2">
                     <div v-for="(item, index) in data.BLOCKED_IPS" :key="index" class="flex justify-between items-center p-2 mb-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 group border border-transparent hover:border-gray-100 dark:hover:border-gray-600">
                         <span class="font-mono text-sm text-gray-600 dark:text-gray-300">{{ item }}</span>
-                        <button @click="remove('BLOCKED_IPS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition px-2">✕</button>
+                        <button @click="remove('BLOCKED_IPS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 px-2">✕</button>
                     </div>
                 </div>
             </div>
@@ -116,16 +132,14 @@
                     <h2 class="font-bold text-blue-600 dark:text-blue-400 flex items-center gap-2">🔗 Referrers</h2>
                     <span class="text-xs bg-white dark:bg-gray-600 px-2 py-0.5 rounded border dark:border-gray-500">{{ data.GOOD_REFERRERS.length }}</span>
                 </div>
-                <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
-                    <div class="flex gap-2">
-                        <input v-model="inputs.ref" @keyup.enter="add('GOOD_REFERRERS', 'ref')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Add Domain...">
-                        <button @click="add('GOOD_REFERRERS', 'ref')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
-                    </div>
+                <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
+                    <input v-model="inputs.ref" @keyup.enter="add('GOOD_REFERRERS', 'ref')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-blue-500 outline-none" placeholder="Add Domain...">
+                    <button @click="add('GOOD_REFERRERS', 'ref')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
                 </div>
                 <div class="flex-grow overflow-y-auto custom-scrollbar p-2">
                     <div v-for="(item, index) in data.GOOD_REFERRERS" :key="index" class="flex justify-between items-center p-2 mb-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 group border border-transparent hover:border-gray-100 dark:hover:border-gray-600">
                         <span class="font-mono text-sm text-gray-600 dark:text-gray-300 truncate max-w-[200px]">{{ item }}</span>
-                        <button @click="remove('GOOD_REFERRERS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition px-2">✕</button>
+                        <button @click="remove('GOOD_REFERRERS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 px-2">✕</button>
                     </div>
                 </div>
             </div>
@@ -135,16 +149,14 @@
                     <h2 class="font-bold text-purple-600 dark:text-purple-400 flex items-center gap-2">🤖 Search Bots</h2>
                     <span class="text-xs bg-white dark:bg-gray-600 px-2 py-0.5 rounded border dark:border-gray-500">{{ data.GOOD_BOTS.SEARCH_BOTS.length }}</span>
                 </div>
-                <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
-                    <div class="flex gap-2">
-                        <input v-model="inputs.searchBot" @keyup.enter="addBot('SEARCH_BOTS', 'searchBot')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Add Bot UA...">
-                        <button @click="addBot('SEARCH_BOTS', 'searchBot')" class="bg-purple-600 hover:bg-purple-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
-                    </div>
+                <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
+                    <input v-model="inputs.searchBot" @keyup.enter="addBot('SEARCH_BOTS', 'searchBot')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-purple-500 outline-none" placeholder="Bot User-Agent...">
+                    <button @click="addBot('SEARCH_BOTS', 'searchBot')" class="bg-purple-600 hover:bg-purple-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
                 </div>
                 <div class="flex-grow overflow-y-auto custom-scrollbar p-2">
                     <div v-for="(item, index) in data.GOOD_BOTS.SEARCH_BOTS" :key="index" class="flex justify-between items-center p-2 mb-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 group border border-transparent hover:border-gray-100 dark:hover:border-gray-600">
                         <span class="font-mono text-sm text-gray-600 dark:text-gray-300 truncate max-w-[200px]">{{ item }}</span>
-                        <button @click="removeBot('SEARCH_BOTS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition px-2">✕</button>
+                        <button @click="removeBot('SEARCH_BOTS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 px-2">✕</button>
                     </div>
                 </div>
             </div>
@@ -154,16 +166,14 @@
                     <h2 class="font-bold text-pink-600 dark:text-pink-400 flex items-center gap-2">🧠 AI Agents</h2>
                     <span class="text-xs bg-white dark:bg-gray-600 px-2 py-0.5 rounded border dark:border-gray-500">{{ data.GOOD_BOTS.AI_BOTS.length }}</span>
                 </div>
-                <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800">
-                    <div class="flex gap-2">
-                        <input v-model="inputs.aiBot" @keyup.enter="addBot('AI_BOTS', 'aiBot')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-pink-500 outline-none" placeholder="Add AI UA...">
-                        <button @click="addBot('AI_BOTS', 'aiBot')" class="bg-pink-600 hover:bg-pink-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
-                    </div>
+                <div class="p-3 border-b border-gray-100 dark:border-gray-700 bg-white dark:bg-gray-800 flex gap-2">
+                    <input v-model="inputs.aiBot" @keyup.enter="addBot('AI_BOTS', 'aiBot')" class="flex-grow border border-gray-300 dark:border-gray-600 rounded p-2 text-sm font-mono bg-gray-50 dark:bg-gray-900 focus:ring-2 focus:ring-pink-500 outline-none" placeholder="AI User-Agent...">
+                    <button @click="addBot('AI_BOTS', 'aiBot')" class="bg-pink-600 hover:bg-pink-700 text-white px-3 rounded font-bold text-lg leading-none">+</button>
                 </div>
                 <div class="flex-grow overflow-y-auto custom-scrollbar p-2">
                     <div v-for="(item, index) in data.GOOD_BOTS.AI_BOTS" :key="index" class="flex justify-between items-center p-2 mb-1 rounded hover:bg-gray-50 dark:hover:bg-gray-700/50 group border border-transparent hover:border-gray-100 dark:hover:border-gray-600">
                         <span class="font-mono text-sm text-gray-600 dark:text-gray-300 truncate max-w-[200px]">{{ item }}</span>
-                        <button @click="removeBot('AI_BOTS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 transition px-2">✕</button>
+                        <button @click="removeBot('AI_BOTS', index)" class="text-gray-400 hover:text-red-500 font-bold opacity-0 group-hover:opacity-100 px-2">✕</button>
                     </div>
                 </div>
             </div>
@@ -175,14 +185,11 @@
 <script>
     const { createApp } = Vue;
 
-    // ============================================================
-    // ⚙️ CONFIGURATION 
-    // ============================================================
+    // CONFIGURATION
     const TARGET_OWNER = 'malaareda'; 
     const TARGET_REPO  = 'security-list';         
     const TARGET_FILE  = 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json';
     const INACTIVITY_MINUTES = 20; 
-    // ============================================================
 
     createApp({
         data() {
@@ -194,24 +201,32 @@
                 fileSha: '', 
                 targetRepo: `${TARGET_OWNER}/${TARGET_REPO}`,
                 isDark: true,
-                inactivityMinutes: INACTIVITY_MINUTES,
-                disconnectTimer: null,
+                
+                timeLeft: INACTIVITY_MINUTES * 60,
+                countdownInterval: null,
+                hasUnsavedChanges: false,
                 
                 inputs: { goodIp: '', blockedIp: '', ref: '', searchBot: '', aiBot: '' },
-
                 data: {
                     GOOD_IPS: [],
-                    BLOCKED_IPS: [], // <-- NEW FIELD ADDED
+                    BLOCKED_IPS: [],
                     GOOD_REFERRERS: [],
                     GOOD_BOTS: { SEARCH_BOTS: [], AI_BOTS: [] }
                 }
+            }
+        },
+        computed: {
+            formattedTime() {
+                const m = Math.floor(this.timeLeft / 60).toString().padStart(2, '0');
+                const s = (this.timeLeft % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
             }
         },
         mounted() {
             this.initTheme();
             if (this.token) {
                 this.fetchData();
-                this.resetTimer();
+                this.startCountdown();
             }
         },
         methods: {
@@ -229,25 +244,47 @@
                 if (this.isDark) document.documentElement.classList.add('dark');
                 else document.documentElement.classList.remove('dark');
             },
-            resetTimer() {
-                if (!this.token) return;
-                if (this.disconnectTimer) clearTimeout(this.disconnectTimer);
-                this.disconnectTimer = setTimeout(() => { this.logout(true); }, this.inactivityMinutes * 60 * 1000);
+            
+            // TIMER & AUTO-SAVE
+            startCountdown() {
+                if (this.countdownInterval) clearInterval(this.countdownInterval);
+                this.countdownInterval = setInterval(() => {
+                    if (this.timeLeft > 0) {
+                        this.timeLeft--;
+                    } else {
+                        this.handleTimeout();
+                    }
+                }, 1000);
             },
+            resetActivity() {
+                if (!this.token) return;
+                this.timeLeft = INACTIVITY_MINUTES * 60; 
+            },
+            async handleTimeout() {
+                clearInterval(this.countdownInterval);
+                if (this.hasUnsavedChanges) {
+                    console.log("⏳ Auto-saving before disconnect...");
+                    await this.performSave(true); // Auto-Save
+                }
+                this.logout(true);
+            },
+
+            // DATA
             setToken() {
                 if(!this.tokenInput.trim()) return;
                 this.token = this.tokenInput;
                 localStorage.setItem('gh_token', this.token);
                 this.fetchData();
-                this.resetTimer();
+                this.startCountdown();
+                this.resetActivity();
             },
             logout(isTimeout = false) {
                 this.token = '';
                 this.tokenInput = '';
                 this.data = { GOOD_IPS: [], BLOCKED_IPS: [], GOOD_REFERRERS: [], GOOD_BOTS: { SEARCH_BOTS: [], AI_BOTS: [] } };
                 localStorage.removeItem('gh_token');
-                if (this.disconnectTimer) clearTimeout(this.disconnectTimer);
-                if (isTimeout) alert(`🔒 Session expired due to inactivity.`);
+                clearInterval(this.countdownInterval);
+                if (isTimeout) alert(`🔒 Session expired. Unsaved changes (if any) were auto-committed.`);
             },
             async fetchData() {
                 this.loading = true; 
@@ -258,15 +295,14 @@
                     const decoded = decodeURIComponent(escape(atob(res.data.content)));
                     const parsed = JSON.parse(decoded);
                     
-                    console.log("✅ Fetched:", parsed);
-
                     this.data.GOOD_IPS = parsed.GOOD_IPS || [];
-                    this.data.BLOCKED_IPS = parsed.BLOCKED_IPS || []; // <-- Load Blocked IPs
+                    this.data.BLOCKED_IPS = parsed.BLOCKED_IPS || [];
                     this.data.GOOD_REFERRERS = parsed.GOOD_REFERRERS || [];
                     this.data.GOOD_BOTS.SEARCH_BOTS = parsed.GOOD_BOTS?.SEARCH_BOTS || [];
                     this.data.GOOD_BOTS.AI_BOTS = parsed.GOOD_BOTS?.AI_BOTS || [];
 
                     this.fileSha = res.data.sha; 
+                    this.hasUnsavedChanges = false;
                 } catch (e) {
                     console.error(e);
                     this.error = `Connection Failed. (${e.status || e.message})`;
@@ -276,47 +312,67 @@
                     this.loading = false;
                 }
             },
-            async saveChanges() {
+            
+            async manualSave() {
+                await this.performSave(false);
+            },
+            async performSave(isAuto) {
                 this.loading = true;
                 const octokit = new window.Octokit({ auth: this.token });
                 try {
                     const contentJson = JSON.stringify(this.data, null, 2);
                     const contentBase64 = btoa(unescape(encodeURIComponent(contentJson))); 
 
+                    const commitMsg = isAuto 
+                        ? '🚨 Auto-Save: Timeout Recovery (List Parser Lite)' 
+                        : '🛡️ Update Whitelist (via List Parser Lite)';
+
                     await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${TARGET_FILE}`, {
-                        message: '🛡️ Update Whitelist & Blocklist (via List-Parser-Lite)',
+                        message: commitMsg,
                         content: contentBase64,
                         sha: this.fileSha
                     });
 
-                    alert('✅ Saved! Changes committed to private repo.');
+                    if (!isAuto) alert('✅ Saved! Changes committed.');
+                    this.hasUnsavedChanges = false;
                     this.fetchData(); 
-                    this.resetTimer();
+                    this.resetActivity();
                 } catch (e) {
-                    alert('Error saving: ' + e.message);
+                    console.error(e);
+                    if (!isAuto) alert('Error saving: ' + e.message);
                 } finally {
                     this.loading = false;
                 }
+            },
+
+            // LOCAL EDITING
+            markDirty() {
+                this.hasUnsavedChanges = true;
+                this.resetActivity();
             },
             add(key, inputKey) {
                 const val = this.inputs[inputKey].trim();
                 if(val) {
                     this.data[key].unshift(val); 
                     this.inputs[inputKey] = ''; 
+                    this.markDirty();
                 }
             },
             remove(key, index) { 
                 this.data[key].splice(index, 1); 
+                this.markDirty();
             },
             addBot(key, inputKey) {
                 const val = this.inputs[inputKey].trim();
                 if(val) {
                     this.data.GOOD_BOTS[key].unshift(val);
                     this.inputs[inputKey] = '';
+                    this.markDirty();
                 }
             },
             removeBot(key, index) { 
                 this.data.GOOD_BOTS[key].splice(index, 1); 
+                this.markDirty();
             }
         }
     }).mount('#app');
