@@ -1,89 +1,112 @@
 <!DOCTYPE html>
-<html lang="en">
-<head>
+<html lang="en" class="dark"> <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>JSON List Parser</title> <script src="https://cdn.tailwindcss.com"></script>
+    <title>List Parser Lite</title>
+    <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script type="module">
         import { Octokit } from "https://esm.sh/@octokit/core";
         window.Octokit = Octokit;
     </script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class', // Enable manual dark mode toggling
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for lists */
+        .custom-scrollbar::-webkit-scrollbar { width: 6px; }
+        .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
+        .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #cbd5e1; border-radius: 20px; }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
+    </style>
 </head>
-<body class="bg-gray-50 text-gray-800 font-sans">
+<body class="bg-gray-100 dark:bg-gray-900 text-gray-800 dark:text-gray-200 font-sans transition-colors duration-300">
 
-<div id="app" class="max-w-4xl mx-auto p-6">
+<div id="app" class="max-w-4xl mx-auto p-6 min-h-screen flex flex-col" @mousemove="resetTimer" @keydown="resetTimer" @click="resetTimer">
     
-    <div class="flex justify-between items-center mb-8 bg-white p-4 rounded shadow-sm border border-gray-200">
+    <div class="flex justify-between items-center mb-8 bg-white dark:bg-gray-800 p-4 rounded shadow-sm border border-gray-200 dark:border-gray-700">
         <div>
-            <h1 class="text-xl font-semibold text-gray-700">List Parser Lite v1.0</h1>
+            <h1 class="text-xl font-semibold text-gray-700 dark:text-gray-100 flex items-center gap-2">
+                🛡️ List Parser Lite <span class="text-xs bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 px-2 py-0.5 rounded">v1.2</span>
+            </h1>
             <p v-if="token" class="text-xs text-gray-400 mt-1">Connected to: {{ targetRepo }}</p>
         </div>
-        <div class="flex gap-3">
-            <button v-if="token" @click="logout" class="text-sm text-gray-500 hover:text-red-500 underline">Disconnect</button>
-            <button v-if="token" @click="saveChanges" :disabled="loading" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-5 rounded shadow flex items-center gap-2 transition">
-                <span v-if="loading">⏳ Processing...</span>
-                <span v-else>💾 Commit Changes</span>
+        <div class="flex gap-3 items-center">
+            <button @click="toggleTheme" class="p-2 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700 transition" title="Toggle Theme">
+                <span v-if="isDark">☀️</span>
+                <span v-else>🌙</span>
             </button>
+
+            <div v-if="token" class="flex gap-3 border-l pl-3 dark:border-gray-600">
+                <button @click="logout" class="text-sm text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 underline">Disconnect</button>
+                <button @click="saveChanges" :disabled="loading" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-5 rounded shadow flex items-center gap-2 transition disabled:opacity-50">
+                    <span v-if="loading">⏳ Processing...</span>
+                    <span v-else>💾 Commit</span>
+                </button>
+            </div>
         </div>
     </div>
 
-    <div v-if="!token" class="bg-white p-10 rounded-lg shadow-sm border border-gray-200 text-center max-w-md mx-auto mt-10">
-        <h2 class="text-lg font-bold mb-2 text-gray-700">Configuration Access</h2>
-        <p class="mb-6 text-xs text-gray-500">
-            Please provide a valid access token with <code>repo</code> scope to load the configuration source.
-        </p>
-        <input type="password" v-model="tokenInput" class="border p-3 rounded w-full mb-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="ghp_...">
-        <button @click="setToken" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded w-full text-sm transition">Load Config</button>
+    <div v-if="!token" class="flex-grow flex items-center justify-center">
+        <div class="bg-white dark:bg-gray-800 p-10 rounded-lg shadow-md border border-gray-200 dark:border-gray-700 text-center max-w-md w-full">
+            <h2 class="text-lg font-bold mb-2 text-gray-700 dark:text-gray-100">Configuration Access</h2>
+            <p class="mb-6 text-xs text-gray-500 dark:text-gray-400">
+                Session auto-expires after {{ inactivityMinutes }} minutes of inactivity.
+            </p>
+            <input type="password" v-model="tokenInput" class="border dark:border-gray-600 p-3 rounded w-full mb-4 text-sm bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:ring-2 focus:ring-blue-500 outline-none transition" placeholder="ghp_...">
+            <button @click="setToken" class="bg-gray-800 hover:bg-gray-900 dark:bg-blue-600 dark:hover:bg-blue-700 text-white font-bold py-2 px-6 rounded w-full text-sm transition">Load Config</button>
+        </div>
     </div>
 
-    <div v-else>
-        <div v-if="error" class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded mb-4 text-sm">{{ error }}</div>
+    <div v-else class="flex-grow">
+        <div v-if="error" class="bg-red-50 dark:bg-red-900/30 border border-red-200 dark:border-red-800 text-red-600 dark:text-red-300 px-4 py-3 rounded mb-4 text-sm">{{ error }}</div>
 
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-            <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4 flex justify-between">
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6 transition-colors">
+            <h2 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4 flex justify-between">
                 <span>Allowed IPs</span>
-                <span class="text-xs font-normal text-gray-300">{{ data.GOOD_IPS.length }} items</span>
+                <span class="text-xs font-normal text-gray-300 dark:text-gray-500">{{ data.GOOD_IPS.length }} items</span>
             </h2>
-            <div class="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
-                <div v-for="(ip, index) in data.GOOD_IPS" :key="index" class="flex gap-2">
-                    <input v-model="data.GOOD_IPS[index]" class="border p-2 rounded w-full font-mono text-sm bg-gray-50 focus:bg-white transition" placeholder="0.0.0.0">
-                    <button @click="remove('GOOD_IPS', index)" class="text-gray-300 hover:text-red-500 font-bold px-2 transition">✕</button>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                <div v-for="(ip, index) in data.GOOD_IPS" :key="index" class="flex gap-2 group">
+                    <input v-model="data.GOOD_IPS[index]" class="border dark:border-gray-600 p-2 rounded w-full font-mono text-sm bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:bg-white dark:focus:bg-black transition" placeholder="0.0.0.0">
+                    <button @click="remove('GOOD_IPS', index)" class="text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 font-bold px-2 transition opacity-0 group-hover:opacity-100">✕</button>
                 </div>
             </div>
-            <button @click="add('GOOD_IPS')" class="mt-4 text-blue-600 text-xs font-bold hover:underline">+ Add Entry</button>
+            <button @click="add('GOOD_IPS')" class="mt-4 text-blue-600 dark:text-blue-400 text-xs font-bold hover:underline">+ Add Entry</button>
         </div>
 
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-            <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">Allowed Referrers</h2>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+            <h2 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">Allowed Referrers</h2>
             <div class="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
-                <div v-for="(ref, index) in data.GOOD_REFERRERS" :key="index" class="flex gap-2">
-                    <input v-model="data.GOOD_REFERRERS[index]" class="border p-2 rounded w-full font-mono text-sm bg-gray-50 focus:bg-white transition">
-                    <button @click="remove('GOOD_REFERRERS', index)" class="text-gray-300 hover:text-red-500 font-bold px-2 transition">✕</button>
+                <div v-for="(ref, index) in data.GOOD_REFERRERS" :key="index" class="flex gap-2 group">
+                    <input v-model="data.GOOD_REFERRERS[index]" class="border dark:border-gray-600 p-2 rounded w-full font-mono text-sm bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:bg-white dark:focus:bg-black transition">
+                    <button @click="remove('GOOD_REFERRERS', index)" class="text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 font-bold px-2 transition opacity-0 group-hover:opacity-100">✕</button>
                 </div>
             </div>
-            <button @click="add('GOOD_REFERRERS')" class="mt-4 text-blue-600 text-xs font-bold hover:underline">+ Add Entry</button>
+            <button @click="add('GOOD_REFERRERS')" class="mt-4 text-blue-600 dark:text-blue-400 text-xs font-bold hover:underline">+ Add Entry</button>
         </div>
 
-        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
-            <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">Allowed Bots</h2>
+        <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-sm border border-gray-200 dark:border-gray-700 mb-6">
+            <h2 class="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wide mb-4">Allowed Bots</h2>
             
             <div class="mb-6">
-                <h3 class="text-xs font-semibold text-gray-400 mb-2">Search Crawlers</h3>
-                <div v-for="(bot, index) in data.GOOD_BOTS.SEARCH_BOTS" :key="'s'+index" class="flex gap-2 mb-2">
-                    <input v-model="data.GOOD_BOTS.SEARCH_BOTS[index]" class="border p-2 rounded w-full font-mono text-sm bg-gray-50 focus:bg-white transition">
-                    <button @click="removeBot('SEARCH_BOTS', index)" class="text-gray-300 hover:text-red-500 font-bold px-2 transition">✕</button>
+                <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 mb-2">Search Crawlers</h3>
+                <div v-for="(bot, index) in data.GOOD_BOTS.SEARCH_BOTS" :key="'s'+index" class="flex gap-2 mb-2 group">
+                    <input v-model="data.GOOD_BOTS.SEARCH_BOTS[index]" class="border dark:border-gray-600 p-2 rounded w-full font-mono text-sm bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:bg-white dark:focus:bg-black transition">
+                    <button @click="removeBot('SEARCH_BOTS', index)" class="text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 font-bold px-2 transition opacity-0 group-hover:opacity-100">✕</button>
                 </div>
-                <button @click="addBot('SEARCH_BOTS')" class="text-xs text-blue-600 font-bold hover:underline">+ Add Crawler</button>
+                <button @click="addBot('SEARCH_BOTS')" class="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline">+ Add Crawler</button>
             </div>
 
             <div>
-                <h3 class="text-xs font-semibold text-gray-400 mb-2">AI Agents</h3>
-                <div v-for="(bot, index) in data.GOOD_BOTS.AI_BOTS" :key="'a'+index" class="flex gap-2 mb-2">
-                    <input v-model="data.GOOD_BOTS.AI_BOTS[index]" class="border p-2 rounded w-full font-mono text-sm bg-gray-50 focus:bg-white transition">
-                    <button @click="removeBot('AI_BOTS', index)" class="text-gray-300 hover:text-red-500 font-bold px-2 transition">✕</button>
+                <h3 class="text-xs font-semibold text-gray-400 dark:text-gray-500 mb-2">AI Agents</h3>
+                <div v-for="(bot, index) in data.GOOD_BOTS.AI_BOTS" :key="'a'+index" class="flex gap-2 mb-2 group">
+                    <input v-model="data.GOOD_BOTS.AI_BOTS[index]" class="border dark:border-gray-600 p-2 rounded w-full font-mono text-sm bg-gray-50 dark:bg-gray-900 text-gray-800 dark:text-gray-200 focus:bg-white dark:focus:bg-black transition">
+                    <button @click="removeBot('AI_BOTS', index)" class="text-gray-300 dark:text-gray-600 hover:text-red-500 dark:hover:text-red-400 font-bold px-2 transition opacity-0 group-hover:opacity-100">✕</button>
                 </div>
-                <button @click="addBot('AI_BOTS')" class="text-xs text-blue-600 font-bold hover:underline">+ Add Agent</button>
+                <button @click="addBot('AI_BOTS')" class="text-xs text-blue-600 dark:text-blue-400 font-bold hover:underline">+ Add Agent</button>
             </div>
         </div>
     </div>
@@ -93,16 +116,14 @@
     const { createApp } = Vue;
 
     // ============================================================
-    // ⚙️ CONFIGURATION (POINT TO YOUR PRIVATE REPO)
+    // ⚙️ CONFIGURATION 
     // ============================================================
-    // 1. Your GitHub Username (where security-list lives)
     const TARGET_OWNER = 'malaareda'; 
-    
-    // 2. Your PRIVATE Repo Name
     const TARGET_REPO  = 'security-list';         
-    
-    // 3. The Path to R.00 inside the private repo
     const TARGET_FILE  = 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json';
+    
+    // 🕒 AUTO-DISCONNECT SETTING (In Minutes)
+    const INACTIVITY_MINUTES = 20; 
     // ============================================================
 
     createApp({
@@ -114,6 +135,14 @@
                 error: '',
                 fileSha: '', 
                 targetRepo: `${TARGET_OWNER}/${TARGET_REPO}`,
+                
+                // Theme Logic
+                isDark: true, // Default to Dark Mode
+
+                // Auto Disconnect Logic
+                inactivityMinutes: INACTIVITY_MINUTES,
+                disconnectTimer: null,
+
                 data: {
                     GOOD_IPS: [],
                     GOOD_REFERRERS: [],
@@ -122,20 +151,67 @@
             }
         },
         mounted() {
-            if (this.token) this.fetchData();
+            // Initialize Theme
+            this.initTheme();
+
+            // Initialize Token & Timer
+            if (this.token) {
+                this.fetchData();
+                this.resetTimer();
+            }
         },
         methods: {
+            // --- THEME METHODS ---
+            initTheme() {
+                // Check localStorage or default to true (Dark)
+                const savedTheme = localStorage.getItem('theme');
+                this.isDark = savedTheme ? savedTheme === 'dark' : true; 
+                this.applyTheme();
+            },
+            toggleTheme() {
+                this.isDark = !this.isDark;
+                localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
+                this.applyTheme();
+            },
+            applyTheme() {
+                if (this.isDark) {
+                    document.documentElement.classList.add('dark');
+                } else {
+                    document.documentElement.classList.remove('dark');
+                }
+            },
+
+            // --- AUTO DISCONNECT METHODS ---
+            resetTimer() {
+                if (!this.token) return;
+                
+                // Clear existing timer
+                if (this.disconnectTimer) clearTimeout(this.disconnectTimer);
+                
+                // Set new timer
+                this.disconnectTimer = setTimeout(() => {
+                    this.logout(true); // True = timed out
+                }, this.inactivityMinutes * 60 * 1000);
+            },
+
+            // --- DATA METHODS ---
             setToken() {
                 if(!this.tokenInput.trim()) return;
                 this.token = this.tokenInput;
                 localStorage.setItem('gh_token', this.token);
                 this.fetchData();
+                this.resetTimer();
             },
-            logout() {
+            logout(isTimeout = false) {
                 this.token = '';
                 this.tokenInput = '';
                 this.data = { GOOD_IPS: [], GOOD_REFERRERS: [], GOOD_BOTS: { SEARCH_BOTS: [], AI_BOTS: [] } };
                 localStorage.removeItem('gh_token');
+                if (this.disconnectTimer) clearTimeout(this.disconnectTimer);
+                
+                if (isTimeout) {
+                    alert(`🔒 Session expired due to ${this.inactivityMinutes} minutes of inactivity.`);
+                }
             },
             async fetchData() {
                 this.loading = true; 
@@ -143,19 +219,14 @@
                 const octokit = new window.Octokit({ auth: this.token });
                 try {
                     const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${TARGET_FILE}`);
-                    
-                    // Decode Base64 (handle special characters safely)
                     const decoded = decodeURIComponent(escape(atob(res.data.content)));
-                    
                     this.data = JSON.parse(decoded);
                     this.fileSha = res.data.sha; 
                 } catch (e) {
                     console.error(e);
                     this.error = `Connection Failed. (${e.status || 'Unknown Error'})`;
-                    
                     if(e.status === 404) this.error = `File not found: ${TARGET_FILE}`;
                     if(e.status === 401) this.error = "Unauthorized. Please check your Token.";
-                    if(e.status === 403) this.error = "Access Denied. Does your Token have 'repo' scope?";
                 } finally {
                     this.loading = false;
                 }
@@ -164,14 +235,12 @@
                 this.loading = true;
                 const octokit = new window.Octokit({ auth: this.token });
                 try {
-                    // Clean empty inputs
                     this.data.GOOD_IPS = this.data.GOOD_IPS.filter(i => i.trim() !== '');
                     this.data.GOOD_REFERRERS = this.data.GOOD_REFERRERS.filter(i => i.trim() !== '');
                     this.data.GOOD_BOTS.SEARCH_BOTS = this.data.GOOD_BOTS.SEARCH_BOTS.filter(i => i.trim() !== '');
                     this.data.GOOD_BOTS.AI_BOTS = this.data.GOOD_BOTS.AI_BOTS.filter(i => i.trim() !== '');
 
                     const contentJson = JSON.stringify(this.data, null, 2);
-                    // Encode Base64 safely
                     const contentBase64 = btoa(unescape(encodeURIComponent(contentJson))); 
 
                     await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${TARGET_FILE}`, {
@@ -181,7 +250,8 @@
                     });
 
                     alert('✅ Saved! The master repo will auto-update shortly.');
-                    this.fetchData(); // Reload SHA
+                    this.fetchData(); 
+                    this.resetTimer(); // Reset timer on active save
                 } catch (e) {
                     alert('Error saving: ' + e.message);
                 } finally {
