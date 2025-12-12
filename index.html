@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v3.5</title>
+    <title>Security Manager v3.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script type="module">
@@ -42,6 +42,8 @@
         @keyframes pulse-red { 0% { opacity: 1; } 50% { opacity: 0.6; } 100% { opacity: 1; } }
         .glass-panel { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.5); }
         .dark .glass-panel { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.05); }
+        /* Initialization Fade */
+        [v-cloak] { display: none; }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-darkbg text-slate-800 dark:text-slate-200 transition-colors duration-300 md:h-screen md:overflow-hidden flex flex-col">
@@ -52,130 +54,136 @@
     <div class="absolute -bottom-32 left-1/3 w-96 h-96 bg-pink-500/20 rounded-full mix-blend-multiply filter blur-3xl opacity-30 animate-blob animation-delay-4000"></div>
 </div>
 
-<div id="app" class="relative z-10 flex flex-col h-full" @mousemove="resetActivity" @keydown="resetActivity" @click="resetActivity">
+<div id="app" class="relative z-10 flex flex-col h-full" v-cloak>
     
-    <header class="sticky top-0 z-50 w-full glass-panel border-b-0 shadow-sm shrink-0" v-if="token">
-        <div class="max-w-8xl mx-auto px-4 lg:px-6 h-16 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 text-white text-lg">🛡️</div>
-                <div>
-                    <div class="flex items-center gap-2">
-                        <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-none">Security Manager</h1>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500">v3.5</span>
-                    </div>
-                    <div class="flex items-center gap-1.5 mt-0.5">
-                        <span class="relative flex h-1.5 w-1.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span></span>
-                        <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">{{ targetRepo }}</span>
-                    </div>
-                </div>
-            </div>
-            <div class="flex items-center gap-3">
-                <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono font-bold border transition-all duration-300" :class="timeLeft < 120 ? 'timer-pulse' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent'"><span>⏱️</span><span>{{ formattedTime }}</span></div>
-                <button @click="toggleTheme" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"><span v-if="isDark" class="text-lg">☀️</span><span v-else class="text-lg">🌙</span></button>
-                <div class="flex items-center gap-2 pl-3 border-l border-slate-300 dark:border-slate-700">
-                    <button @click="logout(false)" class="text-xs font-medium text-slate-500 hover:text-red-500 px-3 py-2 transition-colors">Disconnect</button>
-                    <button @click="manualSave" :disabled="loading" class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white shadow-lg transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" :class="hasUnsavedChanges ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20'"><span v-if="loading" class="animate-spin">⏳</span><span v-else-if="hasUnsavedChanges">⚠ Unsaved</span><span v-else>💾 Commit</span></button>
-                </div>
-            </div>
-        </div>
-    </header>
-
-    <div v-if="!token" class="flex-grow flex items-center justify-center p-6">
-        <div class="glass-panel p-10 rounded-3xl shadow-2xl max-w-sm w-full text-center relative overflow-hidden">
-            <div class="w-14 h-14 mx-auto mb-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-2xl shadow-inner">🔒</div>
-            <h2 class="text-lg font-bold mb-6 dark:text-white tracking-widest uppercase text-xs">Restricted Access</h2>
-            <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-400" placeholder="••••••••••••••••••••">
-            <button @click="setToken" class="w-full bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition-transform transform active:scale-95 text-xs uppercase tracking-wide">Authenticate</button>
-        </div>
+    <div v-if="isInitializing" class="flex-grow flex items-center justify-center">
+        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500"></div>
     </div>
 
-    <div v-else class="flex-grow p-4 lg:p-6 overflow-y-auto md:overflow-hidden relative">
-        <transition name="fade">
-            <div v-if="error" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-red-50 dark:bg-red-900/90 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-100 px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 backdrop-blur-md"><span>⚠️</span><p class="text-sm font-medium">{{ error }}</p><button @click="error = ''" class="ml-2 font-bold opacity-70 hover:opacity-100">✕</button></div>
-        </transition>
-
-        <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 h-full pb-10 md:pb-0">
-            <div class="glass-panel rounded-xl flex flex-col h-[500px] md:h-full overflow-hidden transition-all hover:border-indigo-500/30">
-                <div class="px-5 py-3 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
-                    <h3 class="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2"><span class="text-emerald-500">🌍</span> Allowed IPs</h3>
-                    <span class="text-[10px] font-bold bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300">{{ data.GOOD_IPS.length }}</span>
-                </div>
-                <div class="flex-grow overflow-y-auto custom-scrollbar p-2 space-y-1 bg-white/50 dark:bg-slate-900/20">
-                    <div v-for="(item, index) in data.GOOD_IPS" :key="index" class="group flex justify-between items-center p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all shadow-sm hover:shadow">
-                        <span class="font-mono text-sm text-slate-600 dark:text-slate-300">{{ item }}</span>
-                        <button @click="remove('GOOD_IPS', index)" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 px-2 transition-opacity">✕</button>
+    <template v-else>
+        <header class="sticky top-0 z-50 w-full glass-panel border-b-0 shadow-sm shrink-0" v-if="token">
+            <div class="max-w-8xl mx-auto px-4 lg:px-6 h-16 flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <div class="w-9 h-9 rounded-xl bg-gradient-to-tr from-indigo-600 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 text-white text-lg">🛡️</div>
+                    <div>
+                        <div class="flex items-center gap-2">
+                            <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-none">Security Manager</h1>
+                            <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500">v3.6</span>
+                        </div>
+                        <div class="flex items-center gap-1.5 mt-0.5">
+                            <span class="relative flex h-1.5 w-1.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span></span>
+                            <span class="text-[10px] font-medium text-slate-500 dark:text-slate-400 uppercase tracking-widest">{{ targetRepo }}</span>
+                        </div>
                     </div>
                 </div>
-                <div class="p-3 border-t border-slate-200/50 dark:border-slate-700/50 bg-white dark:bg-slate-800 z-10">
-                    <div class="relative flex items-center"><input v-model="inputs.goodIp" @keyup.enter="add('GOOD_IPS', 'goodIp')" class="w-full pl-3 pr-10 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none text-sm font-mono transition-all" placeholder="Add IP..."><button @click="add('GOOD_IPS', 'goodIp')" class="absolute right-1.5 p-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white rounded-md transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></button></div>
+                <div class="flex items-center gap-3">
+                    <div class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono font-bold border transition-all duration-300" :class="timeLeft < 120 ? 'timer-pulse' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent'"><span>⏱️</span><span>{{ formattedTime }}</span></div>
+                    <button @click="toggleTheme" class="p-2 rounded-full hover:bg-slate-200 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"><span v-if="isDark" class="text-lg">☀️</span><span v-else class="text-lg">🌙</span></button>
+                    <div class="flex items-center gap-2 pl-3 border-l border-slate-300 dark:border-slate-700">
+                        <button @click="logout(false)" class="text-xs font-medium text-slate-500 hover:text-red-500 px-3 py-2 transition-colors">Disconnect</button>
+                        <button @click="manualSave" :disabled="loading" class="flex items-center gap-2 px-4 py-2 rounded-lg text-xs font-bold text-white shadow-lg transition-all transform active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed" :class="hasUnsavedChanges ? 'bg-amber-500 hover:bg-amber-600 shadow-amber-500/20' : 'bg-indigo-600 hover:bg-indigo-700 shadow-indigo-500/20'"><span v-if="loading" class="animate-spin">⏳</span><span v-else-if="hasUnsavedChanges">⚠ Unsaved</span><span v-else>💾 Commit</span></button>
+                    </div>
                 </div>
             </div>
+        </header>
 
-            <div class="glass-panel rounded-xl flex flex-col h-[500px] md:h-full overflow-hidden transition-all hover:border-red-500/30">
-                <div class="px-5 py-3 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
-                    <h3 class="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2"><span class="text-red-500">⛔</span> Blocked IPs</h3>
-                    <span class="text-[10px] font-bold bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300">{{ data.BLOCKED_IPS.length }}</span>
-                </div>
-                <div class="flex-grow overflow-y-auto custom-scrollbar p-2 space-y-1 bg-white/50 dark:bg-slate-900/20">
-                    <div v-for="(item, index) in data.BLOCKED_IPS" :key="index" class="group flex justify-between items-center p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all shadow-sm hover:shadow">
-                        <span class="font-mono text-sm text-slate-600 dark:text-slate-300">{{ item }}</span>
-                        <button @click="remove('BLOCKED_IPS', index)" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 px-2 transition-opacity">✕</button>
-                    </div>
-                </div>
-                <div class="p-3 border-t border-slate-200/50 dark:border-slate-700/50 bg-white dark:bg-slate-800 z-10">
-                    <div class="relative flex items-center"><input v-model="inputs.blockedIp" @keyup.enter="add('BLOCKED_IPS', 'blockedIp')" class="w-full pl-3 pr-10 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none text-sm font-mono transition-all" placeholder="Block IP..."><button @click="add('BLOCKED_IPS', 'blockedIp')" class="absolute right-1.5 p-1.5 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white rounded-md transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></button></div>
-                </div>
+        <div v-if="!token" class="flex-grow flex items-center justify-center p-6">
+            <div class="glass-panel p-10 rounded-3xl shadow-2xl max-w-sm w-full text-center relative overflow-hidden">
+                <div class="w-14 h-14 mx-auto mb-8 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-2xl shadow-inner">🔒</div>
+                <h2 class="text-lg font-bold mb-6 dark:text-white tracking-widest uppercase text-xs">Restricted Access</h2>
+                <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:ring-1 focus:ring-indigo-500 transition-all placeholder:text-slate-400" placeholder="••••••••••••••••••••">
+                <button @click="setToken" class="w-full bg-slate-900 dark:bg-indigo-600 hover:bg-slate-800 dark:hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl shadow-lg transition-transform transform active:scale-95 text-xs uppercase tracking-wide">Authenticate</button>
             </div>
+        </div>
 
-            <div class="glass-panel rounded-xl flex flex-col h-[500px] md:h-full overflow-hidden transition-all hover:border-blue-500/30">
-                <div class="px-5 py-3 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
-                    <h3 class="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2"><span class="text-blue-500">🔗</span> Referrers</h3>
-                    <span class="text-[10px] font-bold bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300">{{ data.GOOD_REFERRERS.length }}</span>
-                </div>
-                <div class="flex-grow overflow-y-auto custom-scrollbar p-2 space-y-1 bg-white/50 dark:bg-slate-900/20">
-                    <div v-for="(item, index) in data.GOOD_REFERRERS" :key="index" class="group flex justify-between items-center p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all shadow-sm hover:shadow">
-                        <span class="font-mono text-sm text-slate-600 dark:text-slate-300 truncate max-w-[220px]">{{ item }}</span>
-                        <button @click="remove('GOOD_REFERRERS', index)" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 px-2 transition-opacity">✕</button>
+        <div v-else class="flex-grow p-4 lg:p-6 overflow-y-auto md:overflow-hidden relative">
+            <transition name="fade">
+                <div v-if="error" class="fixed top-20 left-1/2 -translate-x-1/2 z-50 bg-red-50 dark:bg-red-900/90 border border-red-200 dark:border-red-800 text-red-800 dark:text-red-100 px-4 py-3 rounded-lg shadow-xl flex items-center gap-3 backdrop-blur-md"><span>⚠️</span><p class="text-sm font-medium">{{ error }}</p><button @click="error = ''" class="ml-2 font-bold opacity-70 hover:opacity-100">✕</button></div>
+            </transition>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5 h-full pb-10 md:pb-0">
+                <div class="glass-panel rounded-xl flex flex-col h-[500px] md:h-full overflow-hidden transition-all hover:border-indigo-500/30">
+                    <div class="px-5 py-3 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+                        <h3 class="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2"><span class="text-emerald-500">🌍</span> Allowed IPs</h3>
+                        <span class="text-[10px] font-bold bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300">{{ data.GOOD_IPS.length }}</span>
+                    </div>
+                    <div class="flex-grow overflow-y-auto custom-scrollbar p-2 space-y-1 bg-white/50 dark:bg-slate-900/20">
+                        <div v-for="(item, index) in data.GOOD_IPS" :key="index" class="group flex justify-between items-center p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all shadow-sm hover:shadow">
+                            <span class="font-mono text-sm text-slate-600 dark:text-slate-300">{{ item }}</span>
+                            <button @click="remove('GOOD_IPS', index)" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 px-2 transition-opacity">✕</button>
+                        </div>
+                    </div>
+                    <div class="p-3 border-t border-slate-200/50 dark:border-slate-700/50 bg-white dark:bg-slate-800 z-10">
+                        <div class="relative flex items-center"><input v-model="inputs.goodIp" @keyup.enter="add('GOOD_IPS', 'goodIp')" class="w-full pl-3 pr-10 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-500/20 outline-none text-sm font-mono transition-all" placeholder="Add IP..."><button @click="add('GOOD_IPS', 'goodIp')" class="absolute right-1.5 p-1.5 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500 hover:text-white rounded-md transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></button></div>
                     </div>
                 </div>
-                <div class="p-3 border-t border-slate-200/50 dark:border-slate-700/50 bg-white dark:bg-slate-800 z-10">
-                    <div class="relative flex items-center"><input v-model="inputs.ref" @keyup.enter="add('GOOD_REFERRERS', 'ref')" class="w-full pl-3 pr-10 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none text-sm font-mono transition-all" placeholder="Add Domain..."><button @click="add('GOOD_REFERRERS', 'ref')" class="absolute right-1.5 p-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500 hover:text-white rounded-md transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></button></div>
-                </div>
-            </div>
 
-            <div class="glass-panel rounded-xl flex flex-col h-[500px] md:h-full overflow-hidden transition-all hover:border-purple-500/30">
-                <div class="px-5 py-3 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
-                    <h3 class="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2"><span class="text-purple-500">🤖</span> Search Bots</h3>
-                    <span class="text-[10px] font-bold bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300">{{ data.GOOD_BOTS.SEARCH_BOTS.length }}</span>
-                </div>
-                <div class="flex-grow overflow-y-auto custom-scrollbar p-2 space-y-1 bg-white/50 dark:bg-slate-900/20">
-                    <div v-for="(item, index) in data.GOOD_BOTS.SEARCH_BOTS" :key="index" class="group flex justify-between items-center p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all shadow-sm hover:shadow">
-                        <span class="font-mono text-sm text-slate-600 dark:text-slate-300 truncate max-w-[220px]">{{ item }}</span>
-                        <button @click="removeBot('SEARCH_BOTS', index)" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 px-2 transition-opacity">✕</button>
+                <div class="glass-panel rounded-xl flex flex-col h-[500px] md:h-full overflow-hidden transition-all hover:border-red-500/30">
+                    <div class="px-5 py-3 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+                        <h3 class="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2"><span class="text-red-500">⛔</span> Blocked IPs</h3>
+                        <span class="text-[10px] font-bold bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300">{{ data.BLOCKED_IPS.length }}</span>
+                    </div>
+                    <div class="flex-grow overflow-y-auto custom-scrollbar p-2 space-y-1 bg-white/50 dark:bg-slate-900/20">
+                        <div v-for="(item, index) in data.BLOCKED_IPS" :key="index" class="group flex justify-between items-center p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all shadow-sm hover:shadow">
+                            <span class="font-mono text-sm text-slate-600 dark:text-slate-300">{{ item }}</span>
+                            <button @click="remove('BLOCKED_IPS', index)" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 px-2 transition-opacity">✕</button>
+                        </div>
+                    </div>
+                    <div class="p-3 border-t border-slate-200/50 dark:border-slate-700/50 bg-white dark:bg-slate-800 z-10">
+                        <div class="relative flex items-center"><input v-model="inputs.blockedIp" @keyup.enter="add('BLOCKED_IPS', 'blockedIp')" class="w-full pl-3 pr-10 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-red-500 focus:ring-2 focus:ring-red-500/20 outline-none text-sm font-mono transition-all" placeholder="Block IP..."><button @click="add('BLOCKED_IPS', 'blockedIp')" class="absolute right-1.5 p-1.5 bg-red-500/10 text-red-600 dark:text-red-400 hover:bg-red-500 hover:text-white rounded-md transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></button></div>
                     </div>
                 </div>
-                <div class="p-3 border-t border-slate-200/50 dark:border-slate-700/50 bg-white dark:bg-slate-800 z-10">
-                    <div class="relative flex items-center"><input v-model="inputs.searchBot" @keyup.enter="addBot('SEARCH_BOTS', 'searchBot')" class="w-full pl-3 pr-10 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-mono transition-all" placeholder="Bot User-Agent..."><button @click="addBot('SEARCH_BOTS', 'searchBot')" class="absolute right-1.5 p-1.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500 hover:text-white rounded-md transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></button></div>
-                </div>
-            </div>
 
-            <div class="glass-panel rounded-xl flex flex-col h-[500px] md:h-full overflow-hidden transition-all hover:border-pink-500/30">
-                <div class="px-5 py-3 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
-                    <h3 class="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2"><span class="text-pink-500">🧠</span> AI Agents</h3>
-                    <span class="text-[10px] font-bold bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300">{{ data.GOOD_BOTS.AI_BOTS.length }}</span>
-                </div>
-                <div class="flex-grow overflow-y-auto custom-scrollbar p-2 space-y-1 bg-white/50 dark:bg-slate-900/20">
-                    <div v-for="(item, index) in data.GOOD_BOTS.AI_BOTS" :key="index" class="group flex justify-between items-center p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all shadow-sm hover:shadow">
-                        <span class="font-mono text-sm text-slate-600 dark:text-slate-300 truncate max-w-[220px]">{{ item }}</span>
-                        <button @click="removeBot('AI_BOTS', index)" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 px-2 transition-opacity">✕</button>
+                <div class="glass-panel rounded-xl flex flex-col h-[500px] md:h-full overflow-hidden transition-all hover:border-blue-500/30">
+                    <div class="px-5 py-3 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+                        <h3 class="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2"><span class="text-blue-500">🔗</span> Referrers</h3>
+                        <span class="text-[10px] font-bold bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300">{{ data.GOOD_REFERRERS.length }}</span>
+                    </div>
+                    <div class="flex-grow overflow-y-auto custom-scrollbar p-2 space-y-1 bg-white/50 dark:bg-slate-900/20">
+                        <div v-for="(item, index) in data.GOOD_REFERRERS" :key="index" class="group flex justify-between items-center p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all shadow-sm hover:shadow">
+                            <span class="font-mono text-sm text-slate-600 dark:text-slate-300 truncate max-w-[220px]">{{ item }}</span>
+                            <button @click="remove('GOOD_REFERRERS', index)" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 px-2 transition-opacity">✕</button>
+                        </div>
+                    </div>
+                    <div class="p-3 border-t border-slate-200/50 dark:border-slate-700/50 bg-white dark:bg-slate-800 z-10">
+                        <div class="relative flex items-center"><input v-model="inputs.ref" @keyup.enter="add('GOOD_REFERRERS', 'ref')" class="w-full pl-3 pr-10 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 outline-none text-sm font-mono transition-all" placeholder="Add Domain..."><button @click="add('GOOD_REFERRERS', 'ref')" class="absolute right-1.5 p-1.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 hover:bg-blue-500 hover:text-white rounded-md transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></button></div>
                     </div>
                 </div>
-                <div class="p-3 border-t border-slate-200/50 dark:border-slate-700/50 bg-white dark:bg-slate-800 z-10">
-                    <div class="relative flex items-center"><input v-model="inputs.aiBot" @keyup.enter="addBot('AI_BOTS', 'aiBot')" class="w-full pl-3 pr-10 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 outline-none text-sm font-mono transition-all" placeholder="AI User-Agent..."><button @click="addBot('AI_BOTS', 'aiBot')" class="absolute right-1.5 p-1.5 bg-pink-500/10 text-pink-600 dark:text-pink-400 hover:bg-pink-500 hover:text-white rounded-md transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></button></div>
+
+                <div class="glass-panel rounded-xl flex flex-col h-[500px] md:h-full overflow-hidden transition-all hover:border-purple-500/30">
+                    <div class="px-5 py-3 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+                        <h3 class="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2"><span class="text-purple-500">🤖</span> Search Bots</h3>
+                        <span class="text-[10px] font-bold bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300">{{ data.GOOD_BOTS.SEARCH_BOTS.length }}</span>
+                    </div>
+                    <div class="flex-grow overflow-y-auto custom-scrollbar p-2 space-y-1 bg-white/50 dark:bg-slate-900/20">
+                        <div v-for="(item, index) in data.GOOD_BOTS.SEARCH_BOTS" :key="index" class="group flex justify-between items-center p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all shadow-sm hover:shadow">
+                            <span class="font-mono text-sm text-slate-600 dark:text-slate-300 truncate max-w-[220px]">{{ item }}</span>
+                            <button @click="removeBot('SEARCH_BOTS', index)" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 px-2 transition-opacity">✕</button>
+                        </div>
+                    </div>
+                    <div class="p-3 border-t border-slate-200/50 dark:border-slate-700/50 bg-white dark:bg-slate-800 z-10">
+                        <div class="relative flex items-center"><input v-model="inputs.searchBot" @keyup.enter="addBot('SEARCH_BOTS', 'searchBot')" class="w-full pl-3 pr-10 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 outline-none text-sm font-mono transition-all" placeholder="Bot User-Agent..."><button @click="addBot('SEARCH_BOTS', 'searchBot')" class="absolute right-1.5 p-1.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 hover:bg-purple-500 hover:text-white rounded-md transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></button></div>
+                    </div>
+                </div>
+
+                <div class="glass-panel rounded-xl flex flex-col h-[500px] md:h-full overflow-hidden transition-all hover:border-pink-500/30">
+                    <div class="px-5 py-3 border-b border-slate-200/50 dark:border-slate-700/50 flex justify-between items-center bg-slate-50/50 dark:bg-slate-800/50">
+                        <h3 class="font-semibold text-slate-700 dark:text-slate-200 flex items-center gap-2"><span class="text-pink-500">🧠</span> AI Agents</h3>
+                        <span class="text-[10px] font-bold bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded text-slate-600 dark:text-slate-300">{{ data.GOOD_BOTS.AI_BOTS.length }}</span>
+                    </div>
+                    <div class="flex-grow overflow-y-auto custom-scrollbar p-2 space-y-1 bg-white/50 dark:bg-slate-900/20">
+                        <div v-for="(item, index) in data.GOOD_BOTS.AI_BOTS" :key="index" class="group flex justify-between items-center p-2 rounded-lg hover:bg-white dark:hover:bg-slate-800 border border-transparent hover:border-slate-100 dark:hover:border-slate-700 transition-all shadow-sm hover:shadow">
+                            <span class="font-mono text-sm text-slate-600 dark:text-slate-300 truncate max-w-[220px]">{{ item }}</span>
+                            <button @click="removeBot('AI_BOTS', index)" class="opacity-0 group-hover:opacity-100 text-slate-400 hover:text-red-500 px-2 transition-opacity">✕</button>
+                        </div>
+                    </div>
+                    <div class="p-3 border-t border-slate-200/50 dark:border-slate-700/50 bg-white dark:bg-slate-800 z-10">
+                        <div class="relative flex items-center"><input v-model="inputs.aiBot" @keyup.enter="addBot('AI_BOTS', 'aiBot')" class="w-full pl-3 pr-10 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 outline-none text-sm font-mono transition-all" placeholder="AI User-Agent..."><button @click="addBot('AI_BOTS', 'aiBot')" class="absolute right-1.5 p-1.5 bg-pink-500/10 text-pink-600 dark:text-pink-400 hover:bg-pink-500 hover:text-white rounded-md transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></button></div>
+                    </div>
                 </div>
             </div>
         </div>
-    </div>
+    </template>
 </div>
 
 <script type="module">
@@ -184,24 +192,23 @@
 
     const TARGET_OWNER = 'malaareda'; 
     const TARGET_REPO  = 'security-list';         
-    
-    // READ from R.00 (To show current state)
     const READ_FILE = 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json';
-    
-    // WRITE to TEMP (To trigger logic)
     const WRITE_FILE = 'security-list-backup/security-whitelist-backup/security-whitelist-temp.json';
     
+    // Configurable time
     const INACTIVITY_MINUTES = 5; 
 
     createApp({
         data() {
             return {
-                token: localStorage.getItem('gh_token') || '',
+                isInitializing: true, // Prevents Flash of Login
+                token: '', // Initial empty state
                 tokenInput: '',
                 loading: false,
                 error: '',
                 targetRepo: `${TARGET_OWNER}/${TARGET_REPO}`,
                 isDark: true,
+                targetTime: 0, // REAL timestamp target
                 timeLeft: INACTIVITY_MINUTES * 60,
                 countdownInterval: null,
                 hasUnsavedChanges: false,
@@ -211,22 +218,33 @@
         },
         computed: {
             formattedTime() {
-                const m = Math.floor(this.timeLeft / 60).toString().padStart(2, '0');
-                const s = (this.timeLeft % 60).toString().padStart(2, '0');
+                const totalSeconds = Math.max(0, this.timeLeft);
+                const m = Math.floor(totalSeconds / 60).toString().padStart(2, '0');
+                const s = (totalSeconds % 60).toString().padStart(2, '0');
                 return `${m}:${s}`;
             }
         },
         mounted() {
             this.initTheme();
+            // CHECK AUTH immediately on mount
+            const storedToken = localStorage.getItem('gh_token');
+            if (storedToken) {
+                this.token = storedToken;
+                this.fetchData(); 
+                this.startCountdown();
+            } else {
+                this.isInitializing = false; // Show Login if no token
+            }
+
             window.addEventListener('mousemove', this.resetActivity);
             window.addEventListener('keydown', this.resetActivity);
             window.addEventListener('click', this.resetActivity);
-            if (this.token) { this.fetchData(); this.startCountdown(); }
         },
         beforeUnmount() {
             window.removeEventListener('mousemove', this.resetActivity);
             window.removeEventListener('keydown', this.resetActivity);
             window.removeEventListener('click', this.resetActivity);
+            if(this.countdownInterval) clearInterval(this.countdownInterval);
         },
         methods: {
             initTheme() {
@@ -243,26 +261,39 @@
                 if (this.isDark) document.documentElement.classList.add('dark');
                 else document.documentElement.classList.remove('dark');
             },
+            
+            // --- PRECISION TIMER LOGIC ---
             startCountdown() {
+                this.resetActivity(); // Set initial target
                 if (this.countdownInterval) clearInterval(this.countdownInterval);
+                
                 this.countdownInterval = setInterval(() => {
-                    if (this.timeLeft > 0) this.timeLeft--;
-                    else this.handleTimeout();
+                    const now = Date.now();
+                    const secondsRemaining = Math.ceil((this.targetTime - now) / 1000);
+                    
+                    this.timeLeft = secondsRemaining;
+
+                    if (secondsRemaining <= 0) {
+                        this.handleTimeout();
+                    }
                 }, 1000);
             },
             resetActivity() {
                 if (!this.token) return;
-                if (this.timeLeft < (INACTIVITY_MINUTES * 60)) {
-                    this.timeLeft = INACTIVITY_MINUTES * 60;
-                }
+                // Update the TARGET timestamp based on current time
+                this.targetTime = Date.now() + (INACTIVITY_MINUTES * 60 * 1000);
+                
+                // Visual update immediately so user sees 05:00
+                this.timeLeft = INACTIVITY_MINUTES * 60;
             },
+            
             async handleTimeout() {
                 clearInterval(this.countdownInterval);
                 if (this.hasUnsavedChanges) {
                     try { await this.performSave(true); } 
                     catch (e) { console.error("Auto-save failed", e); }
                 }
-                this.logout(true); // Silent Logout
+                this.logout(true);
             },
             setToken() {
                 if(!this.tokenInput.trim()) return;
@@ -270,7 +301,6 @@
                 localStorage.setItem('gh_token', this.token);
                 this.fetchData();
                 this.startCountdown();
-                this.resetActivity();
             },
             logout(isTimeout = false) {
                 this.token = '';
@@ -278,17 +308,15 @@
                 this.data = { GOOD_IPS: [], BLOCKED_IPS: [], GOOD_REFERRERS: [], GOOD_BOTS: { SEARCH_BOTS: [], AI_BOTS: [] } };
                 localStorage.removeItem('gh_token');
                 clearInterval(this.countdownInterval);
+                this.isInitializing = false; // Ensure login screen shows
             },
-            
             async fetchData() {
                 this.loading = true; this.error = '';
                 const octokit = new Octokit({ auth: this.token });
                 try {
-                    // READ from R.00
                     const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${READ_FILE}`);
                     const decoded = decodeURIComponent(escape(atob(res.data.content)));
                     const parsed = JSON.parse(decoded);
-                    
                     this.data.GOOD_IPS = parsed.GOOD_IPS || [];
                     this.data.BLOCKED_IPS = parsed.BLOCKED_IPS || [];
                     this.data.GOOD_REFERRERS = parsed.GOOD_REFERRERS || [];
@@ -300,10 +328,16 @@
                     console.error(e);
                     this.error = `Connection Failed: ${e.message}`;
                     if(e.status === 404) this.error = `File not found: ${READ_FILE}`;
-                    if(e.status === 401) this.error = "Unauthorized. Check Token.";
-                } finally { this.loading = false; }
+                    if(e.status === 401) {
+                        this.error = "Unauthorized. Check Token.";
+                        // If token is invalid, maybe force logout?
+                        // this.logout(); 
+                    }
+                } finally { 
+                    this.loading = false; 
+                    this.isInitializing = false; // Reveal UI
+                }
             },
-            
             async manualSave() { await this.performSave(false); },
             async performSave(isAuto) {
                 this.loading = true;
@@ -313,28 +347,23 @@
                     const contentBase64 = btoa(unescape(encodeURIComponent(contentJson))); 
                     const commitMsg = isAuto ? '🚨 Auto-Save: Timeout Recovery' : '🛡️ Update Whitelist (via UI)';
                     
-                    // First get SHA of TEMP FILE (If it exists, otherwise create it)
                     let sha = null;
                     try {
                         const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${WRITE_FILE}`);
                         sha = res.data.sha;
-                    } catch (e) { /* File might not exist yet, that's fine */ }
+                    } catch (e) { }
 
-                    // WRITE to TEMP
                     await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${WRITE_FILE}`, {
                         message: commitMsg, content: contentBase64, sha: sha
                     });
                     
                     this.hasUnsavedChanges = false;
                     this.resetActivity();
-                    // We DO NOT reload data here, because the script takes time to process
-                    // We let the user continue editing their local state
                 } catch (e) {
                     console.error(e);
                     if (!isAuto) alert('Error saving: ' + e.message);
                 } finally { this.loading = false; }
             },
-            
             markDirty() { this.hasUnsavedChanges = true; this.resetActivity(); },
             add(key, inputKey) {
                 const val = this.inputs[inputKey].trim();
