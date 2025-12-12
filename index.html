@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JSON List Parser</title> <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script type="module">
+        import { Octokit } from "https://esm.sh/@octokit/core";
+        window.Octokit = Octokit;
+    </script>
+</head>
+<body class="bg-gray-50 text-gray-800 font-sans">
+
+<div id="app" class="max-w-4xl mx-auto p-6">
+    
+    <div class="flex justify-between items-center mb-8 bg-white p-4 rounded shadow-sm border border-gray-200">
+        <div>
+            <h1 class="text-xl font-semibold text-gray-700">List Parser Lite v1.0</h1>
+            <p v-if="token" class="text-xs text-gray-400 mt-1">Connected to: {{ targetRepo }}</p>
+        </div>
+        <div class="flex gap-3">
+            <button v-if="token" @click="logout" class="text-sm text-gray-500 hover:text-red-500 underline">Disconnect</button>
+            <button v-if="token" @click="saveChanges" :disabled="loading" class="bg-blue-600 hover:bg-blue-700 text-white text-sm font-medium py-2 px-5 rounded shadow flex items-center gap-2 transition">
+                <span v-if="loading">⏳ Processing...</span>
+                <span v-else>💾 Commit Changes</span>
+            </button>
+        </div>
+    </div>
+
+    <div v-if="!token" class="bg-white p-10 rounded-lg shadow-sm border border-gray-200 text-center max-w-md mx-auto mt-10">
+        <h2 class="text-lg font-bold mb-2 text-gray-700">Configuration Access</h2>
+        <p class="mb-6 text-xs text-gray-500">
+            Please provide a valid access token with <code>repo</code> scope to load the configuration source.
+        </p>
+        <input type="password" v-model="tokenInput" class="border p-3 rounded w-full mb-4 text-sm focus:ring-2 focus:ring-blue-500 outline-none" placeholder="ghp_...">
+        <button @click="setToken" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-6 rounded w-full text-sm transition">Load Config</button>
+    </div>
+
+    <div v-else>
+        <div v-if="error" class="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded mb-4 text-sm">{{ error }}</div>
+
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+            <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4 flex justify-between">
+                <span>Allowed IPs</span>
+                <span class="text-xs font-normal text-gray-300">{{ data.GOOD_IPS.length }} items</span>
+            </h2>
+            <div class="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                <div v-for="(ip, index) in data.GOOD_IPS" :key="index" class="flex gap-2">
+                    <input v-model="data.GOOD_IPS[index]" class="border p-2 rounded w-full font-mono text-sm bg-gray-50 focus:bg-white transition" placeholder="0.0.0.0">
+                    <button @click="remove('GOOD_IPS', index)" class="text-gray-300 hover:text-red-500 font-bold px-2 transition">✕</button>
+                </div>
+            </div>
+            <button @click="add('GOOD_IPS')" class="mt-4 text-blue-600 text-xs font-bold hover:underline">+ Add Entry</button>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+            <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">Allowed Referrers</h2>
+            <div class="grid grid-cols-1 gap-2 max-h-64 overflow-y-auto pr-2 custom-scrollbar">
+                <div v-for="(ref, index) in data.GOOD_REFERRERS" :key="index" class="flex gap-2">
+                    <input v-model="data.GOOD_REFERRERS[index]" class="border p-2 rounded w-full font-mono text-sm bg-gray-50 focus:bg-white transition">
+                    <button @click="remove('GOOD_REFERRERS', index)" class="text-gray-300 hover:text-red-500 font-bold px-2 transition">✕</button>
+                </div>
+            </div>
+            <button @click="add('GOOD_REFERRERS')" class="mt-4 text-blue-600 text-xs font-bold hover:underline">+ Add Entry</button>
+        </div>
+
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-6">
+            <h2 class="text-sm font-bold text-gray-500 uppercase tracking-wide mb-4">Allowed Bots</h2>
+            
+            <div class="mb-6">
+                <h3 class="text-xs font-semibold text-gray-400 mb-2">Search Crawlers</h3>
+                <div v-for="(bot, index) in data.GOOD_BOTS.SEARCH_BOTS" :key="'s'+index" class="flex gap-2 mb-2">
+                    <input v-model="data.GOOD_BOTS.SEARCH_BOTS[index]" class="border p-2 rounded w-full font-mono text-sm bg-gray-50 focus:bg-white transition">
+                    <button @click="removeBot('SEARCH_BOTS', index)" class="text-gray-300 hover:text-red-500 font-bold px-2 transition">✕</button>
+                </div>
+                <button @click="addBot('SEARCH_BOTS')" class="text-xs text-blue-600 font-bold hover:underline">+ Add Crawler</button>
+            </div>
+
+            <div>
+                <h3 class="text-xs font-semibold text-gray-400 mb-2">AI Agents</h3>
+                <div v-for="(bot, index) in data.GOOD_BOTS.AI_BOTS" :key="'a'+index" class="flex gap-2 mb-2">
+                    <input v-model="data.GOOD_BOTS.AI_BOTS[index]" class="border p-2 rounded w-full font-mono text-sm bg-gray-50 focus:bg-white transition">
+                    <button @click="removeBot('AI_BOTS', index)" class="text-gray-300 hover:text-red-500 font-bold px-2 transition">✕</button>
+                </div>
+                <button @click="addBot('AI_BOTS')" class="text-xs text-blue-600 font-bold hover:underline">+ Add Agent</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const { createApp } = Vue;
+
+    // ============================================================
+    // ⚙️ CONFIGURATION (POINT TO YOUR PRIVATE REPO)
+    // ============================================================
+    // 1. Your GitHub Username (where security-list lives)
+    const TARGET_OWNER = 'malaareda'; 
+    
+    // 2. Your PRIVATE Repo Name
+    const TARGET_REPO  = 'security-list';         
+    
+    // 3. The Path to R.00 inside the private repo
+    const TARGET_FILE  = 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json';
+    // ============================================================
+
+    createApp({
+        data() {
+            return {
+                token: localStorage.getItem('gh_token') || '',
+                tokenInput: '',
+                loading: false,
+                error: '',
+                fileSha: '', 
+                targetRepo: `${TARGET_OWNER}/${TARGET_REPO}`,
+                data: {
+                    GOOD_IPS: [],
+                    GOOD_REFERRERS: [],
+                    GOOD_BOTS: { SEARCH_BOTS: [], AI_BOTS: [] }
+                }
+            }
+        },
+        mounted() {
+            if (this.token) this.fetchData();
+        },
+        methods: {
+            setToken() {
+                if(!this.tokenInput.trim()) return;
+                this.token = this.tokenInput;
+                localStorage.setItem('gh_token', this.token);
+                this.fetchData();
+            },
+            logout() {
+                this.token = '';
+                this.tokenInput = '';
+                this.data = { GOOD_IPS: [], GOOD_REFERRERS: [], GOOD_BOTS: { SEARCH_BOTS: [], AI_BOTS: [] } };
+                localStorage.removeItem('gh_token');
+            },
+            async fetchData() {
+                this.loading = true; 
+                this.error = '';
+                const octokit = new window.Octokit({ auth: this.token });
+                try {
+                    const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${TARGET_FILE}`);
+                    
+                    // Decode Base64 (handle special characters safely)
+                    const decoded = decodeURIComponent(escape(atob(res.data.content)));
+                    
+                    this.data = JSON.parse(decoded);
+                    this.fileSha = res.data.sha; 
+                } catch (e) {
+                    console.error(e);
+                    this.error = `Connection Failed. (${e.status || 'Unknown Error'})`;
+                    
+                    if(e.status === 404) this.error = `File not found: ${TARGET_FILE}`;
+                    if(e.status === 401) this.error = "Unauthorized. Please check your Token.";
+                    if(e.status === 403) this.error = "Access Denied. Does your Token have 'repo' scope?";
+                } finally {
+                    this.loading = false;
+                }
+            },
+            async saveChanges() {
+                this.loading = true;
+                const octokit = new window.Octokit({ auth: this.token });
+                try {
+                    // Clean empty inputs
+                    this.data.GOOD_IPS = this.data.GOOD_IPS.filter(i => i.trim() !== '');
+                    this.data.GOOD_REFERRERS = this.data.GOOD_REFERRERS.filter(i => i.trim() !== '');
+                    this.data.GOOD_BOTS.SEARCH_BOTS = this.data.GOOD_BOTS.SEARCH_BOTS.filter(i => i.trim() !== '');
+                    this.data.GOOD_BOTS.AI_BOTS = this.data.GOOD_BOTS.AI_BOTS.filter(i => i.trim() !== '');
+
+                    const contentJson = JSON.stringify(this.data, null, 2);
+                    // Encode Base64 safely
+                    const contentBase64 = btoa(unescape(encodeURIComponent(contentJson))); 
+
+                    await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${TARGET_FILE}`, {
+                        message: '🛡️ Update Whitelist (via List-Parser-Lite)',
+                        content: contentBase64,
+                        sha: this.fileSha
+                    });
+
+                    alert('✅ Saved! The master repo will auto-update shortly.');
+                    this.fetchData(); // Reload SHA
+                } catch (e) {
+                    alert('Error saving: ' + e.message);
+                } finally {
+                    this.loading = false;
+                }
+            },
+            add(key) { this.data[key].unshift(''); },
+            remove(key, index) { this.data[key].splice(index, 1); },
+            addBot(key) { this.data.GOOD_BOTS[key].unshift(''); },
+            removeBot(key, index) { this.data.GOOD_BOTS[key].splice(index, 1); }
+        }
+    }).mount('#app');
+</script>
+</body>
+</html>
