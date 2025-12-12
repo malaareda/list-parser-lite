@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v3.4</title>
+    <title>Security Manager v3.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script type="module">
@@ -15,14 +15,8 @@
             darkMode: 'class',
             theme: {
                 extend: {
-                    colors: {
-                        slate: { 850: '#15202e', 900: '#0f172a' },
-                        darkbg: '#0B1120',
-                    },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                        mono: ['JetBrains Mono', 'monospace'],
-                    },
+                    colors: { slate: { 850: '#15202e', 900: '#0f172a' }, darkbg: '#0B1120' },
+                    fontFamily: { sans: ['Inter', 'sans-serif'], mono: ['JetBrains Mono', 'monospace'] },
                     animation: { 'blob': 'blob 7s infinite' },
                     keyframes: {
                         blob: {
@@ -67,7 +61,7 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-none">Security Manager</h1>
-                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500">v3.4</span>
+                        <span class="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-500">v3.5</span>
                     </div>
                     <div class="flex items-center gap-1.5 mt-0.5">
                         <span class="relative flex h-1.5 w-1.5"><span class="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span><span class="relative inline-flex rounded-full h-1.5 w-1.5 bg-emerald-500"></span></span>
@@ -180,7 +174,6 @@
                     <div class="relative flex items-center"><input v-model="inputs.aiBot" @keyup.enter="addBot('AI_BOTS', 'aiBot')" class="w-full pl-3 pr-10 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 focus:border-pink-500 focus:ring-2 focus:ring-pink-500/20 outline-none text-sm font-mono transition-all" placeholder="AI User-Agent..."><button @click="addBot('AI_BOTS', 'aiBot')" class="absolute right-1.5 p-1.5 bg-pink-500/10 text-pink-600 dark:text-pink-400 hover:bg-pink-500 hover:text-white rounded-md transition-colors"><svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path></svg></button></div>
                 </div>
             </div>
-
         </div>
     </div>
 </div>
@@ -191,8 +184,14 @@
 
     const TARGET_OWNER = 'malaareda'; 
     const TARGET_REPO  = 'security-list';         
-    const TARGET_FILE  = 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json';
-    const INACTIVITY_MINUTES = 2; 
+    
+    // READ from R.00 (To show current state)
+    const READ_FILE = 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json';
+    
+    // WRITE to TEMP (To trigger logic)
+    const WRITE_FILE = 'security-list-backup/security-whitelist-backup/security-whitelist-temp.json';
+    
+    const INACTIVITY_MINUTES = 5; 
 
     createApp({
         data() {
@@ -201,7 +200,6 @@
                 tokenInput: '',
                 loading: false,
                 error: '',
-                fileSha: '', 
                 targetRepo: `${TARGET_OWNER}/${TARGET_REPO}`,
                 isDark: true,
                 timeLeft: INACTIVITY_MINUTES * 60,
@@ -264,7 +262,7 @@
                     try { await this.performSave(true); } 
                     catch (e) { console.error("Auto-save failed", e); }
                 }
-                this.logout(true); // Silent logout (no alert)
+                this.logout(true); // Silent Logout
             },
             setToken() {
                 if(!this.tokenInput.trim()) return;
@@ -280,29 +278,32 @@
                 this.data = { GOOD_IPS: [], BLOCKED_IPS: [], GOOD_REFERRERS: [], GOOD_BOTS: { SEARCH_BOTS: [], AI_BOTS: [] } };
                 localStorage.removeItem('gh_token');
                 clearInterval(this.countdownInterval);
-                // Removed Alert: Silent Logout
             },
+            
             async fetchData() {
                 this.loading = true; this.error = '';
                 const octokit = new Octokit({ auth: this.token });
                 try {
-                    const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${TARGET_FILE}`);
+                    // READ from R.00
+                    const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${READ_FILE}`);
                     const decoded = decodeURIComponent(escape(atob(res.data.content)));
                     const parsed = JSON.parse(decoded);
+                    
                     this.data.GOOD_IPS = parsed.GOOD_IPS || [];
                     this.data.BLOCKED_IPS = parsed.BLOCKED_IPS || [];
                     this.data.GOOD_REFERRERS = parsed.GOOD_REFERRERS || [];
                     this.data.GOOD_BOTS.SEARCH_BOTS = parsed.GOOD_BOTS?.SEARCH_BOTS || [];
                     this.data.GOOD_BOTS.AI_BOTS = parsed.GOOD_BOTS?.AI_BOTS || [];
-                    this.fileSha = res.data.sha; 
+                    
                     this.hasUnsavedChanges = false;
                 } catch (e) {
                     console.error(e);
                     this.error = `Connection Failed: ${e.message}`;
-                    if(e.status === 404) this.error = `File not found: ${TARGET_FILE}`;
+                    if(e.status === 404) this.error = `File not found: ${READ_FILE}`;
                     if(e.status === 401) this.error = "Unauthorized. Check Token.";
                 } finally { this.loading = false; }
             },
+            
             async manualSave() { await this.performSave(false); },
             async performSave(isAuto) {
                 this.loading = true;
@@ -311,17 +312,29 @@
                     const contentJson = JSON.stringify(this.data, null, 2);
                     const contentBase64 = btoa(unescape(encodeURIComponent(contentJson))); 
                     const commitMsg = isAuto ? '🚨 Auto-Save: Timeout Recovery' : '🛡️ Update Whitelist (via UI)';
-                    await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${TARGET_FILE}`, {
-                        message: commitMsg, content: contentBase64, sha: this.fileSha
+                    
+                    // First get SHA of TEMP FILE (If it exists, otherwise create it)
+                    let sha = null;
+                    try {
+                        const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${WRITE_FILE}`);
+                        sha = res.data.sha;
+                    } catch (e) { /* File might not exist yet, that's fine */ }
+
+                    // WRITE to TEMP
+                    await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${WRITE_FILE}`, {
+                        message: commitMsg, content: contentBase64, sha: sha
                     });
+                    
                     this.hasUnsavedChanges = false;
-                    this.fetchData(); 
                     this.resetActivity();
+                    // We DO NOT reload data here, because the script takes time to process
+                    // We let the user continue editing their local state
                 } catch (e) {
                     console.error(e);
                     if (!isAuto) alert('Error saving: ' + e.message);
                 } finally { this.loading = false; }
             },
+            
             markDirty() { this.hasUnsavedChanges = true; this.resetActivity(); },
             add(key, inputKey) {
                 const val = this.inputs[inputKey].trim();
