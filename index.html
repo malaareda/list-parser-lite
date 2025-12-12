@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v3.1</title>
+    <title>Security Manager v3.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-    <script type="module">
-        import { Octokit } from "https://esm.sh/@octokit/core";
-        window.Octokit = Octokit;
-    </script>
     <script>
         tailwind.config = {
             darkMode: 'class',
@@ -39,7 +35,7 @@
                 <div>
                     <div class="flex items-center gap-2">
                         <h1 class="text-lg font-bold tracking-tight text-slate-900 dark:text-white leading-none">Security Manager</h1>
-                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">v3.1</span>
+                        <span class="px-1.5 py-0.5 rounded text-[10px] font-bold bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">v3.2</span>
                     </div>
                     <div v-if="token" class="flex items-center gap-1.5 mt-1">
                         <span class="relative flex h-2 w-2">
@@ -53,7 +49,7 @@
 
             <div class="flex items-center gap-3">
                 <div v-if="token" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-mono font-medium border transition-all duration-300"
-                     :class="timeLeft < 120 ? 'timer-pulse' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent'">
+                     :class="timeLeft < 60 ? 'timer-pulse' : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border-transparent'">
                     <span>⏱️</span><span>{{ formattedTime }}</span>
                 </div>
 
@@ -139,12 +135,14 @@
     </div>
 </div>
 
-<script>
+<script type="module">
+    import { Octokit } from "https://esm.sh/@octokit/core";
     const { createApp } = Vue;
+
     const TARGET_OWNER = 'malaareda'; 
     const TARGET_REPO  = 'security-list';         
     const TARGET_FILE  = 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json';
-    const INACTIVITY_MINUTES = 20; 
+    const INACTIVITY_MINUTES = 2; // SET TO 2 MINUTES FOR TESTING
 
     createApp({
         data() {
@@ -214,8 +212,15 @@
             },
             async handleTimeout() {
                 clearInterval(this.countdownInterval);
-                if (this.hasUnsavedChanges) await this.performSave(true);
-                this.logout(true);
+                if (this.hasUnsavedChanges) {
+                    try {
+                        console.log("⏳ Timeout reached. Auto-saving...");
+                        await this.performSave(true);
+                    } catch (e) {
+                        console.error("Auto-save failed", e);
+                    }
+                }
+                this.logout(true); // Force Logout regardless of save success
             },
             setToken() {
                 if(!this.tokenInput.trim()) return;
@@ -235,7 +240,7 @@
             },
             async fetchData() {
                 this.loading = true; this.error = '';
-                const octokit = new window.Octokit({ auth: this.token });
+                const octokit = new Octokit({ auth: this.token });
                 try {
                     const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${TARGET_FILE}`);
                     const decoded = decodeURIComponent(escape(atob(res.data.content)));
@@ -257,7 +262,7 @@
             async manualSave() { await this.performSave(false); },
             async performSave(isAuto) {
                 this.loading = true;
-                const octokit = new window.Octokit({ auth: this.token });
+                const octokit = new Octokit({ auth: this.token });
                 try {
                     const contentJson = JSON.stringify(this.data, null, 2);
                     const contentBase64 = btoa(unescape(encodeURIComponent(contentJson))); 
@@ -265,7 +270,6 @@
                     await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${TARGET_FILE}`, {
                         message: commitMsg, content: contentBase64, sha: this.fileSha
                     });
-                    if (!isAuto) {} // Optional toast
                     this.hasUnsavedChanges = false;
                     this.fetchData(); 
                     this.resetActivity();
