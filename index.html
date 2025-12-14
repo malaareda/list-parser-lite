@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v6.5</title>
+    <title>Security Manager v6.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -48,7 +48,6 @@
         .json-tree summary::-webkit-details-marker { display: none; }
         .json-tree summary:hover { background-color: rgba(255,255,255,0.05); border-radius: 4px; }
         
-        /* Interactive Arrow */
         .json-arrow { 
             display: inline-flex; justify-content: center; align-items: center;
             width: 14px; height: 14px; margin-right: 4px; 
@@ -56,13 +55,12 @@
         }
         details[open] > summary > .json-arrow { transform: rotate(90deg); }
 
-        /* Syntax Colors */
-        .j-key { color: #60a5fa; font-weight: 600; }   /* Blue */
-        .j-str { color: #34d399; }                      /* Green */
-        .j-num { color: #c084fc; }                      /* Purple */
-        .j-bool { color: #f87171; }                     /* Red */
-        .j-null { color: #94a3b8; font-style: italic; } /* Slate */
-        .j-meta { color: #64748b; }                     /* Brackets/Commas */
+        .j-key { color: #60a5fa; font-weight: 600; }   
+        .j-str { color: #34d399; }                      
+        .j-num { color: #c084fc; }                      
+        .j-bool { color: #f87171; }                     
+        .j-null { color: #94a3b8; font-style: italic; } 
+        .j-meta { color: #64748b; }                     
 
         /* Transitions */
         .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
@@ -78,18 +76,13 @@
     <transition name="fade">
         <div v-if="modal.show" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform transition-all">
-                
                 <div class="p-6 pb-2">
                     <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-2">
                         <span class="text-xl">{{ modal.type === 'BLOCK' ? '⛔ Block Threat' : '♻️ Manage Blocked Item' }}</span>
                     </h3>
-                    <p class="text-xs text-slate-500 font-mono break-all bg-slate-100 dark:bg-slate-800 p-2 rounded border border-slate-200 dark:border-slate-700">
-                        {{ modal.val }}
-                    </p>
+                    <p class="text-xs text-slate-500 font-mono break-all bg-slate-100 dark:bg-slate-800 p-2 rounded border border-slate-200 dark:border-slate-700">{{ modal.val }}</p>
                 </div>
-
                 <div class="px-6 py-2 space-y-4">
-                    
                     <div v-if="modal.type === 'RESTORE'">
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Action / Destination</label>
                         <select v-model="modal.targetKey" class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200">
@@ -100,7 +93,6 @@
                             <option value="AI_BOTS">🧠 Restore to AI Agents</option>
                         </select>
                     </div>
-
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">
                             {{ modal.type === 'BLOCK' ? 'Reason for Blocking (Required)' : 'Reason / Audit Note' }}
@@ -108,12 +100,9 @@
                         <textarea v-model="modal.reason" class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-sm focus:border-indigo-500 outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400" rows="3" :placeholder="modal.type === 'BLOCK' ? 'e.g. High traffic attack, Scraping...' : 'e.g. False positive, Verified safe...'"></textarea>
                     </div>
                 </div>
-
                 <div class="bg-slate-50 dark:bg-slate-950/50 p-4 flex gap-3 justify-end border-t border-slate-200 dark:border-slate-800 mt-2">
                     <button @click="closeModal" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">Cancel</button>
-                    <button @click="confirmAction" class="px-4 py-2 text-white text-xs font-bold rounded-lg transition-colors shadow-lg" :class="modal.type === 'BLOCK' ? 'bg-red-600 hover:bg-red-700 shadow-red-500/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'">
-                        Confirm Action
-                    </button>
+                    <button @click="confirmAction" class="px-4 py-2 text-white text-xs font-bold rounded-lg transition-colors shadow-lg" :class="modal.type === 'BLOCK' ? 'bg-red-600 hover:bg-red-700 shadow-red-500/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'">Confirm Action</button>
                 </div>
             </div>
         </div>
@@ -134,26 +123,20 @@
             <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl opacity-30"></div>
             <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl opacity-30"></div>
         </div>
-        
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
-        
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v6.5</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v6.6</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
     </div>
 
     <div v-else class="flex h-full">
-        
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div>
-                    <h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1>
-                    <p class="text-[10px] text-slate-400 font-bold">System v6.5</p>
-                </div>
+                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v6.6</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -165,20 +148,8 @@
                         <button @click="loadLog('whitelist')" :class="currentView === 'whitelist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📜</span> Audit Logs</button>
                     </div>
                 </div>
-                <div>
-                    <h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Live Blacklist</h3>
-                    <div class="space-y-1">
-                        <button @click="loadJson('livelist')" :class="currentView === 'livelist-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📦</span> JSON Source</button>
-                        <button @click="loadLog('livelist')" :class="currentView === 'livelist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>⚡</span> Live Logs</button>
-                    </div>
-                </div>
-                <div>
-                    <h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Global Blacklist</h3>
-                    <div class="space-y-1">
-                        <button @click="loadJson('blacklist')" :class="currentView === 'blacklist-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📦</span> JSON Source</button>
-                        <button @click="loadLog('blacklist')" :class="currentView === 'blacklist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>⛔</span> Block Logs</button>
-                    </div>
-                </div>
+                <div><h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Live Blacklist</h3><div class="space-y-1"><button @click="loadJson('livelist')" :class="currentView === 'livelist-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📦</span> JSON Source</button><button @click="loadLog('livelist')" :class="currentView === 'livelist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>⚡</span> Live Logs</button></div></div>
+                <div><h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Global Blacklist</h3><div class="space-y-1"><button @click="loadJson('blacklist')" :class="currentView === 'blacklist-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📦</span> JSON Source</button><button @click="loadLog('blacklist')" :class="currentView === 'blacklist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>⛔</span> Block Logs</button></div></div>
             </nav>
             <div class="p-4 border-t border-slate-200 dark:border-slate-800">
                 <button @click="logout" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 dark:bg-slate-800 dark:hover:bg-red-900/20 dark:hover:text-red-400 text-slate-500 dark:text-slate-400 text-xs font-bold rounded-lg transition-colors">Disconnect</button>
@@ -188,14 +159,14 @@
         <main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-[#0B1120] relative transition-colors duration-300">
             <header class="h-14 border-b border-slate-200 dark:border-slate-800 bg-white/80 dark:bg-slate-900/50 backdrop-blur flex items-center justify-between px-6 shrink-0 transition-colors duration-300">
                 <button @click="sidebarOpen = !sidebarOpen" class="md:hidden text-slate-400">☰</button>
-                
                 <div class="text-sm font-bold font-mono text-indigo-500 dark:text-indigo-400">{{ targetRepo }}</div>
-                
                 <div class="flex items-center gap-4">
                     <div class="text-xs font-bold font-mono text-slate-500" :class="{'text-red-400 animate-pulse': timeLeft < 60}">⏱️ {{ formattedTime }}</div>
                     <button @click="toggleTheme" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"><span v-if="isDark" class="text-lg">☀️</span><span v-else class="text-lg">🌙</span></button>
-                    <button v-if="currentView === 'whitelist-update'" @click="saveChanges" :disabled="loading" class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold text-white shadow-lg transition-all active:scale-95 disabled:opacity-50" :class="hasUnsavedChanges ? 'bg-amber-500 hover:bg-amber-600' : 'bg-indigo-600 hover:bg-indigo-700'">
+                    
+                    <button v-if="currentView === 'whitelist-update'" @click="saveChanges" :disabled="loading || isPolling" class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold text-white shadow-lg transition-all active:scale-95 disabled:opacity-50" :class="hasUnsavedChanges ? 'bg-amber-500 hover:bg-amber-600' : (isPolling ? 'bg-indigo-400 cursor-wait' : 'bg-indigo-600 hover:bg-indigo-700')">
                         <span v-if="loading" class="animate-spin">⏳</span>
+                        <span v-else-if="isPolling" class="animate-pulse">🔄 Processing Remote...</span>
                         <span v-else>{{ hasUnsavedChanges ? '⚠️ Unsaved Changes' : '💾 Commit Updates' }}</span>
                     </button>
                 </div>
@@ -222,9 +193,9 @@
                                             </span>
                                         </div>
                                         <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button v-if="key !== 'BLOCKED_THREATS'" @click="openModal('BLOCK', key, index, item)" class="text-slate-400 hover:text-red-500 px-1" title="Block this item">⛔</button>
-                                            <button v-if="key === 'BLOCKED_THREATS'" @click="openModal('RESTORE', key, index, item)" class="text-slate-400 hover:text-emerald-500 px-1" title="Restore this item">♻️</button>
-                                            <button @click="deleteItem(key, index, item)" class="text-slate-400 hover:text-red-500 px-1" title="Delete permanently">✕</button>
+                                            <button v-if="key !== 'BLOCKED_THREATS'" @click="openModal('BLOCK', key, index, item)" class="text-slate-400 hover:text-red-500 px-1" title="Block">⛔</button>
+                                            <button v-if="key === 'BLOCKED_THREATS'" @click="openModal('RESTORE', key, index, item)" class="text-slate-400 hover:text-emerald-500 px-1" title="Restore">♻️</button>
+                                            <button @click="deleteItem(key, index, item)" class="text-slate-400 hover:text-red-500 px-1" title="Delete">✕</button>
                                         </div>
                                     </div>
                                 </div>
@@ -232,13 +203,8 @@
                             </div>
                         </div>
                         <div class="p-3 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700">
-                            <div class="flex gap-2 mb-2">
-                                <input v-model="inputs[key].val" @keyup.enter="addItem(key)" class="flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-xs font-mono outline-none focus:border-indigo-500 text-slate-800 dark:text-white" :placeholder="list.placeholder">
-                            </div>
-                            <div class="flex gap-2">
-                                <input v-model="inputs[key].note" @keyup.enter="addItem(key)" class="flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-xs outline-none focus:border-indigo-500 text-slate-800 dark:text-white" placeholder="Optional Note...">
-                                <button @click="addItem(key)" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded px-3 py-2 text-xs font-bold">Add</button>
-                            </div>
+                            <div class="flex gap-2 mb-2"><input v-model="inputs[key].val" @keyup.enter="addItem(key)" class="flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-xs font-mono outline-none focus:border-indigo-500 text-slate-800 dark:text-white" :placeholder="list.placeholder"></div>
+                            <div class="flex gap-2"><input v-model="inputs[key].note" @keyup.enter="addItem(key)" class="flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-xs outline-none focus:border-indigo-500 text-slate-800 dark:text-white" placeholder="Optional Note..."><button @click="addItem(key)" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded px-3 py-2 text-xs font-bold">Add</button></div>
                         </div>
                     </div>
                 </div>
@@ -292,42 +258,23 @@
                     </div>
                 </div>
             </div>
-
+            
             <div v-if="currentView.includes('-json')" class="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950 relative transition-colors duration-300">
-                <div v-if="loadingLog" class="absolute inset-0 flex items-center justify-center bg-slate-50 dark:bg-slate-950 z-20">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
-                </div>
-                
+                <div v-if="loadingLog" class="absolute inset-0 flex items-center justify-center bg-slate-50 dark:bg-slate-950 z-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div>
                 <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center sticky top-0 z-10" v-if="activeLogContent && !activeLogContent.startsWith('Error')">
                     <div class="text-xs font-mono text-slate-500 font-bold">JSON Explorer</div>
                     <div class="flex gap-2 items-center">
-                        <button @click="showRawJson = !showRawJson" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700">
-                            {{ showRawJson ? 'Show Tree' : 'Show Raw' }}
-                        </button>
+                        <button @click="showRawJson = !showRawJson" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700">{{ showRawJson ? 'Show Tree' : 'Show Raw' }}</button>
                         <button @click="expandAll" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700" v-if="!showRawJson">Expand All</button>
                         <button @click="collapseAll" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700" v-if="!showRawJson">Collapse All</button>
-                        
-                        <div class="relative" v-if="!showRawJson">
-                            <input v-model="jsonSearchQuery" placeholder="Filter..." class="bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-xs outline-none focus:border-indigo-500 text-slate-800 dark:text-white w-32">
-                        </div>
+                        <div class="relative" v-if="!showRawJson"><input v-model="jsonSearchQuery" placeholder="Filter..." class="bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-xs outline-none focus:border-indigo-500 text-slate-800 dark:text-white w-32"></div>
                     </div>
                 </div>
-
-                <div v-if="!activeLogContent || activeLogContent.trim() === ''" class="flex-1 flex flex-col items-center justify-center text-slate-500">
-                    <div class="text-4xl mb-4 grayscale opacity-50">📂</div>
-                    <h3 class="font-bold text-sm mb-1">File Empty or Missing</h3>
-                </div>
-                <div v-else class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-[#0d1117]" ref="jsonContainer">
-                    <pre v-if="showRawJson" class="font-mono text-xs text-emerald-400 whitespace-pre-wrap">{{ activeLogContent }}</pre>
-                    <div v-else class="json-tree" v-html="renderJsonTree(filteredJsonObj)"></div>
-                </div>
+                <div v-if="!activeLogContent || activeLogContent.trim() === ''" class="flex-1 flex flex-col items-center justify-center text-slate-500"><div class="text-4xl mb-4 grayscale opacity-50">📂</div><h3 class="font-bold text-sm mb-1">File Empty or Missing</h3></div>
+                <div v-else class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-[#0d1117]" ref="jsonContainer"><pre v-if="showRawJson" class="font-mono text-xs text-emerald-400 whitespace-pre-wrap">{{ activeLogContent }}</pre><div v-else class="json-tree" v-html="renderJsonTree(filteredJsonObj)"></div></div>
             </div>
 
-            <div v-if="currentView.includes('-log')" class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-white dark:bg-slate-950">
-                <div v-if="loadingLog" class="flex justify-center mt-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div>
-                <pre v-else class="font-mono text-xs whitespace-pre-wrap" v-html="formattedLogContent"></pre>
-            </div>
-
+            <div v-if="currentView.includes('-log')" class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-white dark:bg-slate-950"><div v-if="loadingLog" class="flex justify-center mt-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div><pre v-else class="font-mono text-xs whitespace-pre-wrap" v-html="formattedLogContent"></pre></div>
         </main>
     </div>
 </div>
@@ -336,437 +283,137 @@
     import { Octokit } from "https://esm.sh/@octokit/core";
     const { createApp } = Vue;
 
-    // --- CONFIGURATION ---
     const TARGET_OWNER = 'malaareda'; 
     const TARGET_REPO  = 'security-list';         
     const FILE_TEMP    = 'security-list-backup/security-whitelist-backup/security-whitelist-temp.json';
     const FILE_README  = 'security-list-backup/security-whitelist-backup/README.md';
-
-    const JSON_FILES = {
-        'whitelist': 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json',
-        'blacklist': 'security-list-backup/security-blacklist-backup/security-blacklist-R.00.json',
-        'livelist':  'security-list-backup/security-live-blacklist-backup/security-live-blacklist-R.00.json'
-    };
-
-    const LOGS = {
-        'whitelist': 'security-list-backup/security-whitelist-backup/whitelist-security-audit.log',
-        'blacklist': 'security-list-backup/security-blacklist-backup/blacklist-security-audit.log',
-        'livelist':  'security-list-backup/security-live-blacklist-backup/live-blacklist-security-audit.log'
-    };
-    
-    // Status colors for Logs
-    const STATUS_CONFIG = {
-        SUCCESS: { label: 'SUCCESS', hex: '#16a34a' },
-        INFO:    { label: 'INFO',    hex: '#2563eb' },
-        WARN:    { label: 'WARNING', hex: '#d97706' },
-        ERROR:   { label: 'ERROR',   hex: '#dc2626' },
-        PROCESS: { label: 'PROCESS', hex: '#0891b2' },
-        START:   { label: 'START',   hex: '#9333ea' },
-        CLEANUP: { label: 'CLEANUP', hex: '#4b5563' }
-    };
-
+    const JSON_FILES = { 'whitelist': 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json', 'blacklist': 'security-list-backup/security-blacklist-backup/security-blacklist-R.00.json', 'livelist':  'security-list-backup/security-live-blacklist-backup/security-live-blacklist-R.00.json' };
+    const LOGS = { 'whitelist': 'security-list-backup/security-whitelist-backup/whitelist-security-audit.log', 'blacklist': 'security-list-backup/security-blacklist-backup/blacklist-security-audit.log', 'livelist':  'security-list-backup/security-live-blacklist-backup/live-blacklist-security-audit.log' };
+    const STATUS_CONFIG = { SUCCESS:{label:'SUCCESS',hex:'#16a34a'}, INFO:{label:'INFO',hex:'#2563eb'}, WARN:{label:'WARNING',hex:'#d97706'}, ERROR:{label:'ERROR',hex:'#dc2626'}, PROCESS:{label:'PROCESS',hex:'#0891b2'}, START:{label:'START',hex:'#9333ea'}, CLEANUP:{label:'CLEANUP',hex:'#4b5563'} };
     const INACTIVITY_MINUTES = 10; 
 
     createApp({
         data() {
             return {
-                isInitializing: true,
-                token: localStorage.getItem('gh_token') || '',
-                tokenInput: '',
-                loading: false,
-                loadingLog: false,
-                sidebarOpen: false,
-                targetRepo: `${TARGET_OWNER}/${TARGET_REPO}`,
-                isDark: true,
-                currentView: 'whitelist-update',
-                targetTime: 0,
-                timeLeft: INACTIVITY_MINUTES * 60,
-                countdownInterval: null,
-                hasUnsavedChanges: false,
-                activeLogContent: '',
+                isInitializing: true, token: localStorage.getItem('gh_token') || '', tokenInput: '', loading: false, loadingLog: false, sidebarOpen: false, targetRepo: `${TARGET_OWNER}/${TARGET_REPO}`, isDark: true, currentView: 'whitelist-update', targetTime: 0, timeLeft: INACTIVITY_MINUTES * 60, countdownInterval: null, hasUnsavedChanges: false, activeLogContent: '',
                 toast: { show: false, title: '', message: '', isError: false },
-                
-                // --- ADVANCED MODAL STATE ---
                 modal: { show: false, type: '', sourceKey: '', index: null, val: '', reason: '', targetKey: '' },
-
-                // --- HISTORY & JSON STATE ---
-                sessionHistory: [], 
-                existingReadmeContent: '',
-                historySearchQuery: '', 
-                jsonSearchQuery: '',
-                parsedActiveJson: null,
-                showRawJson: false, // Toggle state
-
-                editableLists: {
-                    GOOD_IPS:        { title: '🌍 Allowed IPs',      placeholder: 'IP Address...', items: [] },
-                    BLOCKED_THREATS: { title: '⛔ Blocked Threats',  placeholder: 'IP / UA / Domain...', items: [] },
-                    GOOD_REFERRERS:  { title: '🔗 Referrers',        placeholder: 'Domain...',     items: [] },
-                    SEARCH_BOTS:     { title: '🤖 Search Bots',      placeholder: 'User-Agent...', items: [] },
-                    AI_BOTS:         { title: '🧠 AI Agents',        placeholder: 'User-Agent...', items: [] }
-                },
-                inputs: {
-                    GOOD_IPS: { val: '', note: '' },
-                    BLOCKED_THREATS: { val: '', note: '' },
-                    GOOD_REFERRERS: { val: '', note: '' },
-                    SEARCH_BOTS: { val: '', note: '' },
-                    AI_BOTS: { val: '', note: '' }
-                }
+                sessionHistory: [], existingReadmeContent: '', historySearchQuery: '', jsonSearchQuery: '', parsedActiveJson: null, showRawJson: false,
+                // [NEW] Polling State
+                isPolling: false, pollInterval: null, currentGeneratedAt: null,
+                editableLists: { GOOD_IPS:{title:'🌍 Allowed IPs',placeholder:'IP Address...',items:[]}, BLOCKED_THREATS:{title:'⛔ Blocked Threats',placeholder:'IP / UA / Domain...',items:[]}, GOOD_REFERRERS:{title:'🔗 Referrers',placeholder:'Domain...',items:[]}, SEARCH_BOTS:{title:'🤖 Search Bots',placeholder:'User-Agent...',items:[]}, AI_BOTS:{title:'🧠 AI Agents',placeholder:'User-Agent...',items:[]} },
+                inputs: { GOOD_IPS:{val:'',note:''}, BLOCKED_THREATS:{val:'',note:''}, GOOD_REFERRERS:{val:'',note:''}, SEARCH_BOTS:{val:'',note:''}, AI_BOTS:{val:'',note:''} }
             }
         },
         computed: {
-            formattedTime() {
-                const total = Math.max(0, this.timeLeft);
-                const m = Math.floor(total / 60).toString().padStart(2, '0');
-                const s = (total % 60).toString().padStart(2, '0');
-                return `${m}:${s}`;
-            },
-            renderedReadme() { 
-                return marked.parse(this.generateReadmeContent(true)); 
-            },
-            totalItems() {
-                let count = 0;
-                for (const key in this.editableLists) count += this.editableLists[key].items.length;
-                return count;
-            },
-            
-            // --- PARSE AND FILTER HISTORY (FIXED REGEX) ---
-            parsedHistory() {
-                const history = [];
-                // 1. Add current session items
-                this.sessionHistory.forEach(h => {
-                    history.push({ date: h.date, action: h.action, val: h.val, note: h.note });
-                });
-                // 2. Parse existing Readme content
-                const historyHeader = '## 📜 Threat History (Permanent Log)';
-                if (this.existingReadmeContent && this.existingReadmeContent.includes(historyHeader)) {
-                    const rawLog = this.existingReadmeContent.split(historyHeader)[1];
-                    const lines = rawLog.split('\n');
-                    lines.forEach(line => {
-                        const match = line.match(/- (.*?) \[(.*?)\] \*\*(.*?)\*\*: \`(.*?)\` \| Reason: \*(.*?)\*/);
-                        if (match) {
-                            history.push({ date: match[2], action: match[3], val: match[4], note: match[5] });
-                        }
-                    });
-                }
-                return history;
-            },
-            
-            filteredHistory() {
-                if (!this.historySearchQuery) return this.parsedHistory;
-                const q = this.historySearchQuery.toLowerCase();
-                return this.parsedHistory.filter(h => 
-                    h.val.toLowerCase().includes(q) || 
-                    h.note.toLowerCase().includes(q) ||
-                    h.action.toLowerCase().includes(q)
-                );
-            },
-
-            // --- MODERN JSON VIEWER COMPUTED PROPERTIES ---
-            filteredJsonObj() {
-                if (!this.parsedActiveJson) return null;
-                if (!this.jsonSearchQuery) return this.parsedActiveJson;
-                return this.filterObject(this.parsedActiveJson, this.jsonSearchQuery.toLowerCase());
-            },
-
-            formattedLogContent() {
-                if (!this.activeLogContent) return '';
-                const lines = this.activeLogContent.split('\n');
-                return lines.map(line => {
-                    const safeLine = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    if (safeLine.startsWith('====') || safeLine.startsWith('----') || safeLine.includes('[SESSION:')) {
-                        return `<span class="text-slate-900 dark:text-yellow-400 font-bold">${safeLine}</span>`;
-                    }
-                    let matchedColor = null;
-                    for (const key in STATUS_CONFIG) {
-                        const config = STATUS_CONFIG[key];
-                        if (safeLine.includes(config.label)) { matchedColor = config.hex; break; }
-                    }
-                    if (matchedColor) return `<span style="color: ${matchedColor}; font-weight: 600;">${safeLine}</span>`;
-                    return `<span class="text-slate-600 dark:text-slate-400">${safeLine}</span>`;
-                }).join('\n');
-            }
+            formattedTime() { const m=Math.floor(Math.max(0,this.timeLeft)/60).toString().padStart(2,'0'); const s=(Math.max(0,this.timeLeft)%60).toString().padStart(2,'0'); return `${m}:${s}`; },
+            renderedReadme() { return marked.parse(this.generateReadmeContent(true)); },
+            totalItems() { let c=0; for(const k in this.editableLists) c+=this.editableLists[k].items.length; return c; },
+            parsedHistory() { const h=[]; this.sessionHistory.forEach(i=>h.push(i)); if(this.existingReadmeContent.includes('## 📜')){ const lines=this.existingReadmeContent.split('## 📜')[1].split('\n'); lines.forEach(l=>{const m=l.match(/- (.*?) \[(.*?)\] \*\*(.*?)\*\*: \`(.*?)\` \| Reason: \*(.*?)\*/); if(m)h.push({date:m[2],action:m[3],val:m[4],note:m[5]});}); } return h; },
+            filteredHistory() { if(!this.historySearchQuery)return this.parsedHistory; const q=this.historySearchQuery.toLowerCase(); return this.parsedHistory.filter(i=>i.val.toLowerCase().includes(q)||i.note.toLowerCase().includes(q)||i.action.toLowerCase().includes(q)); },
+            filteredJsonObj() { if(!this.parsedActiveJson)return null; if(!this.jsonSearchQuery)return this.parsedActiveJson; return this.filterObject(this.parsedActiveJson, this.jsonSearchQuery.toLowerCase()); },
+            formattedLogContent() { if(!this.activeLogContent)return ''; return this.activeLogContent.split('\n').map(l=>{ if(l.startsWith('=')||l.startsWith('-')||l.includes('[SESSION')) return `<span class="text-slate-900 dark:text-yellow-400 font-bold">${l}</span>`; for(const k in STATUS_CONFIG)if(l.includes(STATUS_CONFIG[k].label))return `<span style="color:${STATUS_CONFIG[k].hex};font-weight:600">${l}</span>`; return `<span class="text-slate-600 dark:text-slate-400">${l}</span>`; }).join('\n'); }
         },
-        mounted() {
-            this.initTheme();
-            if (this.token) { this.loadWhitelistData(); this.startCountdown(); } 
-            else { this.isInitializing = false; }
-            ['mousemove','keydown','click'].forEach(e => window.addEventListener(e, this.resetActivity));
-        },
+        mounted() { this.initTheme(); if(this.token){this.loadWhitelistData();this.startCountdown();}else{this.isInitializing=false;} ['mousemove','keydown','click'].forEach(e=>window.addEventListener(e,this.resetActivity)); },
         methods: {
-            initTheme() {
-                const savedTheme = localStorage.getItem('theme');
-                this.isDark = savedTheme ? savedTheme === 'dark' : true; 
-                this.applyTheme();
-            },
-            toggleTheme() {
-                this.isDark = !this.isDark;
-                localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
-                this.applyTheme();
-            },
-            applyTheme() {
-                if (this.isDark) document.documentElement.classList.add('dark');
-                else document.documentElement.classList.remove('dark');
-            },
-            
-            // Safe Toast: Only show if initialized to prevent hard-refresh noise
-            showToast(title, message, isError = false) {
-                if(this.isInitializing) return; 
-                this.toast = { show: true, title, message, isError };
-                setTimeout(() => { this.toast.show = false; }, 4000);
-            },
-            
-            setToken() {
-                if(!this.tokenInput.trim()) return;
-                this.token = this.tokenInput;
-                localStorage.setItem('gh_token', this.token);
-                this.loadWhitelistData();
-                this.startCountdown();
-            },
-            logout() {
-                this.token = '';
-                localStorage.removeItem('gh_token');
-                clearInterval(this.countdownInterval);
-                this.isInitializing = false;
-            },
-            startCountdown() {
-                this.resetActivity();
-                if (this.countdownInterval) clearInterval(this.countdownInterval);
-                this.countdownInterval = setInterval(() => {
-                    const now = Date.now();
-                    this.timeLeft = Math.ceil((this.targetTime - now) / 1000);
-                    if (this.timeLeft <= 0) this.logout();
-                }, 1000);
-            },
-            resetActivity() {
-                if (!this.token) return;
-                this.targetTime = Date.now() + (INACTIVITY_MINUTES * 60 * 1000);
-            },
-            markDirty() { this.hasUnsavedChanges = true; this.resetActivity(); },
+            initTheme() { const t=localStorage.getItem('theme'); this.isDark=t?t==='dark':true; this.applyTheme(); },
+            toggleTheme() { this.isDark=!this.isDark; localStorage.setItem('theme',this.isDark?'dark':'light'); this.applyTheme(); },
+            applyTheme() { if(this.isDark)document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); },
+            showToast(t,m,e=false) { if(this.isInitializing)return; this.toast={show:true,title:t,message:m,isError:e}; setTimeout(()=>{this.toast.show=false},4000); },
+            setToken() { if(!this.tokenInput.trim())return; this.token=this.tokenInput; localStorage.setItem('gh_token',this.token); this.loadWhitelistData(); this.startCountdown(); },
+            logout() { this.token=''; localStorage.removeItem('gh_token'); clearInterval(this.countdownInterval); this.isInitializing=false; },
+            startCountdown() { this.resetActivity(); if(this.countdownInterval)clearInterval(this.countdownInterval); this.countdownInterval=setInterval(()=>{ const n=Date.now(); this.timeLeft=Math.ceil((this.targetTime-n)/1000); if(this.timeLeft<=0)this.logout(); },1000); },
+            resetActivity() { if(!this.token)return; this.targetTime=Date.now()+(INACTIVITY_MINUTES*60*1000); },
+            markDirty() { this.hasUnsavedChanges=true; this.resetActivity(); },
 
             async loadWhitelistData() {
-                this.loading = true;
-                const octokit = new Octokit({ auth: this.token });
+                this.loading=true; const octokit=new Octokit({auth:this.token});
                 try {
-                    const jsonRes = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}`);
-                    const jsonData = JSON.parse(decodeURIComponent(escape(atob(jsonRes.data.content))));
-                    try {
-                        const readmeRes = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`);
-                        this.existingReadmeContent = decodeURIComponent(escape(atob(readmeRes.data.content)));
-                    } catch (e) { this.existingReadmeContent = ''; }
-                    this.mergeData(jsonData, this.existingReadmeContent);
-                    this.isInitializing = false;
-                    this.hasUnsavedChanges = false;
-                } catch (e) {
-                    console.error(e);
-                    // SILENT FAIL on 404/Empty Repo (Treat as New)
-                    if (e.status === 404) {
-                        this.isInitializing = false;
-                        this.hasUnsavedChanges = false;
-                    } else {
-                        if(!this.isInitializing) this.showToast('Login Failed', e.message, true);
-                        this.logout();
-                    }
-                } finally { this.loading = false; }
-            },
+                    // Load R.00 JSON
+                    const r1=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}`);
+                    const json=JSON.parse(decodeURIComponent(escape(atob(r1.data.content))));
+                    
+                    // [NEW] Capture Generation Time for Polling
+                    if(json.meta && json.meta.generatedAt) this.currentGeneratedAt = json.meta.generatedAt;
 
+                    try{const r2=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`); this.existingReadmeContent=decodeURIComponent(escape(atob(r2.data.content)));}catch(e){this.existingReadmeContent='';}
+                    this.mergeData(json,this.existingReadmeContent);
+                    this.isInitializing=false; this.hasUnsavedChanges=false;
+                } catch(e) { 
+                    if(e.status===404) { this.isInitializing=false; this.hasUnsavedChanges=false; } // New Repo
+                    else { if(!this.isInitializing)this.showToast('Login Failed',e.message,true); this.logout(); }
+                } finally { this.loading=false; }
+            },
             mergeData(json, readme) {
-                const noteMap = {};
-                const lines = readme.split('\n');
-                lines.forEach(line => {
-                    const match = line.match(/- `(.*?)` \| 📝 (.*)/);
-                    if(match) noteMap[match[1]] = match[2];
-                });
-                const populate = (key, sourceArr) => {
-                    this.editableLists[key].items = (sourceArr || []).map(val => ({
-                        val: val,
-                        note: noteMap[val] || '' 
-                    }));
-                };
-                populate('GOOD_IPS', json.GOOD_IPS);
-                populate('BLOCKED_THREATS', json.BLOCKED_THREATS || json.BLOCKED_IPS);
-                populate('GOOD_REFERRERS', json.GOOD_REFERRERS);
-                populate('SEARCH_BOTS', json.GOOD_BOTS?.SEARCH_BOTS);
-                populate('AI_BOTS', json.GOOD_BOTS?.AI_BOTS);
+                const map={}; readme.split('\n').forEach(l=>{const m=l.match(/- `(.*?)` \| 📝 (.*)/); if(m)map[m[1]]=m[2];});
+                const pop=(k,arr)=>{ this.editableLists[k].items=(arr||[]).map(v=>({val:v,note:map[v]||''})); };
+                pop('GOOD_IPS',json.GOOD_IPS); pop('BLOCKED_THREATS',json.BLOCKED_THREATS||json.BLOCKED_IPS); pop('GOOD_REFERRERS',json.GOOD_REFERRERS); pop('SEARCH_BOTS',json.GOOD_BOTS?.SEARCH_BOTS); pop('AI_BOTS',json.GOOD_BOTS?.AI_BOTS);
             },
-
-            async loadLog(type) {
-                this.currentView = type + '-log';
-                this.activeLogContent = '';
-                this.loadingLog = true;
-                const octokit = new Octokit({ auth: this.token });
-                try {
-                    const path = LOGS[type];
-                    const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${path}`);
-                    let content = decodeURIComponent(escape(atob(res.data.content)));
-                    this.activeLogContent = content;
-                } catch (e) {
-                    if (e.status !== 404) this.activeLogContent = `Error: ${e.message}`;
-                } finally { this.loadingLog = false; }
-            },
-
-            async loadJson(type) {
-                this.currentView = type + '-json';
-                this.activeLogContent = '';
-                this.parsedActiveJson = null;
-                this.loadingLog = true;
-                const octokit = new Octokit({ auth: this.token });
-                try {
-                    const path = JSON_FILES[type];
-                    const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${path}`);
-                    const content = decodeURIComponent(escape(atob(res.data.content)));
-                    this.activeLogContent = content;
-                    this.parsedActiveJson = JSON.parse(content);
-                } catch (e) {
-                    if (e.status !== 404) this.activeLogContent = `Error: ${e.message}`;
-                } finally { this.loadingLog = false; }
-            },
-
-            // --- RECURSIVE JSON FILTER & RENDER ---
-            filterObject(obj, query) {
-                if (!query) return obj;
-                if (typeof obj !== 'object' || obj === null) {
-                    return String(obj).toLowerCase().includes(query) ? obj : undefined;
-                }
+            
+            // --- SMART POLLING ENGINE ---
+            startPolling() {
+                this.isPolling = true;
+                this.showToast('Processing', 'Updates sent to GitHub. Waiting for automation...');
                 
-                if (Array.isArray(obj)) {
-                    const filtered = obj.map(i => this.filterObject(i, query)).filter(i => i !== undefined);
-                    return filtered.length > 0 ? filtered : undefined;
-                }
+                if (this.pollInterval) clearInterval(this.pollInterval);
                 
-                const result = {};
-                let hasMatch = false;
-                Object.keys(obj).forEach(key => {
-                    // Match key OR value
-                    if (key.toLowerCase().includes(query)) {
-                        result[key] = obj[key];
-                        hasMatch = true;
-                    } else {
-                        const filteredValue = this.filterObject(obj[key], query);
-                        if (filteredValue !== undefined) {
-                            result[key] = filteredValue;
-                            hasMatch = true;
+                // Poll every 3 seconds
+                this.pollInterval = setInterval(async () => {
+                    const octokit = new Octokit({ auth: this.token });
+                    try {
+                        // Check R.00.json timestamp (cache-busting with timestamp query)
+                        const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}?t=${Date.now()}`);
+                        const content = JSON.parse(decodeURIComponent(escape(atob(res.data.content))));
+                        
+                        // Compare Timestamps
+                        const newGenTime = content.meta?.generatedAt;
+                        if (newGenTime && newGenTime !== this.currentGeneratedAt) {
+                            console.log("New data detected!", newGenTime);
+                            clearInterval(this.pollInterval);
+                            this.isPolling = false;
+                            
+                            // Reload Data
+                            this.currentGeneratedAt = newGenTime;
+                            this.loadWhitelistData(); // Reload UI
+                            this.showToast('Sync Complete', 'GitHub automation finished. Data reloaded.', false);
                         }
+                    } catch (e) {
+                        console.log("Polling check failed, retrying..."); 
                     }
-                });
-                return hasMatch ? result : undefined;
+                }, 3000); // 3 seconds
             },
 
-            renderJsonTree(data) {
-                if (data === undefined) return '<span class="j-null">No matches found.</span>';
-                if (data === null) return '<span class="j-null">null</span>';
-                if (typeof data === 'string') return `<span class="j-str">"${data}"</span>`;
-                if (typeof data === 'number') return `<span class="j-num">${data}</span>`;
-                if (typeof data === 'boolean') return `<span class="j-bool">${data}</span>`;
-
-                const isArray = Array.isArray(data);
-                const keys = Object.keys(data);
-                
-                if (keys.length === 0) return isArray ? '<span class="j-meta">[]</span>' : '<span class="j-meta">{}</span>';
-
-                let html = `<details open><summary><span class="json-arrow">▶</span> <span class="j-meta">${isArray ? `Array(${keys.length})` : `Object{${keys.length}}`}</span></summary>`;
-                
-                keys.forEach(key => {
-                    const value = data[key];
-                    html += `<div>`;
-                    if (!isArray) html += `<span class="j-key">"${key}"</span>: `;
-                    html += this.renderJsonTree(value); 
-                    html += `<span class="j-meta">,</span></div>`; 
-                });
-                
-                html += `</details>`;
-                return html;
-            },
-
-            expandAll() {
-                const details = this.$refs.jsonContainer.querySelectorAll('details');
-                details.forEach(d => d.open = true);
-            },
-            collapseAll() {
-                const details = this.$refs.jsonContainer.querySelectorAll('details');
-                details.forEach(d => d.open = false);
-            },
-            copyJson() {
-                if(this.parsedActiveJson) {
-                    navigator.clipboard.writeText(JSON.stringify(this.parsedActiveJson, null, 4));
-                    this.showToast('Copied', 'JSON copied to clipboard.');
-                }
-            },
-            triggerJsonSearch() {
-                // Triggered by v-model reactivity
-            },
-
-            getOrigin(note) {
-                if(!note) return null;
-                const match = note.match(/\[Origin: (.*?)\]/);
-                if(match) { const k = match[1]; const l = this.editableLists[k]; return l ? l.title.replace(/^[^\s]+\s/, '') : k; }
-                return null;
-            },
-            getLogTimestamp() {
-                const now = new Date(); const d = now.toLocaleDateString('en-CA'); const t = now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }); return `${d} ${t}`;
-            },
-            addItem(key) {
-                const val=this.inputs[key].val.trim(); const note=this.inputs[key].note.trim(); if(!val)return;
-                if(key==='BLOCKED_THREATS' && !note) { this.showToast('Error','Threats require a note.',true); return; }
-                this.editableLists[key].items.unshift({val,note}); this.inputs[key].val=''; this.inputs[key].note='';
-                if(key==='BLOCKED_THREATS') this.sessionHistory.push({action:'ADDED',val,note,date:this.getLogTimestamp()});
-                this.markDirty();
-            },
-            // [FIXED] Updated signature to capture 'item' for modal
-            deleteItem(key, index, item) {
-                if (key === 'BLOCKED_THREATS') { this.openModal('RESTORE', key, index, item); return; }
-                this.editableLists[key].items.splice(index, 1); this.markDirty();
-            },
-            openModal(type, key, index, item) {
-                let targetKey = ''; const initialReason = ''; 
-                if(type === 'RESTORE') { const m = item.note ? item.note.match(/\[Origin: (.*?)\]/) : null; if(m && this.editableLists[m[1]]) targetKey = m[1]; }
-                this.modal = { show: true, type, sourceKey: key, index, val: item.val, reason: initialReason, targetKey };
-            },
-            closeModal() { this.modal.show = false; },
-            confirmAction() {
-                if(!this.modal.reason.trim()) { this.showToast('Missing Reason','Audit log requires a reason.',true); return; }
-                const removedItem = this.editableLists[this.modal.sourceKey].items.splice(this.modal.index, 1)[0];
-                if (this.modal.type === 'BLOCK') {
-                    const newNote = `[Origin: ${this.modal.sourceKey}] ${this.modal.reason}`;
-                    this.editableLists.BLOCKED_THREATS.items.unshift({ val: this.modal.val, note: newNote });
-                    this.sessionHistory.push({ action: 'BLOCKED', val: this.modal.val, note: `Source: ${this.modal.sourceKey} | ${this.modal.reason}`, date: this.getLogTimestamp() });
-                } else {
-                    if (this.modal.targetKey) {
-                        this.editableLists[this.modal.targetKey].items.unshift({ val: this.modal.val, note: this.modal.reason });
-                        this.sessionHistory.push({ action: 'RESTORED', val: this.modal.val, note: `Restored to ${this.modal.targetKey} | ${this.modal.reason}`, date: this.getLogTimestamp() });
-                    } else {
-                        this.sessionHistory.push({ action: 'UNBLOCKED', val: this.modal.val, note: this.modal.reason, date: this.getLogTimestamp() });
-                    }
-                }
-                this.markDirty(); this.closeModal();
-            },
-            generateReadmeContent(isPreview=false) {
-                let md = `# 🛡️ Security Whitelist Documentation\n\n**Last Updated:** ${new Date().toUTCString()}\n\n> Auto-generated by Security Manager WebUI.\n\n`;
-                const sections = [ {key:'GOOD_IPS',t:'🌍 Allowed IPs'}, {key:'BLOCKED_THREATS',t:'⛔ Blocked Threats'}, {key:'GOOD_REFERRERS',t:'🔗 Referrers'}, {key:'SEARCH_BOTS',t:'🤖 Search Bots'}, {key:'AI_BOTS',t:'🧠 AI Agents'} ];
-                sections.forEach(s=>{ md+=`## ${s.t}\n`; const items=this.editableLists[s.key].items; if(!items.length) md+='*No records.*\n\n'; else { items.forEach(i=>{ md+=`- \`${i.val}\`${i.note?` | 📝 ${i.note}`:''}\n`; }); md+='\n'; } });
-                const head = `## 📜 Threat History (Permanent Log)`; let hist='';
-                if(this.existingReadmeContent && this.existingReadmeContent.includes(head)) hist=this.existingReadmeContent.split(head)[1].trim();
-                if(this.sessionHistory.length) {
-                    const newLog = this.sessionHistory.map(h=>{
-                        let ic = '⚪'; if(h.action==='ADDED'||h.action==='BLOCKED') ic='🔴'; else if(h.action==='REMOVED'||h.action==='UNBLOCKED'||h.action==='RESTORED') ic='🟢';
-                        return `- ${ic} [${h.date}] **${h.action}**: \`${h.val}\` | Reason: *${h.note}*`;
-                    }).join('\n');
-                    hist = hist ? (hist+'\n'+newLog) : newLog;
-                }
-                md+=`\n${head}\n${hist||'*No history yet.*'}\n`;
-                return md;
-            },
             async saveChanges() {
                 this.loading=true; const octokit=new Octokit({auth:this.token});
                 try {
                     const pl = { GOOD_IPS:this.editableLists.GOOD_IPS.items.map(i=>i.val), BLOCKED_THREATS:this.editableLists.BLOCKED_THREATS.items.map(i=>i.val), GOOD_REFERRERS:this.editableLists.GOOD_REFERRERS.items.map(i=>i.val), GOOD_BOTS:{ SEARCH_BOTS:this.editableLists.SEARCH_BOTS.items.map(i=>i.val), AI_BOTS:this.editableLists.AI_BOTS.items.map(i=>i.val) } };
                     const md = this.generateReadmeContent(false);
                     let sha1=null; try{const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_TEMP}`); sha1=r.data.sha;}catch(e){}
-                    await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_TEMP}`, { message:'🛡️ Update Whitelist', content:btoa(unescape(encodeURIComponent(JSON.stringify(pl,null,2)))), sha:sha1 });
+                    await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_TEMP}`, { message:'🛡️ Update Whitelist (WebUI)', content:btoa(unescape(encodeURIComponent(JSON.stringify(pl,null,2)))), sha:sha1 });
+                    
                     let sha2=null; try{const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`); sha2=r.data.sha;}catch(e){}
                     await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`, { message:'📝 Update Docs', content:btoa(unescape(encodeURIComponent(md))), sha:sha2 });
-                    this.hasUnsavedChanges=false; this.sessionHistory=[]; this.existingReadmeContent=md; this.resetActivity(); this.showToast('Success','Saved.');
+                    
+                    this.hasUnsavedChanges=false; this.sessionHistory=[]; this.existingReadmeContent=md; this.resetActivity();
+                    
+                    // [UPDATED] Don't show "Success" yet. Start Polling instead.
+                    this.startPolling(); 
+
                 } catch(e) { console.error(e); this.showToast('Error',e.message,true); } finally { this.loading=false; }
-            }
+            },
+
+            // Other unchanged methods...
+            filterObject(obj, query) { if (!query) return obj; if (typeof obj!=='object'||obj===null) return String(obj).toLowerCase().includes(query)?obj:undefined; if(Array.isArray(obj)){const f=obj.map(i=>this.filterObject(i,query)).filter(i=>i!==undefined);return f.length?f:undefined;} const r={};let h=false;Object.keys(obj).forEach(k=>{if(k.toLowerCase().includes(query)){r[k]=obj[k];h=true;}else{const v=this.filterObject(obj[k],query);if(v!==undefined){r[k]=v;h=true;}}}); return h?r:undefined; },
+            renderJsonTree(data) { if(data===undefined)return '<span class="j-null">No matches.</span>'; if(data===null)return '<span class="j-null">null</span>'; if(typeof data==='string')return `<span class="j-str">"${data}"</span>`; if(typeof data==='number')return `<span class="j-num">${data}</span>`; if(typeof data==='boolean')return `<span class="j-bool">${data}</span>`; const arr=Array.isArray(data); const k=Object.keys(data); if(!k.length)return arr?'<span class="j-meta">[]</span>':'<span class="j-meta">{}</span>'; let h=`<details open><summary><span class="json-arrow">▶</span> <span class="j-meta">${arr?`Array(${k.length})`:`Object{${k.length}}`}</span></summary>`; k.forEach(key=>{h+=`<div>`;if(!arr)h+=`<span class="j-key">"${key}"</span>: `;h+=this.renderJsonTree(data[key]);h+=`<span class="j-meta">,</span></div>`;}); h+=`</details>`; return h; },
+            expandAll() { this.$refs.jsonContainer.querySelectorAll('details').forEach(d=>d.open=true); }, collapseAll() { this.$refs.jsonContainer.querySelectorAll('details').forEach(d=>d.open=false); }, copyJson() { if(this.parsedActiveJson) { navigator.clipboard.writeText(JSON.stringify(this.parsedActiveJson,null,4)); this.showToast('Copied','JSON copied.'); } }, triggerJsonSearch() {}, getOrigin(note) { if(!note)return null; const m=note.match(/\[Origin: (.*?)\]/); if(m){const k=m[1];const l=this.editableLists[k];return l?l.title.replace(/^[^\s]+\s/,''):k;} return null; }, getLogTimestamp() { const n=new Date(); return `${n.toLocaleDateString('en-CA')} ${n.toLocaleTimeString('en-US',{hour12:true})}`; },
+            addItem(key) { const v=this.inputs[key].val.trim(); const n=this.inputs[key].note.trim(); if(!v)return; if(key==='BLOCKED_THREATS'&&!n){this.showToast('Error','Note required.',true);return;} this.editableLists[key].items.unshift({val:v,note:n}); this.inputs[key].val='';this.inputs[key].note=''; if(key==='BLOCKED_THREATS')this.sessionHistory.push({action:'ADDED',val:v,note:n,date:this.getLogTimestamp()}); this.markDirty(); },
+            deleteItem(key,index,item) { if(key==='BLOCKED_THREATS'){this.openModal('RESTORE',key,index,item);return;} this.editableLists[key].items.splice(index,1); this.markDirty(); },
+            openModal(t,k,i,v) { let tk=''; if(t==='RESTORE'){const m=v.note?v.note.match(/\[Origin: (.*?)\]/):null;if(m&&this.editableLists[m[1]])tk=m[1];} this.modal={show:true,type:t,sourceKey:k,index:i,val:v.val,reason:'',targetKey:tk}; },
+            closeModal() { this.modal.show=false; },
+            confirmAction() { if(!this.modal.reason.trim()){this.showToast('Error','Reason required.',true);return;} this.editableLists[this.modal.sourceKey].items.splice(this.modal.index,1); if(this.modal.type==='BLOCK'){const n=`[Origin: ${this.modal.sourceKey}] ${this.modal.reason}`;this.editableLists.BLOCKED_THREATS.items.unshift({val:this.modal.val,note:n});this.sessionHistory.push({action:'BLOCKED',val:this.modal.val,note:`Source: ${this.modal.sourceKey} | ${this.modal.reason}`,date:this.getLogTimestamp()});}else{if(this.modal.targetKey){this.editableLists[this.modal.targetKey].items.unshift({val:this.modal.val,note:this.modal.reason});this.sessionHistory.push({action:'RESTORED',val:this.modal.val,note:`Restored to ${this.modal.targetKey} | ${this.modal.reason}`,date:this.getLogTimestamp()});}else{this.sessionHistory.push({action:'UNBLOCKED',val:this.modal.val,note:this.modal.reason,date:this.getLogTimestamp()});}} this.markDirty(); this.closeModal(); },
+            generateReadmeContent(p=false) { let md=`# 🛡️ Security Whitelist Documentation\n\n**Last Updated:** ${new Date().toUTCString()}\n\n> Auto-generated by Security Manager WebUI.\n\n`; const s=[{key:'GOOD_IPS',t:'🌍 Allowed IPs'},{key:'BLOCKED_THREATS',t:'⛔ Blocked Threats'},{key:'GOOD_REFERRERS',t:'🔗 Referrers'},{key:'SEARCH_BOTS',t:'🤖 Search Bots'},{key:'AI_BOTS',t:'🧠 AI Agents'}]; s.forEach(x=>{md+=`## ${x.t}\n`;const i=this.editableLists[x.key].items;if(!i.length)md+='*No records.*\n\n';else{i.forEach(j=>{md+=`- \`${j.val}\`${j.note?` | 📝 ${j.note}`:''}\n`;});md+='\n';}}); const h=`## 📜 Threat History (Permanent Log)`; let ht=''; if(this.existingReadmeContent.includes(h))ht=this.existingReadmeContent.split(h)[1].trim(); if(this.sessionHistory.length){const nl=this.sessionHistory.map(x=>{let c='⚪';if(x.action.includes('ADDED')||x.action.includes('BLOCKED'))c='🔴';else c='🟢'; return `- ${c} [${x.date}] **${x.action}**: \`${x.val}\` | Reason: *${x.note}*`;}).join('\n');ht=ht?ht+'\n'+nl:nl;} md+=`\n${h}\n${ht||'*No history yet.*'}\n`; return md; },
+            async loadLog(t) { this.currentView=t+'-log'; this.activeLogContent=''; this.loadingLog=true; const octokit=new Octokit({auth:this.token}); try{const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${LOGS[t]}`); this.activeLogContent=decodeURIComponent(escape(atob(r.data.content)));}catch(e){if(e.status!==404)this.activeLogContent=`Error: ${e.message}`;}finally{this.loadingLog=false;} },
+            async loadJson(t) { this.currentView=t+'-json'; this.activeLogContent=''; this.loadingLog=true; const octokit=new Octokit({auth:this.token}); try{const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES[t]}`); const c=decodeURIComponent(escape(atob(r.data.content))); this.activeLogContent=c; this.parsedActiveJson=JSON.parse(c);}catch(e){if(e.status!==404)this.activeLogContent=`Error: ${e.message}`;}finally{this.loadingLog=false;} }
         }
     }).mount('#app');
 </script>
