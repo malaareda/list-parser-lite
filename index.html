@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v7.3</title>
+    <title>Security Manager v7.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -35,7 +35,7 @@
         .markdown-body li { margin-bottom: 0.25rem; }
         .markdown-body code { background: #1e293b; padding: 0.2rem 0.4rem; rounded: 0.25rem; font-size: 0.875em; color: #cbd5e1; }
         
-        /* JSON Tree Styles */
+        /* JSON Tree */
         .json-tree { font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; }
         .json-tree details { margin-left: 15px; }
         .json-tree summary { cursor: pointer; list-style: none; outline: none; display: flex; align-items: center; }
@@ -43,17 +43,11 @@
         .json-tree summary:hover { background-color: rgba(255,255,255,0.05); border-radius: 4px; }
         .json-arrow { display: inline-flex; justify-content: center; align-items: center; width: 14px; height: 14px; margin-right: 4px; font-size: 8px; color: #64748b; transition: transform 0.2s; }
         details[open] > summary > .json-arrow { transform: rotate(90deg); }
-        
-        /* JSON Syntax Highlighting */
-        .j-key { color: #60a5fa; font-weight: 600; } 
-        .j-str { color: #34d399; } 
-        .j-num { color: #c084fc; } 
-        .j-bool { color: #f87171; } 
-        .j-null { color: #94a3b8; font-style: italic; } 
-        .j-meta { color: #64748b; }
-        
-        /* Duplicate Highlight Style */
-        .j-dup { color: #fbbf24 !important; font-weight: bold; background: rgba(251, 191, 36, 0.1); padding: 0 4px; border-radius: 4px; }
+        .j-key { color: #60a5fa; font-weight: 600; } .j-str { color: #34d399; } .j-num { color: #c084fc; } .j-bool { color: #f87171; } .j-null { color: #94a3b8; font-style: italic; } .j-meta { color: #64748b; } .j-dup { color: #fbbf24 !important; font-weight: bold; background: rgba(251, 191, 36, 0.1); padding: 0 4px; border-radius: 4px; }
+
+        /* [NEW] Fix Date Picker Icon in Dark Mode */
+        .dark ::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; opacity: 0.6; }
+        .dark ::-webkit-calendar-picker-indicator:hover { opacity: 1; }
 
         .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; } .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(20px); }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; } .fade-enter-from, .fade-leave-to { opacity: 0; }
@@ -111,7 +105,7 @@
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.3</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.4</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -121,7 +115,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.3</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.4</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -230,6 +224,7 @@
                                 <input type="date" v-model="historyStartDate" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-white">
                                 <span class="text-slate-400 text-xs">-</span>
                                 <input type="date" v-model="historyEndDate" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-white">
+                                <button v-if="historyStartDate || historyEndDate" @click="historyStartDate='';historyEndDate=''" class="text-slate-400 hover:text-red-500 px-1" title="Clear Dates">✕</button>
                             </div>
                         </div>
                         <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
@@ -251,7 +246,6 @@
             
             <div v-if="currentView.includes('-json')" class="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950 relative transition-colors duration-300">
                 <div v-if="loadingLog" class="absolute inset-0 flex items-center justify-center bg-slate-50 dark:bg-slate-950 z-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div>
-                
                 <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center sticky top-0 z-10" v-if="activeLogContent && !activeLogContent.startsWith('Error')">
                     <div class="text-xs font-mono text-slate-500 font-bold">JSON Explorer</div>
                     <div class="flex gap-2 items-center">
@@ -265,7 +259,6 @@
                 <div v-if="!activeLogContent || activeLogContent.trim() === ''" class="flex-1 flex flex-col items-center justify-center text-slate-500"><div class="text-4xl mb-4 grayscale opacity-50">📂</div><h3 class="font-bold text-sm mb-1">File Empty or Missing</h3></div>
                 
                 <div v-else class="flex-1 flex overflow-hidden">
-                    
                     <div class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-[#0d1117] border-r border-slate-800" ref="jsonContainer">
                         <pre v-if="showRawJson" class="font-mono text-xs text-emerald-400 whitespace-pre-wrap">{{ activeLogContent }}</pre>
                         <div v-else class="json-tree" v-html="renderJsonTree(filteredJsonObj)"></div>
@@ -289,7 +282,6 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
 
@@ -327,15 +319,10 @@
             formattedTime() { const m=Math.floor(Math.max(0,this.timeLeft)/60).toString().padStart(2,'0'); const s=(Math.max(0,this.timeLeft)%60).toString().padStart(2,'0'); return `${m}:${s}`; },
             renderedReadme() { return marked.parse(this.generateReadmeContent(true)); },
             totalItems() { let c=0; for(const k in this.editableLists) c+=this.editableLists[k].items.length; return c; },
-            
-            // [NEW] Sort Duplicates by Count Descending
             sortedDuplicates() {
                 if (!this.duplicateMap.size) return [];
-                return Array.from(this.duplicateMap.entries())
-                    .filter(x => x[1] > 1)
-                    .sort((a, b) => b[1] - a[1]); 
+                return Array.from(this.duplicateMap.entries()).filter(x => x[1] > 1).sort((a, b) => b[1] - a[1]); 
             },
-
             parsedHistory() {
                 const h = [];
                 this.sessionHistory.forEach(i => h.push(i));
@@ -486,7 +473,6 @@
                     this.activeLogContent=c; 
                     this.parsedActiveJson=JSON.parse(c);
                     
-                    // Build Frequency Map
                     this.duplicateMap = new Map();
                     this.calculateDuplicates(this.parsedActiveJson);
                     
