@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v6.4</title>
+    <title>Security Manager v6.5</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -32,7 +32,8 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #94a3b8; border-radius: 20px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
         
-        [v-cloak] { display: none; }
+        /* [FIXED] Force hide uncompiled content to prevent flash of modal */
+        [v-cloak] { display: none !important; }
         
         /* Markdown Styles */
         .markdown-body h2 { border-bottom: 1px solid #334155; padding-bottom: 0.5rem; margin-top: 1.5rem; margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600; color: #e2e8f0; }
@@ -47,7 +48,6 @@
         .json-tree summary::-webkit-details-marker { display: none; }
         .json-tree summary:hover { background-color: rgba(255,255,255,0.05); border-radius: 4px; }
         
-        /* Interactive Arrow */
         .json-arrow { 
             display: inline-flex; justify-content: center; align-items: center;
             width: 14px; height: 14px; margin-right: 4px; 
@@ -55,13 +55,12 @@
         }
         details[open] > summary > .json-arrow { transform: rotate(90deg); }
 
-        /* Syntax Colors */
-        .j-key { color: #60a5fa; font-weight: 600; }   /* Blue */
-        .j-str { color: #34d399; }                      /* Green */
-        .j-num { color: #c084fc; }                      /* Purple */
-        .j-bool { color: #f87171; }                     /* Red */
-        .j-null { color: #94a3b8; font-style: italic; } /* Slate */
-        .j-meta { color: #64748b; }                     /* Brackets/Commas */
+        .j-key { color: #60a5fa; font-weight: 600; }   
+        .j-str { color: #34d399; }                      
+        .j-num { color: #c084fc; }                      
+        .j-bool { color: #f87171; }                     
+        .j-null { color: #94a3b8; font-style: italic; } 
+        .j-meta { color: #64748b; }                     
 
         /* Transitions */
         .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
@@ -245,7 +244,6 @@
 
             <div v-if="currentView === 'whitelist-readme'" class="flex-1 overflow-hidden p-6 relative">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
-                    
                     <div class="flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm h-full">
                         <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
                             <h2 class="text-sm font-bold text-slate-700 dark:text-white">🛡️ Security Whitelist Documentation</h2>
@@ -253,9 +251,7 @@
                         </div>
                         <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
                             <div v-for="(list, key) in editableLists" :key="key">
-                                <h3 class="font-bold text-sm text-slate-800 dark:text-slate-200 mb-2 border-b border-slate-200 dark:border-slate-700 pb-1">
-                                    {{ list.title }}
-                                </h3>
+                                <h3 class="font-bold text-sm text-slate-800 dark:text-slate-200 mb-2 border-b border-slate-200 dark:border-slate-700 pb-1">{{ list.title }}</h3>
                                 <div v-if="list.items.length === 0" class="text-xs text-slate-400 italic">No records.</div>
                                 <ul v-else class="space-y-1">
                                     <li v-for="item in list.items" class="text-xs text-slate-600 dark:text-slate-400 font-mono flex items-center gap-2">
@@ -267,7 +263,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm h-full">
                         <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
                             <h2 class="text-sm font-bold text-slate-700 dark:text-white mb-2">📜 Threat History (Permanent Log)</h2>
@@ -279,29 +274,20 @@
                                 <button class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-colors">Search</button>
                             </div>
                         </div>
-                        
                         <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
-                            <div v-if="filteredHistory.length === 0" class="text-center text-slate-400 text-xs italic mt-10">
-                                No history records found.
-                            </div>
+                            <div v-if="filteredHistory.length === 0" class="text-center text-slate-400 text-xs italic mt-10">No history records found.</div>
                             <div v-for="(h, i) in filteredHistory" :key="i" class="p-2 rounded border border-slate-100 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-950/30 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex flex-col gap-0.5">
                                 <div class="flex justify-between items-baseline gap-2">
                                     <div class="flex items-center gap-2 min-w-0">
-                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase shrink-0" 
-                                              :class="(h.action.includes('ADDED') || h.action.includes('BLOCKED')) ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'">
-                                            {{ h.action }}
-                                        </span>
+                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase shrink-0" :class="(h.action.includes('ADDED') || h.action.includes('BLOCKED')) ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'">{{ h.action }}</span>
                                         <code class="text-xs font-mono text-slate-800 dark:text-slate-200 font-bold truncate">{{ h.val }}</code>
                                     </div>
                                     <span class="text-[9px] font-mono text-slate-400 dark:text-slate-300 shrink-0">{{ h.date }}</span>
                                 </div>
-                                <div v-if="h.note" class="text-[10px] text-slate-500 dark:text-slate-300 italic pl-1 truncate">
-                                    ↳ {{ h.note }}
-                                </div>
+                                <div v-if="h.note" class="text-[10px] text-slate-500 dark:text-slate-300 italic pl-1 truncate">↳ {{ h.note }}</div>
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
 
