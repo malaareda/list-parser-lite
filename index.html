@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v7.0</title>
+    <title>Security Manager v7.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -25,48 +25,25 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
-        
-        /* Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #94a3b8; border-radius: 20px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
-        
-        /* [FIXED] Force hide uncompiled content to prevent flash of modal */
         [v-cloak] { display: none !important; }
-        
-        /* Markdown Styles */
         .markdown-body h2 { border-bottom: 1px solid #334155; padding-bottom: 0.5rem; margin-top: 1.5rem; margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600; color: #e2e8f0; }
         .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; color: #cbd5e1; }
         .markdown-body li { margin-bottom: 0.25rem; }
         .markdown-body code { background: #1e293b; padding: 0.2rem 0.4rem; rounded: 0.25rem; font-size: 0.875em; color: #cbd5e1; }
-
-        /* Modern JSON Tree Styles */
         .json-tree { font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; }
         .json-tree details { margin-left: 15px; }
         .json-tree summary { cursor: pointer; list-style: none; outline: none; display: flex; align-items: center; }
         .json-tree summary::-webkit-details-marker { display: none; }
         .json-tree summary:hover { background-color: rgba(255,255,255,0.05); border-radius: 4px; }
-        
-        .json-arrow { 
-            display: inline-flex; justify-content: center; align-items: center;
-            width: 14px; height: 14px; margin-right: 4px; 
-            font-size: 8px; color: #64748b; transition: transform 0.2s; 
-        }
+        .json-arrow { display: inline-flex; justify-content: center; align-items: center; width: 14px; height: 14px; margin-right: 4px; font-size: 8px; color: #64748b; transition: transform 0.2s; }
         details[open] > summary > .json-arrow { transform: rotate(90deg); }
-
-        .j-key { color: #60a5fa; font-weight: 600; }   
-        .j-str { color: #34d399; }                      
-        .j-num { color: #c084fc; }                      
-        .j-bool { color: #f87171; }                     
-        .j-null { color: #94a3b8; font-style: italic; } 
-        .j-meta { color: #64748b; }                     
-
-        /* Transitions */
-        .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
-        .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(20px); }
-        .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
-        .fade-enter-from, .fade-leave-to { opacity: 0; }
+        .j-key { color: #60a5fa; font-weight: 600; } .j-str { color: #34d399; } .j-num { color: #c084fc; } .j-bool { color: #f87171; } .j-null { color: #94a3b8; font-style: italic; } .j-meta { color: #64748b; }
+        .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; } .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(20px); }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; } .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-darkbg text-slate-800 dark:text-slate-200 h-screen overflow-hidden flex flex-col transition-colors duration-300">
@@ -94,15 +71,13 @@
                         </select>
                     </div>
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">
-                            Reason / Note (Optional)
-                        </label>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Reason / Note (Optional)</label>
                         <textarea v-model="modal.reason" class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-sm focus:border-indigo-500 outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400" rows="3" placeholder="Optional note..."></textarea>
                     </div>
                 </div>
                 <div class="bg-slate-50 dark:bg-slate-950/50 p-4 flex gap-3 justify-end border-t border-slate-200 dark:border-slate-800 mt-2">
                     <button @click="closeModal" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">Cancel</button>
-                    <button @click="confirmAction" class="px-4 py-2 text-white text-xs font-bold rounded-lg transition-colors shadow-lg" :class="modal.type === 'BLOCK' ? 'bg-red-600 hover:bg-red-700 shadow-red-500/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'">Confirm</button>
+                    <button @click="confirmAction(false)" class="px-4 py-2 text-white text-xs font-bold rounded-lg transition-colors shadow-lg" :class="modal.type === 'BLOCK' ? 'bg-red-600 hover:bg-red-700 shadow-red-500/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'">Confirm</button>
                 </div>
             </div>
         </div>
@@ -123,7 +98,7 @@
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.0</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.1</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -133,7 +108,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.0</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.1</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -251,7 +226,6 @@
                                 <input type="date" v-model="historyEndDate" class="bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-2 py-1.5 text-xs text-slate-800 dark:text-white">
                             </div>
                         </div>
-                        
                         <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
                             <div v-if="filteredHistory.length === 0" class="text-center text-slate-400 text-xs italic mt-10">No history records found.</div>
                             <div v-for="(h, i) in filteredHistory" :key="i" class="p-2 rounded border border-slate-100 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-950/30 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex flex-col gap-0.5">
@@ -308,9 +282,7 @@
                 isInitializing: true, token: localStorage.getItem('gh_token') || '', tokenInput: '', loading: false, loadingLog: false, sidebarOpen: false, targetRepo: `${TARGET_OWNER}/${TARGET_REPO}`, isDark: true, currentView: 'whitelist-update', targetTime: 0, timeLeft: INACTIVITY_MINUTES * 60, countdownInterval: null, hasUnsavedChanges: false, activeLogContent: '',
                 toast: { show: false, title: '', message: '', isError: false },
                 modal: { show: false, type: '', sourceKey: '', index: null, val: '', reason: '', targetKey: '' },
-                // [NEW] Advanced History State
                 sessionHistory: [], existingReadmeContent: '', historySearchQuery: '', historyStartDate: '', historyEndDate: '', historyUniqueOnly: false,
-                // [NEW] Silent Mode
                 silentMode: false,
                 jsonSearchQuery: '', parsedActiveJson: null, showRawJson: false, isPolling: false, pollInterval: null, currentGeneratedAt: null,
                 editableLists: { GOOD_IPS:{title:'🌍 Allowed IPs',placeholder:'IP Address...',items:[]}, BLOCKED_THREATS:{title:'⛔ Blocked Threats',placeholder:'IP / UA / Domain...',items:[]}, GOOD_REFERRERS:{title:'🔗 Referrers',placeholder:'Domain...',items:[]}, SEARCH_BOTS:{title:'🤖 Search Bots',placeholder:'User-Agent...',items:[]}, AI_BOTS:{title:'🧠 AI Agents',placeholder:'User-Agent...',items:[]} },
@@ -321,13 +293,9 @@
             formattedTime() { const m=Math.floor(Math.max(0,this.timeLeft)/60).toString().padStart(2,'0'); const s=(Math.max(0,this.timeLeft)%60).toString().padStart(2,'0'); return `${m}:${s}`; },
             renderedReadme() { return marked.parse(this.generateReadmeContent(true)); },
             totalItems() { let c=0; for(const k in this.editableLists) c+=this.editableLists[k].items.length; return c; },
-            
-            // [FIXED] History: Sort Newest First & Apply Advanced Filters
             parsedHistory() {
                 const h = [];
-                // 1. Session History
                 this.sessionHistory.forEach(i => h.push(i));
-                // 2. Readme History
                 if (this.existingReadmeContent.includes('## 📜')) {
                     const lines = this.existingReadmeContent.split('## 📜')[1].split('\n');
                     lines.forEach(l => {
@@ -335,37 +303,25 @@
                         if (m) h.push({ date: m[2], action: m[3], val: m[4], note: m[5] });
                     });
                 }
-                // Sort by Date Descending
                 return h.sort((a, b) => new Date(b.date) - new Date(a.date));
             },
             filteredHistory() {
                 let res = this.parsedHistory;
                 const q = this.historySearchQuery.toLowerCase();
-                
-                // 1. Text Search
                 if (q) res = res.filter(i => i.val.toLowerCase().includes(q) || i.note.toLowerCase().includes(q) || i.action.toLowerCase().includes(q));
-                
-                // 2. Date Range
                 if (this.historyStartDate) res = res.filter(i => new Date(i.date) >= new Date(this.historyStartDate));
                 if (this.historyEndDate) res = res.filter(i => new Date(i.date) <= new Date(this.historyEndDate));
-
-                // 3. Unique Filter
                 if (this.historyUniqueOnly) {
                     const uniqueMap = new Map();
-                    res.forEach(item => {
-                        if (!uniqueMap.has(item.val)) uniqueMap.set(item.val, item);
-                    });
+                    res.forEach(item => { if (!uniqueMap.has(item.val)) uniqueMap.set(item.val, item); });
                     res = Array.from(uniqueMap.values());
                 }
                 return res;
             },
-
             filteredJsonObj() { if(!this.parsedActiveJson)return null; if(!this.jsonSearchQuery)return this.parsedActiveJson; return this.filterObject(this.parsedActiveJson, this.jsonSearchQuery.toLowerCase()); },
-            // [FIXED] Audit Logs: Reverse Order (Newest First)
             formattedLogContent() { 
                 if(!this.activeLogContent)return ''; 
                 const rawLines = this.activeLogContent.split('\n');
-                // Reverse lines for visual display, but keep sessions grouped if possible. Simple reverse is usually enough for logs.
                 const reversed = [...rawLines].reverse();
                 return reversed.map(l=>{ 
                     if(l.startsWith('=')||l.startsWith('-')||l.includes('[SESSION')) return `<span class="text-slate-900 dark:text-yellow-400 font-bold">${l}</span>`; 
@@ -431,12 +387,10 @@
                 } catch(e) { console.error(e); this.showToast('Error',e.message,true); } finally { this.loading=false; }
             },
             
-            // [FIXED] Silent Action Handler
             tryAction(type, key, index, item) {
                 if (this.silentMode) {
-                    // Bypass Modal, Execute Directly
                     this.modal = { show:false, type, sourceKey:key, index, val:item.val, reason:'', targetKey:'' };
-                    this.confirmAction(true); // true = force silent execution
+                    this.confirmAction(true); 
                 } else {
                     this.openModal(type, key, index, item);
                 }
@@ -445,21 +399,21 @@
             addItem(key) { 
                 const v=this.inputs[key].val.trim(); const n=this.inputs[key].note.trim(); 
                 if(!v)return; 
-                // [FIXED] Optional Note Check Removed
                 this.editableLists[key].items.unshift({val:v,note:n}); 
                 this.inputs[key].val='';this.inputs[key].note=''; 
                 if(key==='BLOCKED_THREATS')this.sessionHistory.push({action:'ADDED',val:v,note:n,date:this.getLogTimestamp()}); 
                 this.markDirty(); 
             },
-            deleteItem(key,index,item) { this.tryAction('DELETE', key, index, item); }, // Mapped to Silent Handler
+            deleteItem(key,index,item) { this.tryAction('DELETE', key, index, item); }, 
             
             openModal(t,k,i,v) { let tk=''; if(t==='RESTORE'){const m=v.note?v.note.match(/\[Origin: (.*?)\]/):null;if(m&&this.editableLists[m[1]])tk=m[1];} this.modal={show:true,type:t,sourceKey:k,index:i,val:v.val,reason:'',targetKey:tk}; },
             closeModal() { this.modal.show=false; },
             
             confirmAction(silent = false) { 
-                // [FIXED] Reason is now Optional
+                // [FIXED] Force silence check for event objects
+                if(typeof silent === 'object') silent = false;
+
                 this.editableLists[this.modal.sourceKey].items.splice(this.modal.index,1); 
-                
                 const reasonText = this.modal.reason || (silent ? 'Silent Action' : 'No reason provided');
                 
                 if (this.modal.type === 'BLOCK') {
@@ -473,8 +427,6 @@
                     } else {
                         this.sessionHistory.push({action:'UNBLOCKED', val:this.modal.val, note:reasonText, date:this.getLogTimestamp()});
                     }
-                } else if (this.modal.type === 'DELETE') {
-                    // Regular Delete (No history for non-threats usually, unless desired)
                 }
                 
                 this.markDirty(); 
