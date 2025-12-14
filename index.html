@@ -25,17 +25,22 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
     <style>
         body { font-family: 'Inter', sans-serif; }
+        
+        /* Custom Scrollbar */
         .custom-scrollbar::-webkit-scrollbar { width: 5px; height: 5px; }
         .custom-scrollbar::-webkit-scrollbar-track { background: transparent; }
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #94a3b8; border-radius: 20px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
+        
         [v-cloak] { display: none; }
         
+        /* Markdown Styles */
         .markdown-body h2 { border-bottom: 1px solid #334155; padding-bottom: 0.5rem; margin-top: 1.5rem; margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600; color: #e2e8f0; }
         .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; color: #cbd5e1; }
         .markdown-body li { margin-bottom: 0.25rem; }
         .markdown-body code { background: #1e293b; padding: 0.2rem 0.4rem; rounded: 0.25rem; font-size: 0.875em; color: #cbd5e1; }
 
+        /* Transitions */
         .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
         .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(20px); }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
@@ -99,7 +104,13 @@
     </transition>
 
     <div v-if="!token || isInitializing" class="flex-grow flex items-center justify-center relative">
+        <div class="absolute inset-0 overflow-hidden pointer-events-none">
+            <div class="absolute top-0 left-1/4 w-96 h-96 bg-indigo-500/20 rounded-full blur-3xl opacity-30"></div>
+            <div class="absolute bottom-0 right-1/4 w-96 h-96 bg-purple-500/20 rounded-full blur-3xl opacity-30"></div>
+        </div>
+        
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
+        
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
             <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v5.2</h2>
@@ -109,6 +120,7 @@
     </div>
 
     <div v-else class="flex h-full">
+        
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
@@ -161,6 +173,7 @@
             <div v-if="currentView === 'whitelist-update'" class="flex-1 overflow-y-auto p-6">
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 pb-20">
                     <div v-for="(list, key) in editableLists" :key="key" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm flex flex-col h-[600px] transition-colors duration-300">
+                        
                         <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
                             <h3 class="font-bold text-sm text-slate-700 dark:text-slate-200 flex items-center gap-2">
                                 {{ list.title }}
@@ -173,14 +186,16 @@
                             <div v-for="(item, index) in list.items" :key="index" class="p-3 bg-slate-50 dark:bg-slate-900/30 rounded-lg border border-transparent hover:border-indigo-500/30 group transition-all">
                                 <div class="flex flex-col gap-1 mb-1">
                                     <div class="flex justify-between items-start">
+                                        
                                         <div class="flex flex-col">
                                             <span class="font-mono text-sm text-indigo-600 dark:text-indigo-400 font-bold break-all">{{ item.val }}</span>
-                                            <span v-if="getOrigin(item.note)" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1 rounded w-fit mt-0.5 font-bold">
+                                            <span v-if="getOrigin(item.note)" class="text-[9px] bg-slate-200 dark:bg-slate-700 text-slate-600 dark:text-slate-300 px-1.5 py-0.5 rounded w-fit mt-1 font-bold">
                                                 From: {{ getOrigin(item.note) }}
                                             </span>
                                         </div>
                                         
                                         <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            
                                             <button v-if="key !== 'BLOCKED_THREATS'" @click="openModal('BLOCK', key, index, item)" class="text-slate-400 hover:text-red-500 px-1" title="Block this item">⛔</button>
                                             
                                             <button v-if="key === 'BLOCKED_THREATS'" @click="openModal('RESTORE', key, index, item)" class="text-slate-400 hover:text-emerald-500 px-1" title="Restore this item">♻️</button>
@@ -236,14 +251,34 @@
     import { Octokit } from "https://esm.sh/@octokit/core";
     const { createApp } = Vue;
 
+    // --- CONFIGURATION ---
     const TARGET_OWNER = 'malaareda'; 
     const TARGET_REPO  = 'security-list';         
     const FILE_TEMP    = 'security-list-backup/security-whitelist-backup/security-whitelist-temp.json';
     const FILE_README  = 'security-list-backup/security-whitelist-backup/README.md';
-    const JSON_FILES = { 'whitelist': 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json', 'blacklist': 'security-list-backup/security-blacklist-backup/security-blacklist-R.00.json', 'livelist':  'security-list-backup/security-live-blacklist-backup/security-live-blacklist-R.00.json' };
-    const LOGS = { 'whitelist': 'security-list-backup/security-whitelist-backup/whitelist-security-audit.log', 'blacklist': 'security-list-backup/security-blacklist-backup/blacklist-security-audit.log', 'livelist':  'security-list-backup/security-live-blacklist-backup/live-blacklist-security-audit.log' };
+
+    const JSON_FILES = {
+        'whitelist': 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json',
+        'blacklist': 'security-list-backup/security-blacklist-backup/security-blacklist-R.00.json',
+        'livelist':  'security-list-backup/security-live-blacklist-backup/security-live-blacklist-R.00.json'
+    };
+
+    const LOGS = {
+        'whitelist': 'security-list-backup/security-whitelist-backup/whitelist-security-audit.log',
+        'blacklist': 'security-list-backup/security-blacklist-backup/blacklist-security-audit.log',
+        'livelist':  'security-list-backup/security-live-blacklist-backup/live-blacklist-security-audit.log'
+    };
     
-    const STATUS_CONFIG = { SUCCESS:{label:'SUCCESS',hex:'#16a34a'}, INFO:{label:'INFO',hex:'#2563eb'}, WARN:{label:'WARNING',hex:'#d97706'}, ERROR:{label:'ERROR',hex:'#dc2626'}, PROCESS:{label:'PROCESS',hex:'#0891b2'}, START:{label:'START',hex:'#9333ea'}, CLEANUP:{label:'CLEANUP',hex:'#4b5563'} };
+    const STATUS_CONFIG = {
+        SUCCESS: { label: 'SUCCESS', hex: '#16a34a' },
+        INFO:    { label: 'INFO',    hex: '#2563eb' },
+        WARN:    { label: 'WARNING', hex: '#d97706' },
+        ERROR:   { label: 'ERROR',   hex: '#dc2626' },
+        PROCESS: { label: 'PROCESS', hex: '#0891b2' },
+        START:   { label: 'START',   hex: '#9333ea' },
+        CLEANUP: { label: 'CLEANUP', hex: '#4b5563' }
+    };
+
     const INACTIVITY_MINUTES = 10; 
 
     createApp({
@@ -265,7 +300,7 @@
                 activeLogContent: '',
                 toast: { show: false, title: '', message: '', isError: false },
                 
-                // ADVANCED MODAL STATE
+                // --- ADVANCED MODAL STATE ---
                 modal: { show: false, type: '', sourceKey: '', index: null, val: '', reason: '', targetKey: '' },
 
                 sessionHistory: [], 
@@ -278,21 +313,41 @@
                     SEARCH_BOTS:     { title: '🤖 Search Bots',      placeholder: 'User-Agent...', items: [] },
                     AI_BOTS:         { title: '🧠 AI Agents',        placeholder: 'User-Agent...', items: [] }
                 },
-                inputs: { GOOD_IPS: { val:'', note:'' }, BLOCKED_THREATS: { val:'', note:'' }, GOOD_REFERRERS: { val:'', note:'' }, SEARCH_BOTS: { val:'', note:'' }, AI_BOTS: { val:'', note:'' } }
+                inputs: {
+                    GOOD_IPS: { val: '', note: '' },
+                    BLOCKED_THREATS: { val: '', note: '' },
+                    GOOD_REFERRERS: { val: '', note: '' },
+                    SEARCH_BOTS: { val: '', note: '' },
+                    AI_BOTS: { val: '', note: '' }
+                }
             }
         },
         computed: {
-            formattedTime() { const m = Math.floor(Math.max(0,this.timeLeft)/60).toString().padStart(2,'0'); const s = (Math.max(0,this.timeLeft)%60).toString().padStart(2,'0'); return `${m}:${s}`; },
+            formattedTime() {
+                const total = Math.max(0, this.timeLeft);
+                const m = Math.floor(total / 60).toString().padStart(2, '0');
+                const s = (total % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
+            },
             renderedReadme() { return marked.parse(this.generateReadmeContent(true)); },
-            totalItems() { let c=0; for(const k in this.editableLists) c+=this.editableLists[k].items.length; return c; },
+            totalItems() {
+                let count = 0;
+                for (const key in this.editableLists) count += this.editableLists[key].items.length;
+                return count;
+            },
             formattedLogContent() {
                 if (!this.activeLogContent) return '';
                 const lines = this.activeLogContent.split('\n');
                 return lines.map(line => {
                     const safeLine = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    if (safeLine.startsWith('====') || safeLine.startsWith('----') || safeLine.includes('[SESSION:')) return `<span class="text-slate-900 dark:text-yellow-400 font-bold">${safeLine}</span>`;
+                    if (safeLine.startsWith('====') || safeLine.startsWith('----') || safeLine.includes('[SESSION:')) {
+                        return `<span class="text-slate-900 dark:text-yellow-400 font-bold">${safeLine}</span>`;
+                    }
                     let matchedColor = null;
-                    for (const key in STATUS_CONFIG) { if (safeLine.includes(STATUS_CONFIG[key].label)) { matchedColor = STATUS_CONFIG[key].hex; break; } }
+                    for (const key in STATUS_CONFIG) {
+                        const config = STATUS_CONFIG[key];
+                        if (safeLine.includes(config.label)) { matchedColor = config.hex; break; }
+                    }
                     if (matchedColor) return `<span style="color: ${matchedColor}; font-weight: 600;">${safeLine}</span>`;
                     return `<span class="text-slate-600 dark:text-slate-400">${safeLine}</span>`;
                 }).join('\n');
@@ -304,79 +359,184 @@
             ['mousemove','keydown','click'].forEach(e => window.addEventListener(e, this.resetActivity));
         },
         methods: {
-            initTheme() { const t = localStorage.getItem('theme'); this.isDark = t ? t==='dark' : true; this.applyTheme(); },
-            toggleTheme() { this.isDark=!this.isDark; localStorage.setItem('theme', this.isDark?'dark':'light'); this.applyTheme(); },
-            applyTheme() { if(this.isDark) document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); },
-            showToast(t,m,e=false) { this.toast={show:true,title:t,message:m,isError:e}; setTimeout(()=>{this.toast.show=false},4000); },
-            setToken() { if(!this.tokenInput.trim())return; this.token=this.tokenInput; localStorage.setItem('gh_token',this.token); this.loadWhitelistData(); this.startCountdown(); },
-            logout() { this.token=''; localStorage.removeItem('gh_token'); clearInterval(this.countdownInterval); this.isInitializing=false; },
-            startCountdown() { this.resetActivity(); if(this.countdownInterval)clearInterval(this.countdownInterval); this.countdownInterval=setInterval(()=>{ const n=Date.now(); this.timeLeft=Math.ceil((this.targetTime-n)/1000); if(this.timeLeft<=0)this.logout(); },1000); },
-            resetActivity() { if(!this.token)return; this.targetTime=Date.now()+(INACTIVITY_MINUTES*60*1000); },
-            markDirty() { this.hasUnsavedChanges=true; this.resetActivity(); },
+            initTheme() {
+                const savedTheme = localStorage.getItem('theme');
+                this.isDark = savedTheme ? savedTheme === 'dark' : true; 
+                this.applyTheme();
+            },
+            toggleTheme() {
+                this.isDark = !this.isDark;
+                localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
+                this.applyTheme();
+            },
+            applyTheme() {
+                if (this.isDark) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+            },
+            showToast(title, message, isError = false) {
+                this.toast = { show: true, title, message, isError };
+                setTimeout(() => { this.toast.show = false; }, 4000);
+            },
+            setToken() {
+                if(!this.tokenInput.trim()) return;
+                this.token = this.tokenInput;
+                localStorage.setItem('gh_token', this.token);
+                this.loadWhitelistData();
+                this.startCountdown();
+            },
+            logout() {
+                this.token = '';
+                localStorage.removeItem('gh_token');
+                clearInterval(this.countdownInterval);
+                this.isInitializing = false;
+            },
+            startCountdown() {
+                this.resetActivity();
+                if (this.countdownInterval) clearInterval(this.countdownInterval);
+                this.countdownInterval = setInterval(() => {
+                    const now = Date.now();
+                    this.timeLeft = Math.ceil((this.targetTime - now) / 1000);
+                    if (this.timeLeft <= 0) this.logout();
+                }, 1000);
+            },
+            resetActivity() {
+                if (!this.token) return;
+                this.targetTime = Date.now() + (INACTIVITY_MINUTES * 60 * 1000);
+            },
+            markDirty() { this.hasUnsavedChanges = true; this.resetActivity(); },
 
             async loadWhitelistData() {
-                this.loading=true; const octokit=new Octokit({auth:this.token});
+                this.loading = true;
+                const octokit = new Octokit({ auth: this.token });
                 try {
-                    const r1 = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}`);
-                    const json = JSON.parse(decodeURIComponent(escape(atob(r1.data.content))));
-                    try { const r2 = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`); this.existingReadmeContent=decodeURIComponent(escape(atob(r2.data.content))); } catch(e){this.existingReadmeContent='';}
-                    this.mergeData(json, this.existingReadmeContent);
-                    this.isInitializing=false; this.hasUnsavedChanges=false;
-                } catch(e) { console.error(e); this.showToast('Login Failed',e.message,true); this.logout(); } finally { this.loading=false; }
+                    const jsonRes = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}`);
+                    const jsonData = JSON.parse(decodeURIComponent(escape(atob(jsonRes.data.content))));
+                    try {
+                        const readmeRes = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`);
+                        this.existingReadmeContent = decodeURIComponent(escape(atob(readmeRes.data.content)));
+                    } catch (e) { this.existingReadmeContent = ''; }
+                    this.mergeData(jsonData, this.existingReadmeContent);
+                    this.isInitializing = false;
+                    this.hasUnsavedChanges = false;
+                } catch (e) {
+                    console.error(e);
+                    this.showToast('Login Failed', e.message, true);
+                    this.logout();
+                } finally { this.loading = false; }
             },
+
             mergeData(json, readme) {
-                const map={}; readme.split('\n').forEach(l=>{const m=l.match(/- `(.*?)` \| 📝 (.*)/); if(m)map[m[1]]=m[2];});
-                const pop=(k,arr)=>{ this.editableLists[k].items=(arr||[]).map(v=>({val:v, note:map[v]||''})); };
-                pop('GOOD_IPS',json.GOOD_IPS); pop('BLOCKED_THREATS',json.BLOCKED_THREATS||json.BLOCKED_IPS); pop('GOOD_REFERRERS',json.GOOD_REFERRERS); pop('SEARCH_BOTS',json.GOOD_BOTS?.SEARCH_BOTS); pop('AI_BOTS',json.GOOD_BOTS?.AI_BOTS);
+                const noteMap = {};
+                const lines = readme.split('\n');
+                lines.forEach(line => {
+                    const match = line.match(/- `(.*?)` \| 📝 (.*)/);
+                    if(match) noteMap[match[1]] = match[2];
+                });
+                const populate = (key, sourceArr) => {
+                    this.editableLists[key].items = (sourceArr || []).map(val => ({
+                        val: val,
+                        note: noteMap[val] || '' 
+                    }));
+                };
+                populate('GOOD_IPS', json.GOOD_IPS);
+                populate('BLOCKED_THREATS', json.BLOCKED_THREATS || json.BLOCKED_IPS);
+                populate('GOOD_REFERRERS', json.GOOD_REFERRERS);
+                populate('SEARCH_BOTS', json.GOOD_BOTS?.SEARCH_BOTS);
+                populate('AI_BOTS', json.GOOD_BOTS?.AI_BOTS);
             },
+
             async loadLog(type) {
-                this.currentView=type+'-log'; this.activeLogContent=''; this.loadingLog=true; const octokit=new Octokit({auth:this.token});
-                try { const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${LOGS[type]}`); this.activeLogContent=decodeURIComponent(escape(atob(r.data.content))); } 
-                catch(e){ if(e.status!==404)this.activeLogContent=`Error: ${e.message}`; } finally { this.loadingLog=false; }
+                this.currentView = type + '-log';
+                this.activeLogContent = '';
+                this.loadingLog = true;
+                const octokit = new Octokit({ auth: this.token });
+                try {
+                    const path = LOGS[type];
+                    const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${path}`);
+                    let content = decodeURIComponent(escape(atob(res.data.content)));
+                    this.activeLogContent = content;
+                } catch (e) {
+                    if (e.status !== 404) this.activeLogContent = `Error: ${e.message}`;
+                } finally { this.loadingLog = false; }
             },
+
             async loadJson(type) {
-                this.currentView=type+'-json'; this.activeLogContent=''; this.loadingLog=true; const octokit=new Octokit({auth:this.token});
-                try { const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES[type]}`); this.activeLogContent=JSON.stringify(JSON.parse(decodeURIComponent(escape(atob(r.data.content)))),null,4); } 
-                catch(e){ if(e.status!==404)this.activeLogContent=`Error: ${e.message}`; } finally { this.loadingLog=false; }
+                this.currentView = type + '-json';
+                this.activeLogContent = '';
+                this.loadingLog = true;
+                const octokit = new Octokit({ auth: this.token });
+                try {
+                    const path = JSON_FILES[type];
+                    const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${path}`);
+                    const content = decodeURIComponent(escape(atob(res.data.content)));
+                    this.activeLogContent = JSON.stringify(JSON.parse(content), null, 4);
+                } catch (e) {
+                    if (e.status !== 404) this.activeLogContent = `Error: ${e.message}`;
+                } finally { this.loadingLog = false; }
             },
 
             // --- UI HELPER: EXTRACT TAG FROM NOTE ---
             getOrigin(note) {
                 if(!note) return null;
                 const match = note.match(/\[Origin: (.*?)\]/);
-                return match ? match[1] : null;
+                // Return readable name instead of key
+                if(match) {
+                    const key = match[1];
+                    const list = this.editableLists[key];
+                    return list ? list.title.replace(/^[^\s]+\s/, '') : key; // Remove icon
+                }
+                return null;
             },
 
-            // --- CORE LIST LOGIC ---
+            // --- CORE ITEM MANAGEMENT ---
             addItem(key) {
-                const val=this.inputs[key].val.trim(); const note=this.inputs[key].note.trim(); if(!val)return;
-                if(key==='BLOCKED_THREATS' && !note) { this.showToast('Error','Threats require a note.',true); return; }
-                this.editableLists[key].items.unshift({val,note});
-                this.inputs[key].val=''; this.inputs[key].note='';
-                if(key==='BLOCKED_THREATS') this.sessionHistory.push({action:'ADDED',val,note,date:new Date().toISOString().split('T')[0]});
+                const val = this.inputs[key].val.trim();
+                const note = this.inputs[key].note.trim();
+                if (!val) return;
+                
+                if (key === 'BLOCKED_THREATS' && !note) {
+                    this.showToast('Validation Error', 'You must add a note explaining why this threat is blocked.', true);
+                    return;
+                }
+
+                this.editableLists[key].items.unshift({ val, note });
+                this.inputs[key].val = '';
+                this.inputs[key].note = '';
+                
+                if (key === 'BLOCKED_THREATS') {
+                    this.sessionHistory.push({ action: 'ADDED', val, note, date: new Date().toISOString().split('T')[0] });
+                }
                 this.markDirty();
             },
+
             deleteItem(key, index) {
                 this.editableLists[key].items.splice(index, 1);
                 this.markDirty();
             },
 
-            // --- ADVANCED MODAL LOGIC ---
+            // --- ADVANCED MODAL ACTIONS ---
             openModal(type, key, index, item) {
                 let targetKey = '';
-                // Smart Restore: Check note for [Origin: ...]
+                // Smart Restore Detection
                 if(type === 'RESTORE') {
-                    const origin = this.getOrigin(item.note);
-                    if(origin && this.editableLists[origin]) targetKey = origin;
+                    const originMatch = item.note ? item.note.match(/\[Origin: (.*?)\]/) : null;
+                    if(originMatch && this.editableLists[originMatch[1]]) {
+                        targetKey = originMatch[1];
+                    }
                 }
                 this.modal = { show: true, type, sourceKey: key, index, val: item.val, reason: '', targetKey };
             },
+            
             closeModal() { this.modal.show = false; },
             
             confirmAction() {
-                if(!this.modal.reason.trim()) { this.showToast('Missing Reason','Audit log requires a reason.',true); return; }
+                if(!this.modal.reason.trim()) {
+                    this.showToast('Missing Reason', 'Audit log requires a reason.', true);
+                    return;
+                }
                 
                 // 1. Remove from Source
+                // We use [0] because splice returns an array
                 const removedItem = this.editableLists[this.modal.sourceKey].items.splice(this.modal.index, 1)[0];
 
                 if (this.modal.type === 'BLOCK') {
@@ -393,9 +553,8 @@
                 } else {
                     // RESTORE
                     if (this.modal.targetKey) {
-                        // Restore to specific list, remove the Origin tag from the note to make it clean
-                        const cleanNote = this.modal.reason; 
-                        this.editableLists[this.modal.targetKey].items.unshift({ val: this.modal.val, note: cleanNote });
+                        // Restore to specific list, clean note
+                        this.editableLists[this.modal.targetKey].items.unshift({ val: this.modal.val, note: this.modal.reason });
                         
                         this.sessionHistory.push({
                             action: 'RESTORED', 
@@ -404,7 +563,7 @@
                             date: new Date().toISOString().split('T')[0]
                         });
                     } else {
-                        // Just Unblock (Delete)
+                        // Just Unblock
                         this.sessionHistory.push({
                             action: 'UNBLOCKED', 
                             val: this.modal.val, 
@@ -417,39 +576,98 @@
                 this.closeModal();
             },
 
-            generateReadmeContent(isPreview=false) {
-                let md = `# 🛡️ Security Whitelist Documentation\n\n**Last Updated:** ${new Date().toUTCString()}\n\n> Auto-generated by Security Manager WebUI.\n\n`;
-                const sections = [ {key:'GOOD_IPS',t:'🌍 Allowed IPs'}, {key:'BLOCKED_THREATS',t:'⛔ Blocked Threats'}, {key:'GOOD_REFERRERS',t:'🔗 Referrers'}, {key:'SEARCH_BOTS',t:'🤖 Search Bots'}, {key:'AI_BOTS',t:'🧠 AI Agents'} ];
-                sections.forEach(s=>{
-                    md+=`## ${s.t}\n`;
-                    const items=this.editableLists[s.key].items;
-                    if(!items.length) md+='*No records.*\n\n';
-                    else { items.forEach(i=>{ md+=`- \`${i.val}\`${i.note?` | 📝 ${i.note}`:''}\n`; }); md+='\n'; }
+            generateReadmeContent(isPreview = false) {
+                let md = `# 🛡️ Security Whitelist Documentation\n\n`;
+                md += `**Last Updated:** ${new Date().toUTCString()}\n\n`;
+                md += `> This file is auto-generated by the Security Manager WebUI. It contains record details and notes.\n\n`;
+                
+                const sections = [
+                    { key: 'GOOD_IPS', title: '🌍 Allowed IPs' },
+                    { key: 'BLOCKED_THREATS', title: '⛔ Blocked Threats' },
+                    { key: 'GOOD_REFERRERS', title: '🔗 Referrers' },
+                    { key: 'SEARCH_BOTS', title: '🤖 Search Bots' },
+                    { key: 'AI_BOTS', title: '🧠 AI Agents' }
+                ];
+
+                sections.forEach(sec => {
+                    md += `## ${sec.title}\n`;
+                    const items = this.editableLists[sec.key].items;
+                    if(items.length === 0) md += `*No records.*\n\n`;
+                    else {
+                        items.forEach(item => {
+                            const noteStr = item.note ? ` | 📝 ${item.note}` : '';
+                            md += `- \`${item.val}\`${noteStr}\n`;
+                        });
+                        md += `\n`;
+                    }
                 });
-                const head = `## 📜 Threat History (Permanent Log)`; let hist='';
-                if(this.existingReadmeContent && this.existingReadmeContent.includes(head)) hist=this.existingReadmeContent.split(head)[1].trim();
-                if(this.sessionHistory.length) {
-                    const newLog = this.sessionHistory.map(h=>{
-                        const ic = (h.action==='BLOCKED'||h.action==='ADDED') ? '🔴' : '🟢';
-                        return `- ${ic} [${h.date}] **${h.action}**: \`${h.val}\` | Reason: *${h.note}*`;
-                    }).join('\n');
-                    hist = hist ? (hist+'\n'+newLog) : newLog;
+
+                const historyHeader = `## 📜 Threat History (Permanent Log)`;
+                let historyContent = "";
+                
+                if (this.existingReadmeContent && this.existingReadmeContent.includes(historyHeader)) {
+                    const parts = this.existingReadmeContent.split(historyHeader);
+                    if (parts[1]) historyContent = parts[1].trim();
                 }
-                md+=`\n${head}\n${hist||'*No history yet.*'}\n`;
+
+                if (this.sessionHistory.length > 0) {
+                    const newLogLines = this.sessionHistory.map(h => {
+                        let icon = '⚪';
+                        if (h.action === 'ADDED' || h.action === 'BLOCKED') icon = '🔴'; // Red for Block
+                        else if (h.action === 'REMOVED' || h.action === 'UNBLOCKED' || h.action === 'RESTORED') icon = '🟢'; // Green for Allow
+                        
+                        return `- ${icon} [${h.date}] **${h.action}**: \`${h.val}\` | Reason: *${h.note}*`;
+                    }).join('\n');
+                    
+                    historyContent = historyContent ? (historyContent + '\n' + newLogLines) : newLogLines;
+                }
+
+                md += `\n${historyHeader}\n${historyContent || '*No history yet.*'}\n`;
                 return md;
             },
 
             async saveChanges() {
-                this.loading=true; const octokit=new Octokit({auth:this.token});
+                this.loading = true;
+                const octokit = new Octokit({ auth: this.token });
                 try {
-                    const pl = { GOOD_IPS:this.editableLists.GOOD_IPS.items.map(i=>i.val), BLOCKED_THREATS:this.editableLists.BLOCKED_THREATS.items.map(i=>i.val), GOOD_REFERRERS:this.editableLists.GOOD_REFERRERS.items.map(i=>i.val), GOOD_BOTS:{ SEARCH_BOTS:this.editableLists.SEARCH_BOTS.items.map(i=>i.val), AI_BOTS:this.editableLists.AI_BOTS.items.map(i=>i.val) } };
-                    const md = this.generateReadmeContent(false);
-                    let sha1=null; try{const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_TEMP}`); sha1=r.data.sha;}catch(e){}
-                    await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_TEMP}`, { message:'🛡️ Update Whitelist', content:btoa(unescape(encodeURIComponent(JSON.stringify(pl,null,2)))), sha:sha1 });
-                    let sha2=null; try{const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`); sha2=r.data.sha;}catch(e){}
-                    await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`, { message:'📝 Update Docs', content:btoa(unescape(encodeURIComponent(md))), sha:sha2 });
-                    this.hasUnsavedChanges=false; this.sessionHistory=[]; this.existingReadmeContent=md; this.resetActivity(); this.showToast('Success','Saved.');
-                } catch(e) { console.error(e); this.showToast('Error',e.message,true); } finally { this.loading=false; }
+                    const jsonPayload = {
+                        GOOD_IPS: this.editableLists.GOOD_IPS.items.map(i => i.val),
+                        BLOCKED_THREATS: this.editableLists.BLOCKED_THREATS.items.map(i => i.val),
+                        GOOD_REFERRERS: this.editableLists.GOOD_REFERRERS.items.map(i => i.val),
+                        GOOD_BOTS: {
+                            SEARCH_BOTS: this.editableLists.SEARCH_BOTS.items.map(i => i.val),
+                            AI_BOTS: this.editableLists.AI_BOTS.items.map(i => i.val)
+                        }
+                    };
+                    const readmePayload = this.generateReadmeContent(false);
+
+                    let shaTemp = null;
+                    try { const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_TEMP}`); shaTemp = res.data.sha; } catch(e) {}
+
+                    await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_TEMP}`, {
+                        message: '🛡️ Update Whitelist (WebUI)',
+                        content: btoa(unescape(encodeURIComponent(JSON.stringify(jsonPayload, null, 2)))),
+                        sha: shaTemp
+                    });
+
+                    let shaReadme = null;
+                    try { const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`); shaReadme = res.data.sha; } catch(e) {}
+
+                    await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`, {
+                        message: '📝 Update Documentation & History',
+                        content: btoa(unescape(encodeURIComponent(readmePayload))),
+                        sha: shaReadme
+                    });
+
+                    this.hasUnsavedChanges = false;
+                    this.sessionHistory = []; 
+                    this.existingReadmeContent = readmePayload; 
+                    this.resetActivity();
+                    this.showToast('Success', 'Changes committed successfully.');
+                } catch (e) {
+                    console.error(e);
+                    this.showToast('Save Failed', e.message, true);
+                } finally { this.loading = false; }
             }
         }
     }).mount('#app');
