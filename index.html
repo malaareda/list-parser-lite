@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v7.2</title>
+    <title>Security Manager v7.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -52,7 +52,7 @@
         .j-null { color: #94a3b8; font-style: italic; } 
         .j-meta { color: #64748b; }
         
-        /* [NEW] Duplicate Highlight Style */
+        /* Duplicate Highlight Style */
         .j-dup { color: #fbbf24 !important; font-weight: bold; background: rgba(251, 191, 36, 0.1); padding: 0 4px; border-radius: 4px; }
 
         .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; } .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(20px); }
@@ -111,7 +111,7 @@
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.2</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.3</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -121,7 +121,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.2</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.3</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -251,6 +251,7 @@
             
             <div v-if="currentView.includes('-json')" class="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950 relative transition-colors duration-300">
                 <div v-if="loadingLog" class="absolute inset-0 flex items-center justify-center bg-slate-50 dark:bg-slate-950 z-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div>
+                
                 <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center sticky top-0 z-10" v-if="activeLogContent && !activeLogContent.startsWith('Error')">
                     <div class="text-xs font-mono text-slate-500 font-bold">JSON Explorer</div>
                     <div class="flex gap-2 items-center">
@@ -260,8 +261,36 @@
                         <div class="relative" v-if="!showRawJson"><input v-model="jsonSearchQuery" placeholder="Filter..." class="bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-xs outline-none focus:border-indigo-500 text-slate-800 dark:text-white w-32"></div>
                     </div>
                 </div>
+
                 <div v-if="!activeLogContent || activeLogContent.trim() === ''" class="flex-1 flex flex-col items-center justify-center text-slate-500"><div class="text-4xl mb-4 grayscale opacity-50">📂</div><h3 class="font-bold text-sm mb-1">File Empty or Missing</h3></div>
-                <div v-else class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-[#0d1117]" ref="jsonContainer"><pre v-if="showRawJson" class="font-mono text-xs text-emerald-400 whitespace-pre-wrap">{{ activeLogContent }}</pre><div v-else class="json-tree" v-html="renderJsonTree(filteredJsonObj)"></div></div>
+                
+                <div v-else class="flex-1 flex overflow-hidden">
+                    
+                    <div class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-[#0d1117] border-r border-slate-800" ref="jsonContainer">
+                        <pre v-if="showRawJson" class="font-mono text-xs text-emerald-400 whitespace-pre-wrap">{{ activeLogContent }}</pre>
+                        <div v-else class="json-tree" v-html="renderJsonTree(filteredJsonObj)"></div>
+                    </div>
+
+                    <div class="w-72 bg-slate-50 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col" v-if="!showRawJson">
+                        <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 font-bold text-xs text-slate-500 uppercase tracking-wider flex items-center gap-2">
+                            <span>⚠️ Duplicate Inspector</span>
+                            <span class="ml-auto bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px] text-slate-600 dark:text-slate-400">{{ sortedDuplicates.length }}</span>
+                        </div>
+                        <div class="flex-1 overflow-y-auto custom-scrollbar p-0">
+                            <div v-if="sortedDuplicates.length === 0" class="flex flex-col items-center justify-center h-40 text-slate-400 text-xs italic">
+                                <span class="text-xl mb-1">✅</span>
+                                <span>No duplicates found.</span>
+                            </div>
+                            <div v-else class="divide-y divide-slate-200 dark:divide-slate-800">
+                                <div v-for="[val, count] in sortedDuplicates" :key="val" class="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex justify-between items-center group">
+                                    <code class="text-xs font-mono text-slate-700 dark:text-slate-300 break-all">{{ val }}</code>
+                                    <span class="text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full">x{{ count }}</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
             </div>
 
             <div v-if="currentView.includes('-log')" class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-white dark:bg-slate-950"><div v-if="loadingLog" class="flex justify-center mt-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div><pre v-else class="font-mono text-xs whitespace-pre-wrap" v-html="formattedLogContent"></pre></div>
@@ -298,6 +327,15 @@
             formattedTime() { const m=Math.floor(Math.max(0,this.timeLeft)/60).toString().padStart(2,'0'); const s=(Math.max(0,this.timeLeft)%60).toString().padStart(2,'0'); return `${m}:${s}`; },
             renderedReadme() { return marked.parse(this.generateReadmeContent(true)); },
             totalItems() { let c=0; for(const k in this.editableLists) c+=this.editableLists[k].items.length; return c; },
+            
+            // [NEW] Sort Duplicates by Count Descending
+            sortedDuplicates() {
+                if (!this.duplicateMap.size) return [];
+                return Array.from(this.duplicateMap.entries())
+                    .filter(x => x[1] > 1)
+                    .sort((a, b) => b[1] - a[1]); 
+            },
+
             parsedHistory() {
                 const h = [];
                 this.sessionHistory.forEach(i => h.push(i));
@@ -392,7 +430,6 @@
                 } catch(e) { console.error(e); this.showToast('Error',e.message,true); } finally { this.loading=false; }
             },
             
-            // [FIXED] Removed Silent Mode / Always Modal
             addItem(key) { 
                 const v=this.inputs[key].val.trim(); const n=this.inputs[key].note.trim(); 
                 if(!v)return; 
@@ -427,7 +464,6 @@
                 this.closeModal(); 
             },
 
-            // [NEW] Duplicate Frequency Map Logic
             calculateDuplicates(obj) {
                 if (typeof obj === 'object' && obj !== null) {
                     if (Array.isArray(obj)) {
@@ -436,7 +472,6 @@
                         Object.values(obj).forEach(v => this.calculateDuplicates(v));
                     }
                 } else if (['string', 'number'].includes(typeof obj)) {
-                    // Count primitive values
                     const val = String(obj);
                     this.duplicateMap.set(val, (this.duplicateMap.get(val) || 0) + 1);
                 }
@@ -464,22 +499,18 @@
 
             filterObject(obj, query) { if (!query) return obj; if (typeof obj!=='object'||obj===null) return String(obj).toLowerCase().includes(query)?obj:undefined; if(Array.isArray(obj)){const f=obj.map(i=>this.filterObject(i,query)).filter(i=>i!==undefined);return f.length?f:undefined;} const r={};let h=false;Object.keys(obj).forEach(k=>{if(k.toLowerCase().includes(query)){r[k]=obj[k];h=true;}else{const v=this.filterObject(obj[k],query);if(v!==undefined){r[k]=v;h=true;}}}); return h?r:undefined; },
             
-            // [UPDATED] Render with Duplicate Check
             renderJsonTree(data) { 
                 if(data===undefined)return '<span class="j-null">No matches.</span>'; 
                 if(data===null)return '<span class="j-null">null</span>'; 
                 
-                // Primitives
                 if(['string','number','boolean'].includes(typeof data)) {
                     const valStr = String(data);
                     const count = this.duplicateMap.get(valStr) || 0;
-                    
                     let html = '';
                     if(typeof data==='string') html = `<span class="j-str">"${data}"</span>`;
                     else if(typeof data==='number') html = `<span class="j-num">${data}</span>`;
                     else html = `<span class="j-bool">${data}</span>`;
                     
-                    // Add Warning if Duplicate
                     if (count > 1) {
                         html += ` <span class="j-dup" title="This value appears ${count} times">⚠️ (x${count})</span>`;
                     }
