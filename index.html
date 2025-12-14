@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v6.2</title>
+    <title>Security Manager v6.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -41,17 +41,23 @@
         .markdown-body code { background: #1e293b; padding: 0.2rem 0.4rem; rounded: 0.25rem; font-size: 0.875em; color: #cbd5e1; }
 
         /* Modern JSON Tree Styles */
-        details > summary { list-style: none; cursor: pointer; }
-        details > summary::-webkit-details-marker { display: none; }
-        details > summary::before { content: '▶'; font-size: 0.6rem; margin-right: 6px; display: inline-block; transition: transform 0.2s; color: #94a3b8; }
-        details[open] > summary::before { transform: rotate(90deg); }
+        .json-tree { font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.5; }
+        .json-tree details { margin-left: 10px; }
+        .json-tree summary { cursor: pointer; list-style: none; outline: none; }
+        .json-tree summary::-webkit-details-marker { display: none; }
+        .json-tree summary:hover { background-color: rgba(255,255,255,0.05); border-radius: 4px; }
         
-        .json-tree { font-family: 'JetBrains Mono', monospace; font-size: 12px; line-height: 1.6; }
-        .j-key { color: #60a5fa; } /* Blue */
-        .j-str { color: #34d399; } /* Green */
-        .j-num { color: #c084fc; } /* Purple */
-        .j-bool { color: #f87171; } /* Red */
-        .j-null { color: #94a3b8; } /* Grey */
+        /* Arrow Icons */
+        .json-arrow { display: inline-block; width: 12px; transition: transform 0.15s; font-size: 10px; color: #64748b; }
+        details[open] > summary > .json-arrow { transform: rotate(90deg); }
+
+        /* Syntax Colors */
+        .j-key { color: #60a5fa; font-weight: 600; }   /* Blue */
+        .j-str { color: #34d399; }                      /* Green */
+        .j-num { color: #c084fc; }                      /* Purple */
+        .j-bool { color: #f87171; }                     /* Red */
+        .j-null { color: #94a3b8; italic; }             /* Slate */
+        .j-meta { color: #94a3b8; }                     /* Brackets/Commas */
 
         /* Transitions */
         .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
@@ -67,13 +73,18 @@
     <transition name="fade">
         <div v-if="modal.show" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
             <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform transition-all">
+                
                 <div class="p-6 pb-2">
                     <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-2">
                         <span class="text-xl">{{ modal.type === 'BLOCK' ? '⛔ Block Threat' : '♻️ Restore Item' }}</span>
                     </h3>
-                    <p class="text-xs text-slate-500 font-mono break-all bg-slate-100 dark:bg-slate-800 p-2 rounded border border-slate-200 dark:border-slate-700">{{ modal.val }}</p>
+                    <p class="text-xs text-slate-500 font-mono break-all bg-slate-100 dark:bg-slate-800 p-2 rounded border border-slate-200 dark:border-slate-700">
+                        {{ modal.val }}
+                    </p>
                 </div>
+
                 <div class="px-6 py-2 space-y-4">
+                    
                     <div v-if="modal.type === 'RESTORE'">
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Action / Destination</label>
                         <select v-model="modal.targetKey" class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200">
@@ -84,13 +95,15 @@
                             <option value="AI_BOTS">🧠 Restore to AI Agents</option>
                         </select>
                     </div>
+
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">
                             {{ modal.type === 'BLOCK' ? 'Reason for Blocking (Required)' : 'Reason / New Note' }}
                         </label>
-                        <textarea v-model="modal.reason" class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-sm focus:border-indigo-500 outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400" rows="3" :placeholder="modal.type === 'BLOCK' ? 'e.g. High traffic attack...' : 'e.g. Verified safe...'"></textarea>
+                        <textarea v-model="modal.reason" class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-sm focus:border-indigo-500 outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400" rows="3" :placeholder="modal.type === 'BLOCK' ? 'e.g. High traffic attack, Scraping...' : 'e.g. False positive, Verified safe...'"></textarea>
                     </div>
                 </div>
+
                 <div class="bg-slate-50 dark:bg-slate-950/50 p-4 flex gap-3 justify-end border-t border-slate-200 dark:border-slate-800 mt-2">
                     <button @click="closeModal" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">Cancel</button>
                     <button @click="confirmAction" class="px-4 py-2 text-white text-xs font-bold rounded-lg transition-colors shadow-lg" :class="modal.type === 'BLOCK' ? 'bg-red-600 hover:bg-red-700 shadow-red-500/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'">
@@ -104,7 +117,10 @@
     <transition name="toast">
         <div v-if="toast.show" class="fixed bottom-6 right-6 z-50 px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4 border border-slate-200 dark:border-white/10 backdrop-blur-md" :class="toast.isError ? 'bg-red-100 text-red-800 dark:bg-red-900/90 dark:text-red-100' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/90 dark:text-emerald-100'">
             <div class="text-2xl">{{ toast.isError ? '❌' : '✅' }}</div>
-            <div><h4 class="font-bold text-sm">{{ toast.title }}</h4><p class="text-xs opacity-90">{{ toast.message }}</p></div>
+            <div>
+                <h4 class="font-bold text-sm">{{ toast.title }}</h4>
+                <p class="text-xs opacity-90">{{ toast.message }}</p>
+            </div>
         </div>
     </transition>
 
@@ -118,7 +134,7 @@
         
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v6.2</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v6.3</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -131,7 +147,7 @@
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
                 <div>
                     <h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1>
-                    <p class="text-[10px] text-slate-400 font-bold">System v6.2</p>
+                    <p class="text-[10px] text-slate-400 font-bold">System v6.3</p>
                 </div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
@@ -196,15 +212,14 @@
                                     <div class="flex justify-between items-start">
                                         <div class="flex flex-col">
                                             <span class="font-mono text-sm text-indigo-600 dark:text-indigo-400 font-bold break-all">{{ item.val }}</span>
-                                            
                                             <span v-if="getOrigin(item.note)" class="text-[10px] bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 px-1.5 py-0.5 rounded w-fit mt-1 font-bold">
                                                 From: {{ getOrigin(item.note) }}
                                             </span>
                                         </div>
                                         <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button v-if="key !== 'BLOCKED_THREATS'" @click="openModal('BLOCK', key, index, item)" class="text-slate-400 hover:text-red-500 px-1" title="Block">⛔</button>
-                                            <button v-if="key === 'BLOCKED_THREATS'" @click="openModal('RESTORE', key, index, item)" class="text-slate-400 hover:text-emerald-500 px-1" title="Restore">♻️</button>
-                                            <button @click="deleteItem(key, index, item)" class="text-slate-400 hover:text-red-500 px-1" title="Delete">✕</button>
+                                            <button v-if="key !== 'BLOCKED_THREATS'" @click="openModal('BLOCK', key, index, item)" class="text-slate-400 hover:text-red-500 px-1" title="Block this item">⛔</button>
+                                            <button v-if="key === 'BLOCKED_THREATS'" @click="openModal('RESTORE', key, index, item)" class="text-slate-400 hover:text-emerald-500 px-1" title="Restore this item">♻️</button>
+                                            <button @click="deleteItem(key, index, item)" class="text-slate-400 hover:text-red-500 px-1" title="Delete permanently">✕</button>
                                         </div>
                                     </div>
                                 </div>
@@ -212,8 +227,13 @@
                             </div>
                         </div>
                         <div class="p-3 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700">
-                            <div class="flex gap-2 mb-2"><input v-model="inputs[key].val" @keyup.enter="addItem(key)" class="flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-xs font-mono outline-none focus:border-indigo-500 text-slate-800 dark:text-white" :placeholder="list.placeholder"></div>
-                            <div class="flex gap-2"><input v-model="inputs[key].note" @keyup.enter="addItem(key)" class="flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-xs outline-none focus:border-indigo-500 text-slate-800 dark:text-white" placeholder="Optional Note..."><button @click="addItem(key)" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded px-3 py-2 text-xs font-bold">Add</button></div>
+                            <div class="flex gap-2 mb-2">
+                                <input v-model="inputs[key].val" @keyup.enter="addItem(key)" class="flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-xs font-mono outline-none focus:border-indigo-500 text-slate-800 dark:text-white" :placeholder="list.placeholder">
+                            </div>
+                            <div class="flex gap-2">
+                                <input v-model="inputs[key].note" @keyup.enter="addItem(key)" class="flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-xs outline-none focus:border-indigo-500 text-slate-800 dark:text-white" placeholder="Optional Note...">
+                                <button @click="addItem(key)" class="bg-indigo-600 hover:bg-indigo-700 text-white rounded px-3 py-2 text-xs font-bold">Add</button>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -221,6 +241,7 @@
 
             <div v-if="currentView === 'whitelist-readme'" class="flex-1 overflow-hidden p-6 relative">
                 <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                    
                     <div class="flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm h-full">
                         <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
                             <h2 class="text-sm font-bold text-slate-700 dark:text-white">🛡️ Security Whitelist Documentation</h2>
@@ -228,7 +249,9 @@
                         </div>
                         <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
                             <div v-for="(list, key) in editableLists" :key="key">
-                                <h3 class="font-bold text-sm text-slate-800 dark:text-slate-200 mb-2 border-b border-slate-200 dark:border-slate-700 pb-1">{{ list.title }}</h3>
+                                <h3 class="font-bold text-sm text-slate-800 dark:text-slate-200 mb-2 border-b border-slate-200 dark:border-slate-700 pb-1">
+                                    {{ list.title }}
+                                </h3>
                                 <div v-if="list.items.length === 0" class="text-xs text-slate-400 italic">No records.</div>
                                 <ul v-else class="space-y-1">
                                     <li v-for="item in list.items" class="text-xs text-slate-600 dark:text-slate-400 font-mono flex items-center gap-2">
@@ -240,6 +263,7 @@
                             </div>
                         </div>
                     </div>
+
                     <div class="flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm h-full">
                         <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
                             <h2 class="text-sm font-bold text-slate-700 dark:text-white mb-2">📜 Threat History (Permanent Log)</h2>
@@ -251,30 +275,48 @@
                                 <button class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-colors">Search</button>
                             </div>
                         </div>
+                        
                         <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
-                            <div v-if="filteredHistory.length === 0" class="text-center text-slate-400 text-xs italic mt-10">No history records found.</div>
+                            <div v-if="filteredHistory.length === 0" class="text-center text-slate-400 text-xs italic mt-10">
+                                No history records found.
+                            </div>
                             <div v-for="(h, i) in filteredHistory" :key="i" class="p-2 rounded border border-slate-100 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-950/30 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex flex-col gap-0.5">
                                 <div class="flex justify-between items-baseline gap-2">
                                     <div class="flex items-center gap-2 min-w-0">
-                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase shrink-0" :class="(h.action.includes('ADDED') || h.action.includes('BLOCKED')) ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'">{{ h.action }}</span>
+                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase shrink-0" 
+                                              :class="(h.action.includes('ADDED') || h.action.includes('BLOCKED')) ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'">
+                                            {{ h.action }}
+                                        </span>
                                         <code class="text-xs font-mono text-slate-800 dark:text-slate-200 font-bold truncate">{{ h.val }}</code>
                                     </div>
-                                    <span class="text-[10px] font-mono text-slate-400 dark:text-slate-300 shrink-0">{{ h.date }}</span>
+                                    <span class="text-[9px] font-mono text-slate-400 dark:text-slate-300 shrink-0">{{ h.date }}</span>
                                 </div>
-                                <div v-if="h.note" class="text-[11px] text-slate-500 dark:text-slate-400 italic pl-1 truncate">↳ {{ h.note }}</div>
+                                <div v-if="h.note" class="text-[10px] text-slate-500 dark:text-slate-300 italic pl-1 truncate">
+                                    ↳ {{ h.note }}
+                                </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
             </div>
 
             <div v-if="currentView.includes('-json')" class="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950 relative transition-colors duration-300">
-                <div v-if="loadingLog" class="absolute inset-0 flex items-center justify-center bg-slate-50 dark:bg-slate-950 z-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div>
+                <div v-if="loadingLog" class="absolute inset-0 flex items-center justify-center bg-slate-50 dark:bg-slate-950 z-20">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                </div>
                 
                 <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center sticky top-0 z-10" v-if="activeLogContent && !activeLogContent.startsWith('Error')">
-                    <div class="text-xs font-mono text-slate-500 font-bold">JSON Source Viewer</div>
+                    <div class="text-xs font-mono text-slate-500 font-bold">JSON Explorer</div>
                     <div class="flex gap-2">
-                        <input v-model="jsonSearchQuery" placeholder="Filter Keys/Values..." class="bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-xs outline-none focus:border-indigo-500 text-slate-800 dark:text-white w-48">
+                        <button @click="expandAll" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700">Expand All</button>
+                        <button @click="collapseAll" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700">Collapse All</button>
+                        <button @click="copyJson" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700">📋 Copy</button>
+                        
+                        <div class="relative">
+                            <input v-model="jsonSearchQuery" placeholder="Filter..." class="bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-xs outline-none focus:border-indigo-500 text-slate-800 dark:text-white w-40">
+                            <button @click="triggerJsonSearch" class="ml-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded px-2 py-1 text-xs font-bold">🔍</button>
+                        </div>
                     </div>
                 </div>
 
@@ -282,8 +324,8 @@
                     <div class="text-4xl mb-4 grayscale opacity-50">📂</div>
                     <h3 class="font-bold text-sm mb-1">File Empty or Missing</h3>
                 </div>
-                <div v-else class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-[#0d1117]">
-                    <div class="json-tree text-sm" v-html="renderJsonTree(JSON.parse(activeLogContent))"></div>
+                <div v-else class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-[#0d1117]" ref="jsonContainer">
+                    <div class="json-tree" v-html="renderJsonTree(filteredJsonObj)"></div>
                 </div>
             </div>
 
@@ -305,60 +347,145 @@
     const TARGET_REPO  = 'security-list';         
     const FILE_TEMP    = 'security-list-backup/security-whitelist-backup/security-whitelist-temp.json';
     const FILE_README  = 'security-list-backup/security-whitelist-backup/README.md';
-    const JSON_FILES = { 'whitelist': 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json', 'blacklist': 'security-list-backup/security-blacklist-backup/security-blacklist-R.00.json', 'livelist':  'security-list-backup/security-live-blacklist-backup/security-live-blacklist-R.00.json' };
-    const LOGS = { 'whitelist': 'security-list-backup/security-whitelist-backup/whitelist-security-audit.log', 'blacklist': 'security-list-backup/security-blacklist-backup/blacklist-security-audit.log', 'livelist':  'security-list-backup/security-live-blacklist-backup/live-blacklist-security-audit.log' };
-    const STATUS_CONFIG = { SUCCESS:{label:'SUCCESS',hex:'#16a34a'}, INFO:{label:'INFO',hex:'#2563eb'}, WARN:{label:'WARNING',hex:'#d97706'}, ERROR:{label:'ERROR',hex:'#dc2626'}, PROCESS:{label:'PROCESS',hex:'#0891b2'}, START:{label:'START',hex:'#9333ea'}, CLEANUP:{label:'CLEANUP',hex:'#4b5563'} };
+
+    const JSON_FILES = {
+        'whitelist': 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json',
+        'blacklist': 'security-list-backup/security-blacklist-backup/security-blacklist-R.00.json',
+        'livelist':  'security-list-backup/security-live-blacklist-backup/security-live-blacklist-R.00.json'
+    };
+
+    const LOGS = {
+        'whitelist': 'security-list-backup/security-whitelist-backup/whitelist-security-audit.log',
+        'blacklist': 'security-list-backup/security-blacklist-backup/blacklist-security-audit.log',
+        'livelist':  'security-list-backup/security-live-blacklist-backup/live-blacklist-security-audit.log'
+    };
+    
+    // Status colors for Logs
+    const STATUS_CONFIG = {
+        SUCCESS: { label: 'SUCCESS', hex: '#16a34a' },
+        INFO:    { label: 'INFO',    hex: '#2563eb' },
+        WARN:    { label: 'WARNING', hex: '#d97706' },
+        ERROR:   { label: 'ERROR',   hex: '#dc2626' },
+        PROCESS: { label: 'PROCESS', hex: '#0891b2' },
+        START:   { label: 'START',   hex: '#9333ea' },
+        CLEANUP: { label: 'CLEANUP', hex: '#4b5563' }
+    };
+
     const INACTIVITY_MINUTES = 10; 
 
     createApp({
         data() {
             return {
-                isInitializing: true, token: localStorage.getItem('gh_token') || '', tokenInput: '', loading: false, loadingLog: false, sidebarOpen: false, targetRepo: `${TARGET_OWNER}/${TARGET_REPO}`, isDark: true, currentView: 'whitelist-update', targetTime: 0, timeLeft: INACTIVITY_MINUTES * 60, countdownInterval: null, hasUnsavedChanges: false, activeLogContent: '',
+                isInitializing: true,
+                token: localStorage.getItem('gh_token') || '',
+                tokenInput: '',
+                loading: false,
+                loadingLog: false,
+                sidebarOpen: false,
+                targetRepo: `${TARGET_OWNER}/${TARGET_REPO}`,
+                isDark: true,
+                currentView: 'whitelist-update',
+                targetTime: 0,
+                timeLeft: INACTIVITY_MINUTES * 60,
+                countdownInterval: null,
+                hasUnsavedChanges: false,
+                activeLogContent: '',
                 toast: { show: false, title: '', message: '', isError: false },
+                
+                // --- ADVANCED MODAL STATE ---
                 modal: { show: false, type: '', sourceKey: '', index: null, val: '', reason: '', targetKey: '' },
-                sessionHistory: [], existingReadmeContent: '', historySearchQuery: '', jsonSearchQuery: '',
+
+                // --- HISTORY & JSON STATE ---
+                sessionHistory: [], 
+                existingReadmeContent: '',
+                historySearchQuery: '', 
+                jsonSearchQuery: '',
+                parsedActiveJson: null, // Store raw object for JSON viewer
+
                 editableLists: {
-                    GOOD_IPS: { title: '🌍 Allowed IPs', placeholder: 'IP Address...', items: [] },
-                    BLOCKED_THREATS: { title: '⛔ Blocked Threats', placeholder: 'IP / UA / Domain...', items: [] },
-                    GOOD_REFERRERS: { title: '🔗 Referrers', placeholder: 'Domain...', items: [] },
-                    SEARCH_BOTS: { title: '🤖 Search Bots', placeholder: 'User-Agent...', items: [] },
-                    AI_BOTS: { title: '🧠 AI Agents', placeholder: 'User-Agent...', items: [] }
+                    GOOD_IPS:        { title: '🌍 Allowed IPs',      placeholder: 'IP Address...', items: [] },
+                    BLOCKED_THREATS: { title: '⛔ Blocked Threats',  placeholder: 'IP / UA / Domain...', items: [] },
+                    GOOD_REFERRERS:  { title: '🔗 Referrers',        placeholder: 'Domain...',     items: [] },
+                    SEARCH_BOTS:     { title: '🤖 Search Bots',      placeholder: 'User-Agent...', items: [] },
+                    AI_BOTS:         { title: '🧠 AI Agents',        placeholder: 'User-Agent...', items: [] }
                 },
-                inputs: { GOOD_IPS: { val:'', note:'' }, BLOCKED_THREATS: { val:'', note:'' }, GOOD_REFERRERS: { val:'', note:'' }, SEARCH_BOTS: { val:'', note:'' }, AI_BOTS: { val:'', note:'' } }
+                inputs: {
+                    GOOD_IPS: { val: '', note: '' },
+                    BLOCKED_THREATS: { val: '', note: '' },
+                    GOOD_REFERRERS: { val: '', note: '' },
+                    SEARCH_BOTS: { val: '', note: '' },
+                    AI_BOTS: { val: '', note: '' }
+                }
             }
         },
         computed: {
-            formattedTime() { const m = Math.floor(Math.max(0,this.timeLeft)/60).toString().padStart(2,'0'); const s = (Math.max(0,this.timeLeft)%60).toString().padStart(2,'0'); return `${m}:${s}`; },
-            renderedReadme() { return marked.parse(this.generateReadmeContent(true)); },
-            totalItems() { let c=0; for(const k in this.editableLists) c+=this.editableLists[k].items.length; return c; },
+            formattedTime() {
+                const total = Math.max(0, this.timeLeft);
+                const m = Math.floor(total / 60).toString().padStart(2, '0');
+                const s = (total % 60).toString().padStart(2, '0');
+                return `${m}:${s}`;
+            },
+            renderedReadme() { 
+                return marked.parse(this.generateReadmeContent(true)); 
+            },
+            totalItems() {
+                let count = 0;
+                for (const key in this.editableLists) count += this.editableLists[key].items.length;
+                return count;
+            },
             
+            // --- PARSE AND FILTER HISTORY ---
             parsedHistory() {
                 const history = [];
-                this.sessionHistory.forEach(h => { history.push({ date: h.date, action: h.action, val: h.val, note: h.note }); });
+                // 1. Add current session items
+                this.sessionHistory.forEach(h => {
+                    history.push({ date: h.date, action: h.action, val: h.val, note: h.note });
+                });
+                // 2. Parse existing Readme content
                 const historyHeader = '## 📜 Threat History (Permanent Log)';
                 if (this.existingReadmeContent && this.existingReadmeContent.includes(historyHeader)) {
                     const rawLog = this.existingReadmeContent.split(historyHeader)[1];
                     const lines = rawLog.split('\n');
                     lines.forEach(line => {
                         const match = line.match(/- (.*?) \[(.*?)\] \*\*(.*?)\*\*: \`(.*?)\` \| Reason: \*(.*?)\*/);
-                        if (match) { history.push({ date: match[2], action: match[3], val: match[4], note: match[5] }); }
+                        if (match) {
+                            history.push({ date: match[2], action: match[3], val: match[4], note: match[5] });
+                        }
                     });
                 }
                 return history;
             },
+            
             filteredHistory() {
                 if (!this.historySearchQuery) return this.parsedHistory;
                 const q = this.historySearchQuery.toLowerCase();
-                return this.parsedHistory.filter(h => h.val.toLowerCase().includes(q) || h.note.toLowerCase().includes(q) || h.action.toLowerCase().includes(q));
+                return this.parsedHistory.filter(h => 
+                    h.val.toLowerCase().includes(q) || 
+                    h.note.toLowerCase().includes(q) ||
+                    h.action.toLowerCase().includes(q)
+                );
             },
+
+            // --- MODERN JSON VIEWER COMPUTED PROPERTIES ---
+            filteredJsonObj() {
+                if (!this.parsedActiveJson) return null;
+                if (!this.jsonSearchQuery) return this.parsedActiveJson;
+                return this.filterObject(this.parsedActiveJson, this.jsonSearchQuery.toLowerCase());
+            },
+
             formattedLogContent() {
                 if (!this.activeLogContent) return '';
                 const lines = this.activeLogContent.split('\n');
                 return lines.map(line => {
                     const safeLine = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    if (safeLine.startsWith('====') || safeLine.startsWith('----') || safeLine.includes('[SESSION:')) return `<span class="text-slate-900 dark:text-yellow-400 font-bold">${safeLine}</span>`;
+                    if (safeLine.startsWith('====') || safeLine.startsWith('----') || safeLine.includes('[SESSION:')) {
+                        return `<span class="text-slate-900 dark:text-yellow-400 font-bold">${safeLine}</span>`;
+                    }
                     let matchedColor = null;
-                    for (const key in STATUS_CONFIG) { if (safeLine.includes(STATUS_CONFIG[key].label)) { matchedColor = STATUS_CONFIG[key].hex; break; } }
+                    for (const key in STATUS_CONFIG) {
+                        const config = STATUS_CONFIG[key];
+                        if (safeLine.includes(config.label)) { matchedColor = config.hex; break; }
+                    }
                     if (matchedColor) return `<span style="color: ${matchedColor}; font-weight: 600;">${safeLine}</span>`;
                     return `<span class="text-slate-600 dark:text-slate-400">${safeLine}</span>`;
                 }).join('\n');
@@ -371,44 +498,158 @@
             ['mousemove','keydown','click'].forEach(e => window.addEventListener(e, this.resetActivity));
         },
         methods: {
-            initTheme() { const t = localStorage.getItem('theme'); this.isDark = t ? t==='dark' : true; this.applyTheme(); },
-            toggleTheme() { this.isDark=!this.isDark; localStorage.setItem('theme', this.isDark?'dark':'light'); this.applyTheme(); },
-            applyTheme() { if(this.isDark) document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); },
-            showToast(t,m,e=false) { if(this.isInitializing) return; this.toast={show:true,title:t,message:m,isError:e}; setTimeout(()=>{this.toast.show=false},4000); },
-            setToken() { if(!this.tokenInput.trim())return; this.token=this.tokenInput; localStorage.setItem('gh_token',this.token); this.loadWhitelistData(); this.startCountdown(); },
-            logout() { this.token=''; localStorage.removeItem('gh_token'); clearInterval(this.countdownInterval); this.isInitializing=false; },
-            startCountdown() { this.resetActivity(); if(this.countdownInterval)clearInterval(this.countdownInterval); this.countdownInterval=setInterval(()=>{ const n=Date.now(); this.timeLeft=Math.ceil((this.targetTime-n)/1000); if(this.timeLeft<=0)this.logout(); },1000); },
-            resetActivity() { if(!this.token)return; this.targetTime=Date.now()+(INACTIVITY_MINUTES*60*1000); },
-            markDirty() { this.hasUnsavedChanges=true; this.resetActivity(); },
+            initTheme() {
+                const savedTheme = localStorage.getItem('theme');
+                this.isDark = savedTheme ? savedTheme === 'dark' : true; 
+                this.applyTheme();
+            },
+            toggleTheme() {
+                this.isDark = !this.isDark;
+                localStorage.setItem('theme', this.isDark ? 'dark' : 'light');
+                this.applyTheme();
+            },
+            applyTheme() {
+                if (this.isDark) document.documentElement.classList.add('dark');
+                else document.documentElement.classList.remove('dark');
+            },
+            showToast(title, message, isError = false) {
+                if(this.isInitializing) return; 
+                this.toast = { show: true, title, message, isError };
+                setTimeout(() => { this.toast.show = false; }, 4000);
+            },
+            
+            setToken() {
+                if(!this.tokenInput.trim()) return;
+                this.token = this.tokenInput;
+                localStorage.setItem('gh_token', this.token);
+                this.loadWhitelistData();
+                this.startCountdown();
+            },
+            logout() {
+                this.token = '';
+                localStorage.removeItem('gh_token');
+                clearInterval(this.countdownInterval);
+                this.isInitializing = false;
+            },
+            startCountdown() {
+                this.resetActivity();
+                if (this.countdownInterval) clearInterval(this.countdownInterval);
+                this.countdownInterval = setInterval(() => {
+                    const now = Date.now();
+                    this.timeLeft = Math.ceil((this.targetTime - now) / 1000);
+                    if (this.timeLeft <= 0) this.logout();
+                }, 1000);
+            },
+            resetActivity() {
+                if (!this.token) return;
+                this.targetTime = Date.now() + (INACTIVITY_MINUTES * 60 * 1000);
+            },
+            markDirty() { this.hasUnsavedChanges = true; this.resetActivity(); },
 
             async loadWhitelistData() {
-                this.loading=true; const octokit=new Octokit({auth:this.token});
+                this.loading = true;
+                const octokit = new Octokit({ auth: this.token });
                 try {
-                    const r1 = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}`);
-                    const json = JSON.parse(decodeURIComponent(escape(atob(r1.data.content))));
-                    try { const r2 = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`); this.existingReadmeContent=decodeURIComponent(escape(atob(r2.data.content))); } catch(e){this.existingReadmeContent='';}
-                    this.mergeData(json, this.existingReadmeContent);
-                    this.isInitializing=false; this.hasUnsavedChanges=false;
-                } catch(e) { console.error(e); if(!this.isInitializing) this.showToast('Login Failed',e.message,true); this.logout(); } finally { this.loading=false; }
-            },
-            mergeData(json, readme) {
-                const map={}; readme.split('\n').forEach(l=>{const m=l.match(/- `(.*?)` \| 📝 (.*)/); if(m)map[m[1]]=m[2];});
-                const pop=(k,arr)=>{ this.editableLists[k].items=(arr||[]).map(v=>({val:v, note:map[v]||''})); };
-                pop('GOOD_IPS',json.GOOD_IPS); pop('BLOCKED_THREATS',json.BLOCKED_THREATS||json.BLOCKED_IPS); pop('GOOD_REFERRERS',json.GOOD_REFERRERS); pop('SEARCH_BOTS',json.GOOD_BOTS?.SEARCH_BOTS); pop('AI_BOTS',json.GOOD_BOTS?.AI_BOTS);
-            },
-            async loadLog(type) {
-                this.currentView=type+'-log'; this.activeLogContent=''; this.loadingLog=true; const octokit=new Octokit({auth:this.token});
-                try { const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${LOGS[type]}`); this.activeLogContent=decodeURIComponent(escape(atob(r.data.content))); } 
-                catch(e){ if(e.status!==404)this.activeLogContent=`Error: ${e.message}`; } finally { this.loadingLog=false; }
-            },
-            async loadJson(type) {
-                this.currentView=type+'-json'; this.activeLogContent=''; this.loadingLog=true; const octokit=new Octokit({auth:this.token});
-                try { const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES[type]}`); const content=decodeURIComponent(escape(atob(r.data.content))); this.activeLogContent=content; } 
-                catch(e){ if(e.status!==404)this.activeLogContent=`Error: ${e.message}`; } finally { this.loadingLog=false; }
+                    const jsonRes = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}`);
+                    const jsonData = JSON.parse(decodeURIComponent(escape(atob(jsonRes.data.content))));
+                    try {
+                        const readmeRes = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`);
+                        this.existingReadmeContent = decodeURIComponent(escape(atob(readmeRes.data.content)));
+                    } catch (e) { this.existingReadmeContent = ''; }
+                    this.mergeData(jsonData, this.existingReadmeContent);
+                    this.isInitializing = false;
+                    this.hasUnsavedChanges = false;
+                } catch (e) {
+                    console.error(e);
+                    if(!this.isInitializing) this.showToast('Login Failed', e.message, true);
+                    this.logout();
+                } finally { this.loading = false; }
             },
 
-            // --- RECURSIVE JSON TREE RENDERER ---
-            renderJsonTree(data, indent = 0) {
+            mergeData(json, readme) {
+                const noteMap = {};
+                const lines = readme.split('\n');
+                lines.forEach(line => {
+                    const match = line.match(/- `(.*?)` \| 📝 (.*)/);
+                    if(match) noteMap[match[1]] = match[2];
+                });
+                const populate = (key, sourceArr) => {
+                    this.editableLists[key].items = (sourceArr || []).map(val => ({
+                        val: val,
+                        note: noteMap[val] || '' 
+                    }));
+                };
+                populate('GOOD_IPS', json.GOOD_IPS);
+                populate('BLOCKED_THREATS', json.BLOCKED_THREATS || json.BLOCKED_IPS);
+                populate('GOOD_REFERRERS', json.GOOD_REFERRERS);
+                populate('SEARCH_BOTS', json.GOOD_BOTS?.SEARCH_BOTS);
+                populate('AI_BOTS', json.GOOD_BOTS?.AI_BOTS);
+            },
+
+            async loadLog(type) {
+                this.currentView = type + '-log';
+                this.activeLogContent = '';
+                this.loadingLog = true;
+                const octokit = new Octokit({ auth: this.token });
+                try {
+                    const path = LOGS[type];
+                    const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${path}`);
+                    let content = decodeURIComponent(escape(atob(res.data.content)));
+                    this.activeLogContent = content;
+                } catch (e) {
+                    if (e.status !== 404) this.activeLogContent = `Error: ${e.message}`;
+                } finally { this.loadingLog = false; }
+            },
+
+            async loadJson(type) {
+                this.currentView = type + '-json';
+                this.activeLogContent = '';
+                this.parsedActiveJson = null;
+                this.loadingLog = true;
+                const octokit = new Octokit({ auth: this.token });
+                try {
+                    const path = JSON_FILES[type];
+                    const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${path}`);
+                    const content = decodeURIComponent(escape(atob(res.data.content)));
+                    this.activeLogContent = content;
+                    this.parsedActiveJson = JSON.parse(content);
+                } catch (e) {
+                    if (e.status !== 404) this.activeLogContent = `Error: ${e.message}`;
+                } finally { this.loadingLog = false; }
+            },
+
+            // --- RECURSIVE JSON FILTER & RENDER ---
+            filterObject(obj, query) {
+                if (!query) return obj;
+                if (typeof obj !== 'object' || obj === null) {
+                    return String(obj).toLowerCase().includes(query) ? obj : undefined;
+                }
+                
+                if (Array.isArray(obj)) {
+                    const filtered = obj.map(i => this.filterObject(i, query)).filter(i => i !== undefined);
+                    return filtered.length > 0 ? filtered : undefined;
+                }
+                
+                const result = {};
+                let hasMatch = false;
+                Object.keys(obj).forEach(key => {
+                    // Match key OR value
+                    if (key.toLowerCase().includes(query)) {
+                        result[key] = obj[key];
+                        hasMatch = true;
+                    } else {
+                        const filteredValue = this.filterObject(obj[key], query);
+                        if (filteredValue !== undefined) {
+                            result[key] = filteredValue;
+                            hasMatch = true;
+                        }
+                    }
+                });
+                return hasMatch ? result : undefined;
+            },
+
+            renderJsonTree(data) {
+                if (data === undefined) return '<span class="j-null">No matches found.</span>';
                 if (data === null) return '<span class="j-null">null</span>';
                 if (typeof data === 'string') return `<span class="j-str">"${data}"</span>`;
                 if (typeof data === 'number') return `<span class="j-num">${data}</span>`;
@@ -417,26 +658,38 @@
                 const isArray = Array.isArray(data);
                 const keys = Object.keys(data);
                 
-                // If empty
-                if (keys.length === 0) return isArray ? '[]' : '{}';
+                if (keys.length === 0) return isArray ? '<span class="j-meta">[]</span>' : '<span class="j-meta">{}</span>';
 
-                // Filter logic (if search query exists)
-                // This is a visual recursive search highlighting
-                let shouldHighlight = false;
-                // Simplified: We always render, but maybe you can expand this later.
-
-                let html = `<details open style="margin-left:${indent}px"><summary>${isArray ? `Array(${keys.length})` : `Object{${keys.length}}`}</summary>`;
+                let html = `<details open><summary><span class="json-arrow">▶</span> <span class="j-meta">${isArray ? `Array(${keys.length})` : `Object{${keys.length}}`}</span></summary>`;
                 
                 keys.forEach(key => {
                     const value = data[key];
-                    html += `<div style="padding-left:15px">`;
+                    html += `<div>`;
                     if (!isArray) html += `<span class="j-key">"${key}"</span>: `;
-                    html += this.renderJsonTree(value, 0); // Recursion handles indentation via padding
-                    html += `,</div>`; 
+                    html += this.renderJsonTree(value); 
+                    html += `<span class="j-meta">,</span></div>`; 
                 });
                 
                 html += `</details>`;
                 return html;
+            },
+
+            expandAll() {
+                const details = this.$refs.jsonContainer.querySelectorAll('details');
+                details.forEach(d => d.open = true);
+            },
+            collapseAll() {
+                const details = this.$refs.jsonContainer.querySelectorAll('details');
+                details.forEach(d => d.open = false);
+            },
+            copyJson() {
+                if(this.parsedActiveJson) {
+                    navigator.clipboard.writeText(JSON.stringify(this.parsedActiveJson, null, 4));
+                    this.showToast('Copied', 'JSON copied to clipboard.');
+                }
+            },
+            triggerJsonSearch() {
+                // Triggered by v-model reactivity, but button can be used for explicit feel
             },
 
             getOrigin(note) {
