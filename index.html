@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v5.8</title>
+    <title>Security Manager v5.9</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -115,7 +115,7 @@
         
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v5.8</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v5.9</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -126,7 +126,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Security Hub</h1><p class="text-[10px] text-slate-500">System v5.8</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Security Hub</h1><p class="text-[10px] text-slate-500">System v5.9</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -215,33 +215,61 @@
                 </div>
             </div>
 
-            <div v-if="currentView === 'whitelist-readme'" class="flex-1 overflow-y-auto p-6 relative flex flex-col gap-6">
-                <div class="max-w-4xl mx-auto w-full">
-                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-4 shadow-sm">
-                        <h3 class="text-xs font-bold uppercase text-slate-500 mb-2">History Explorer</h3>
-                        <input v-model="historySearchQuery" placeholder="Search History by IP/Domain..." class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-2 text-sm focus:border-indigo-500 outline-none text-slate-800 dark:text-white">
+            <div v-if="currentView === 'whitelist-readme'" class="flex-1 overflow-hidden p-6 relative">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 h-full">
+                    
+                    <div class="flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm h-full">
+                        <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+                            <h2 class="text-sm font-bold text-slate-700 dark:text-white">🛡️ Security Whitelist Documentation</h2>
+                            <p class="text-[10px] text-slate-500 mt-1">Last Updated: {{ new Date().toUTCString() }}</p>
+                        </div>
+                        <div class="flex-1 overflow-y-auto custom-scrollbar p-6 space-y-6">
+                            <div v-for="(list, key) in editableLists" :key="key">
+                                <h3 class="font-bold text-sm text-slate-800 dark:text-slate-200 mb-2 border-b border-slate-200 dark:border-slate-700 pb-1">
+                                    {{ list.title }}
+                                </h3>
+                                <div v-if="list.items.length === 0" class="text-xs text-slate-400 italic">No records.</div>
+                                <ul v-else class="space-y-1">
+                                    <li v-for="item in list.items" class="text-xs text-slate-600 dark:text-slate-400 font-mono flex items-center gap-2">
+                                        <span class="text-slate-400">•</span>
+                                        <span class="bg-slate-100 dark:bg-slate-800 px-1.5 py-0.5 rounded">{{ item.val }}</span>
+                                        <span v-if="item.note" class="text-[10px] text-slate-400 italic">📝 {{ item.note }}</span>
+                                    </li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm h-full">
+                        <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
+                            <h2 class="text-sm font-bold text-slate-700 dark:text-white mb-2">📜 Threat History (Permanent Log)</h2>
+                            <div class="relative">
+                                <span class="absolute left-3 top-2.5 text-slate-400 text-xs">🔍</span>
+                                <input v-model="historySearchQuery" placeholder="Search History by IP or Note..." class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs focus:border-indigo-500 outline-none text-slate-800 dark:text-white placeholder-slate-400">
+                            </div>
+                        </div>
                         
-                        <div v-if="historySearchQuery" class="mt-4 space-y-2 max-h-60 overflow-y-auto custom-scrollbar">
-                            <div v-if="filteredHistory.length === 0" class="text-xs text-slate-500 italic text-center py-2">No history found for this query.</div>
-                            <div v-for="(h, i) in filteredHistory" :key="i" class="text-xs p-2 rounded bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 flex flex-col gap-1">
-                                <div class="flex justify-between">
-                                    <span class="font-mono font-bold" :class="h.action.includes('ADDED') || h.action.includes('BLOCKED') ? 'text-red-500' : 'text-emerald-500'">{{ h.action }}</span>
-                                    <span class="text-slate-400">{{ h.date }}</span>
+                        <div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
+                            <div v-if="filteredHistory.length === 0" class="text-center text-slate-400 text-xs italic mt-10">
+                                No history records found matching your query.
+                            </div>
+                            <div v-for="(h, i) in filteredHistory" :key="i" class="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex flex-col gap-1.5 hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider" 
+                                          :class="(h.action.includes('ADDED') || h.action.includes('BLOCKED')) ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'">
+                                        {{ h.action }}
+                                    </span>
+                                    <span class="text-[10px] font-mono text-slate-400">{{ h.date }}</span>
                                 </div>
-                                <div class="text-slate-600 dark:text-slate-300">
-                                    <code class="bg-slate-200 dark:bg-slate-950 px-1 rounded text-[10px]">{{ h.val }}</code>
-                                    <span class="italic ml-2">{{ h.note }}</span>
+                                <div class="flex flex-col gap-0.5">
+                                    <code class="text-xs font-mono text-slate-700 dark:text-slate-200">{{ h.val }}</code>
+                                    <span class="text-[11px] text-slate-500 italic">{{ h.note }}</span>
                                 </div>
                             </div>
                         </div>
                     </div>
-                </div>
 
-                <div v-if="totalItems === 0" class="flex flex-col items-center justify-center h-full text-slate-400 opacity-60">
-                    <div class="text-4xl mb-4">📝</div>
-                    <h3 class="font-bold text-sm mb-1">Documentation Empty</h3>
                 </div>
-                <div v-else class="max-w-4xl mx-auto w-full bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-8 markdown-body shadow-sm dark:shadow-lg transition-colors duration-300" v-html="renderedReadme"></div>
             </div>
 
             <div v-if="currentView.includes('-json') || currentView.includes('-log')" class="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950 relative transition-colors duration-300">
@@ -322,7 +350,7 @@
                 // --- HISTORY ENGINE ---
                 sessionHistory: [], 
                 existingReadmeContent: '',
-                historySearchQuery: '', // New search state
+                historySearchQuery: '', // Search Filter State
 
                 editableLists: {
                     GOOD_IPS:        { title: '🌍 Allowed IPs',      placeholder: 'IP Address...', items: [] },
@@ -377,7 +405,6 @@
                     const lines = rawLog.split('\n');
                     lines.forEach(line => {
                         // Regex to parse: - 🔴 [DATE] **ACTION**: `VAL` | Reason: *NOTE*
-                        // Updated to handle both old [YYYY-MM-DD] and new timestamps
                         const match = line.match(/- (.) \[(.*?)\] \*\*(.*?)\*\*: \`(.*?)\` \| Reason: \*(.*?)\*/);
                         if (match) {
                             history.push({
@@ -391,8 +418,9 @@
                 }
                 return history;
             },
+            
             filteredHistory() {
-                if (!this.historySearchQuery) return [];
+                if (!this.historySearchQuery) return this.parsedHistory;
                 const q = this.historySearchQuery.toLowerCase();
                 return this.parsedHistory.filter(h => 
                     h.val.toLowerCase().includes(q) || 
@@ -558,7 +586,8 @@
             getLogTimestamp() {
                 const now = new Date();
                 const date = now.toLocaleDateString('en-CA'); // YYYY-MM-DD
-                const time = now.toLocaleTimeString('en-US', { hour12: true }); // 02:30:00 PM
+                // Force 12-hour format with AM/PM
+                const time = now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }); 
                 return `${date} ${time}`;
             },
 
@@ -688,6 +717,7 @@
                         let icon = '⚪';
                         if (h.action === 'ADDED' || h.action === 'BLOCKED') icon = '🔴';
                         else if (h.action === 'REMOVED' || h.action === 'UNBLOCKED' || h.action === 'RESTORED') icon = '🟢';
+                        
                         return `- ${icon} [${h.date}] **${h.action}**: \`${h.val}\` | Reason: *${h.note}*`;
                     }).join('\n');
                     
