@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v5.5</title>
+    <title>Security Manager v5.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -57,7 +57,7 @@
                 
                 <div class="p-6 pb-2">
                     <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-2">
-                        <span class="text-xl">{{ modal.type === 'BLOCK' ? '⛔ Block Threat' : '♻️ Restore Item' }}</span>
+                        <span class="text-xl">{{ modal.type === 'BLOCK' ? '⛔ Block Threat' : '♻️ Unblock / Restore' }}</span>
                     </h3>
                     <p class="text-xs text-slate-500 font-mono break-all bg-slate-100 dark:bg-slate-800 p-2 rounded border border-slate-200 dark:border-slate-700">
                         {{ modal.val }}
@@ -88,7 +88,7 @@
                 <div class="bg-slate-50 dark:bg-slate-950/50 p-4 flex gap-3 justify-end border-t border-slate-200 dark:border-slate-800 mt-2">
                     <button @click="closeModal" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">Cancel</button>
                     <button @click="confirmAction" class="px-4 py-2 text-white text-xs font-bold rounded-lg transition-colors shadow-lg" :class="modal.type === 'BLOCK' ? 'bg-red-600 hover:bg-red-700 shadow-red-500/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'">
-                        {{ modal.type === 'BLOCK' ? 'Confirm Block' : 'Confirm Restore' }}
+                        {{ modal.type === 'BLOCK' ? 'Confirm Block' : 'Confirm Action' }}
                     </button>
                 </div>
             </div>
@@ -115,7 +115,7 @@
         
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v5.5</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v5.6</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -126,7 +126,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Security Hub</h1><p class="text-[10px] text-slate-500">System v5.5</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Security Hub</h1><p class="text-[10px] text-slate-500">System v5.6</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -202,7 +202,7 @@
                                             
                                             <button v-if="key === 'BLOCKED_THREATS'" @click="openModal('RESTORE', key, index, item)" class="text-slate-400 hover:text-emerald-500 px-1" title="Restore this item">♻️</button>
                                             
-                                            <button @click="deleteItem(key, index)" class="text-slate-400 hover:text-red-500 px-1" title="Delete permanently">✕</button>
+                                            <button @click="deleteItem(key, index, item)" class="text-slate-400 hover:text-red-500 px-1" title="Delete permanently">✕</button>
                                         </div>
                                     </div>
                                 </div>
@@ -519,7 +519,16 @@
                 this.markDirty();
             },
 
-            deleteItem(key, index) {
+            // [FIXED] Updated signature to accept 'item'
+            deleteItem(key, index, item) {
+                // Intercept deletion for threats to enforce audit log via Modal
+                if (key === 'BLOCKED_THREATS') {
+                    // Redirect to the modal flow as a RESTORE/UNBLOCK action
+                    this.openModal('RESTORE', key, index, item);
+                    return;
+                }
+
+                // Standard delete for other lists
                 this.editableLists[key].items.splice(index, 1);
                 this.markDirty();
             },
@@ -530,8 +539,9 @@
                 
                 // Determine Initial Note for Modal:
                 // 1. BLOCKING: Empty string (Force user to type reason)
-                // 2. RESTORING: Keep existing note (Optional to edit)
-                const initialReason = type === 'BLOCK' ? '' : (item.note || '');
+                // 2. RESTORING: Empty string (Force user to type reason)
+                // We deliberately do NOT pre-fill 'item.note' so the user must justify the action again.
+                const initialReason = ''; 
 
                 if(type === 'RESTORE') {
                     const originMatch = item.note ? item.note.match(/\[Origin: (.*?)\]/) : null;
@@ -568,7 +578,7 @@
                 } else {
                     // RESTORE
                     if (this.modal.targetKey) {
-                        // Restore to specific list, clean note
+                        // Restore to specific list, note is just the reason (no tag needed)
                         this.editableLists[this.modal.targetKey].items.unshift({ val: this.modal.val, note: this.modal.reason });
                         
                         this.sessionHistory.push({
