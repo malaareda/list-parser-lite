@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v7.1</title>
+    <title>Security Manager v7.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -34,6 +34,8 @@
         .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; color: #cbd5e1; }
         .markdown-body li { margin-bottom: 0.25rem; }
         .markdown-body code { background: #1e293b; padding: 0.2rem 0.4rem; rounded: 0.25rem; font-size: 0.875em; color: #cbd5e1; }
+        
+        /* JSON Tree Styles */
         .json-tree { font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; }
         .json-tree details { margin-left: 15px; }
         .json-tree summary { cursor: pointer; list-style: none; outline: none; display: flex; align-items: center; }
@@ -41,7 +43,18 @@
         .json-tree summary:hover { background-color: rgba(255,255,255,0.05); border-radius: 4px; }
         .json-arrow { display: inline-flex; justify-content: center; align-items: center; width: 14px; height: 14px; margin-right: 4px; font-size: 8px; color: #64748b; transition: transform 0.2s; }
         details[open] > summary > .json-arrow { transform: rotate(90deg); }
-        .j-key { color: #60a5fa; font-weight: 600; } .j-str { color: #34d399; } .j-num { color: #c084fc; } .j-bool { color: #f87171; } .j-null { color: #94a3b8; font-style: italic; } .j-meta { color: #64748b; }
+        
+        /* JSON Syntax Highlighting */
+        .j-key { color: #60a5fa; font-weight: 600; } 
+        .j-str { color: #34d399; } 
+        .j-num { color: #c084fc; } 
+        .j-bool { color: #f87171; } 
+        .j-null { color: #94a3b8; font-style: italic; } 
+        .j-meta { color: #64748b; }
+        
+        /* [NEW] Duplicate Highlight Style */
+        .j-dup { color: #fbbf24 !important; font-weight: bold; background: rgba(251, 191, 36, 0.1); padding: 0 4px; border-radius: 4px; }
+
         .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; } .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(20px); }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; } .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
@@ -77,7 +90,7 @@
                 </div>
                 <div class="bg-slate-50 dark:bg-slate-950/50 p-4 flex gap-3 justify-end border-t border-slate-200 dark:border-slate-800 mt-2">
                     <button @click="closeModal" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">Cancel</button>
-                    <button @click="confirmAction(false)" class="px-4 py-2 text-white text-xs font-bold rounded-lg transition-colors shadow-lg" :class="modal.type === 'BLOCK' ? 'bg-red-600 hover:bg-red-700 shadow-red-500/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'">Confirm</button>
+                    <button @click="confirmAction" class="px-4 py-2 text-white text-xs font-bold rounded-lg transition-colors shadow-lg" :class="modal.type === 'BLOCK' ? 'bg-red-600 hover:bg-red-700 shadow-red-500/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'">Confirm</button>
                 </div>
             </div>
         </div>
@@ -98,7 +111,7 @@
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.1</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.2</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -108,7 +121,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.1</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.2</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -133,13 +146,6 @@
                 <button @click="sidebarOpen = !sidebarOpen" class="md:hidden text-slate-400">☰</button>
                 <div class="text-sm font-bold font-mono text-indigo-500 dark:text-indigo-400">{{ targetRepo }}</div>
                 <div class="flex items-center gap-4">
-                    <div class="flex items-center gap-2 bg-slate-100 dark:bg-slate-800 rounded-full px-2 py-1">
-                        <span class="text-[10px] font-bold text-slate-500 uppercase">Silent</span>
-                        <button @click="silentMode = !silentMode" class="w-8 h-4 rounded-full relative transition-colors duration-300" :class="silentMode ? 'bg-indigo-600' : 'bg-slate-400'">
-                            <span class="absolute top-0.5 left-0.5 w-3 h-3 rounded-full bg-white shadow-sm transition-transform duration-300" :class="silentMode ? 'translate-x-4' : 'translate-x-0'"></span>
-                        </button>
-                    </div>
-
                     <div class="text-xs font-bold font-mono text-slate-500" :class="{'text-red-400 animate-pulse': timeLeft < 60}">⏱️ {{ formattedTime }}</div>
                     <button @click="toggleTheme" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"><span v-if="isDark" class="text-lg">☀️</span><span v-else class="text-lg">🌙</span></button>
                     <button v-if="currentView === 'whitelist-update'" @click="saveChanges" :disabled="loading || isPolling" class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold text-white shadow-lg transition-all active:scale-95 disabled:opacity-50" :class="hasUnsavedChanges ? 'bg-amber-500 hover:bg-amber-600' : (isPolling ? 'bg-indigo-400 cursor-wait' : 'bg-indigo-600 hover:bg-indigo-700')">
@@ -171,9 +177,9 @@
                                             </span>
                                         </div>
                                         <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <button v-if="key !== 'BLOCKED_THREATS'" @click="tryAction('BLOCK', key, index, item)" class="text-slate-400 hover:text-red-500 px-1" title="Block">⛔</button>
-                                            <button v-if="key === 'BLOCKED_THREATS'" @click="tryAction('RESTORE', key, index, item)" class="text-slate-400 hover:text-emerald-500 px-1" title="Restore">♻️</button>
-                                            <button @click="tryAction('DELETE', key, index, item)" class="text-slate-400 hover:text-red-500 px-1" title="Delete">✕</button>
+                                            <button v-if="key !== 'BLOCKED_THREATS'" @click="openModal('BLOCK', key, index, item)" class="text-slate-400 hover:text-red-500 px-1" title="Block">⛔</button>
+                                            <button v-if="key === 'BLOCKED_THREATS'" @click="openModal('RESTORE', key, index, item)" class="text-slate-400 hover:text-emerald-500 px-1" title="Restore">♻️</button>
+                                            <button @click="openModal('DELETE', key, index, item)" class="text-slate-400 hover:text-red-500 px-1" title="Delete">✕</button>
                                         </div>
                                     </div>
                                 </div>
@@ -283,8 +289,7 @@
                 toast: { show: false, title: '', message: '', isError: false },
                 modal: { show: false, type: '', sourceKey: '', index: null, val: '', reason: '', targetKey: '' },
                 sessionHistory: [], existingReadmeContent: '', historySearchQuery: '', historyStartDate: '', historyEndDate: '', historyUniqueOnly: false,
-                silentMode: false,
-                jsonSearchQuery: '', parsedActiveJson: null, showRawJson: false, isPolling: false, pollInterval: null, currentGeneratedAt: null,
+                jsonSearchQuery: '', parsedActiveJson: null, showRawJson: false, duplicateMap: new Map(), isPolling: false, pollInterval: null, currentGeneratedAt: null,
                 editableLists: { GOOD_IPS:{title:'🌍 Allowed IPs',placeholder:'IP Address...',items:[]}, BLOCKED_THREATS:{title:'⛔ Blocked Threats',placeholder:'IP / UA / Domain...',items:[]}, GOOD_REFERRERS:{title:'🔗 Referrers',placeholder:'Domain...',items:[]}, SEARCH_BOTS:{title:'🤖 Search Bots',placeholder:'User-Agent...',items:[]}, AI_BOTS:{title:'🧠 AI Agents',placeholder:'User-Agent...',items:[]} },
                 inputs: { GOOD_IPS:{val:'',note:''}, BLOCKED_THREATS:{val:'',note:''}, GOOD_REFERRERS:{val:'',note:''}, SEARCH_BOTS:{val:'',note:''}, AI_BOTS:{val:'',note:''} }
             }
@@ -387,15 +392,7 @@
                 } catch(e) { console.error(e); this.showToast('Error',e.message,true); } finally { this.loading=false; }
             },
             
-            tryAction(type, key, index, item) {
-                if (this.silentMode) {
-                    this.modal = { show:false, type, sourceKey:key, index, val:item.val, reason:'', targetKey:'' };
-                    this.confirmAction(true); 
-                } else {
-                    this.openModal(type, key, index, item);
-                }
-            },
-
+            // [FIXED] Removed Silent Mode / Always Modal
             addItem(key) { 
                 const v=this.inputs[key].val.trim(); const n=this.inputs[key].note.trim(); 
                 if(!v)return; 
@@ -404,17 +401,14 @@
                 if(key==='BLOCKED_THREATS')this.sessionHistory.push({action:'ADDED',val:v,note:n,date:this.getLogTimestamp()}); 
                 this.markDirty(); 
             },
-            deleteItem(key,index,item) { this.tryAction('DELETE', key, index, item); }, 
+            deleteItem(key,index,item) { this.openModal('DELETE', key, index, item); }, 
             
             openModal(t,k,i,v) { let tk=''; if(t==='RESTORE'){const m=v.note?v.note.match(/\[Origin: (.*?)\]/):null;if(m&&this.editableLists[m[1]])tk=m[1];} this.modal={show:true,type:t,sourceKey:k,index:i,val:v.val,reason:'',targetKey:tk}; },
             closeModal() { this.modal.show=false; },
             
-            confirmAction(silent = false) { 
-                // [FIXED] Force silence check for event objects
-                if(typeof silent === 'object') silent = false;
-
+            confirmAction() { 
                 this.editableLists[this.modal.sourceKey].items.splice(this.modal.index,1); 
-                const reasonText = this.modal.reason || (silent ? 'Silent Action' : 'No reason provided');
+                const reasonText = this.modal.reason || 'No reason provided';
                 
                 if (this.modal.type === 'BLOCK') {
                     const n = `[Origin: ${this.modal.sourceKey}] ${reasonText}`;
@@ -430,16 +424,86 @@
                 }
                 
                 this.markDirty(); 
-                if (!silent) this.closeModal(); 
+                this.closeModal(); 
             },
 
-            // Unchanged utilities
+            // [NEW] Duplicate Frequency Map Logic
+            calculateDuplicates(obj) {
+                if (typeof obj === 'object' && obj !== null) {
+                    if (Array.isArray(obj)) {
+                        obj.forEach(i => this.calculateDuplicates(i));
+                    } else {
+                        Object.values(obj).forEach(v => this.calculateDuplicates(v));
+                    }
+                } else if (['string', 'number'].includes(typeof obj)) {
+                    // Count primitive values
+                    const val = String(obj);
+                    this.duplicateMap.set(val, (this.duplicateMap.get(val) || 0) + 1);
+                }
+            },
+
+            async loadJson(t) { 
+                this.currentView=t+'-json'; this.activeLogContent=''; this.loadingLog=true; 
+                const octokit=new Octokit({auth:this.token}); 
+                try {
+                    const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES[t]}`); 
+                    const c=decodeURIComponent(escape(atob(r.data.content))); 
+                    this.activeLogContent=c; 
+                    this.parsedActiveJson=JSON.parse(c);
+                    
+                    // Build Frequency Map
+                    this.duplicateMap = new Map();
+                    this.calculateDuplicates(this.parsedActiveJson);
+                    
+                } catch(e) {
+                    if(e.status!==404)this.activeLogContent=`Error: ${e.message}`;
+                } finally {
+                    this.loadingLog=false;
+                } 
+            },
+
             filterObject(obj, query) { if (!query) return obj; if (typeof obj!=='object'||obj===null) return String(obj).toLowerCase().includes(query)?obj:undefined; if(Array.isArray(obj)){const f=obj.map(i=>this.filterObject(i,query)).filter(i=>i!==undefined);return f.length?f:undefined;} const r={};let h=false;Object.keys(obj).forEach(k=>{if(k.toLowerCase().includes(query)){r[k]=obj[k];h=true;}else{const v=this.filterObject(obj[k],query);if(v!==undefined){r[k]=v;h=true;}}}); return h?r:undefined; },
-            renderJsonTree(data) { if(data===undefined)return '<span class="j-null">No matches.</span>'; if(data===null)return '<span class="j-null">null</span>'; if(typeof data==='string')return `<span class="j-str">"${data}"</span>`; if(typeof data==='number')return `<span class="j-num">${data}</span>`; if(typeof data==='boolean')return `<span class="j-bool">${data}</span>`; const arr=Array.isArray(data); const k=Object.keys(data); if(!k.length)return arr?'<span class="j-meta">[]</span>':'<span class="j-meta">{}</span>'; let h=`<details open><summary><span class="json-arrow">▶</span> <span class="j-meta">${arr?`Array(${k.length})`:`Object{${k.length}}`}</span></summary>`; k.forEach(key=>{h+=`<div>`;if(!arr)h+=`<span class="j-key">"${key}"</span>: `;h+=this.renderJsonTree(data[key]);h+=`<span class="j-meta">,</span></div>`;}); h+=`</details>`; return h; },
+            
+            // [UPDATED] Render with Duplicate Check
+            renderJsonTree(data) { 
+                if(data===undefined)return '<span class="j-null">No matches.</span>'; 
+                if(data===null)return '<span class="j-null">null</span>'; 
+                
+                // Primitives
+                if(['string','number','boolean'].includes(typeof data)) {
+                    const valStr = String(data);
+                    const count = this.duplicateMap.get(valStr) || 0;
+                    
+                    let html = '';
+                    if(typeof data==='string') html = `<span class="j-str">"${data}"</span>`;
+                    else if(typeof data==='number') html = `<span class="j-num">${data}</span>`;
+                    else html = `<span class="j-bool">${data}</span>`;
+                    
+                    // Add Warning if Duplicate
+                    if (count > 1) {
+                        html += ` <span class="j-dup" title="This value appears ${count} times">⚠️ (x${count})</span>`;
+                    }
+                    return html;
+                }
+                
+                const arr=Array.isArray(data); 
+                const k=Object.keys(data); 
+                if(!k.length)return arr?'<span class="j-meta">[]</span>':'<span class="j-meta">{}</span>'; 
+                
+                let h=`<details open><summary><span class="json-arrow">▶</span> <span class="j-meta">${arr?`Array(${k.length})`:`Object{${k.length}}`}</span></summary>`; 
+                k.forEach(key=>{
+                    h+=`<div>`;
+                    if(!arr)h+=`<span class="j-key">"${key}"</span>: `;
+                    h+=this.renderJsonTree(data[key]);
+                    h+=`<span class="j-meta">,</span></div>`;
+                }); 
+                h+=`</details>`; 
+                return h; 
+            },
+            
             expandAll() { this.$refs.jsonContainer.querySelectorAll('details').forEach(d=>d.open=true); }, collapseAll() { this.$refs.jsonContainer.querySelectorAll('details').forEach(d=>d.open=false); }, copyJson() { if(this.parsedActiveJson) { navigator.clipboard.writeText(JSON.stringify(this.parsedActiveJson,null,4)); this.showToast('Copied','JSON copied.'); } }, triggerJsonSearch() {}, getOrigin(note) { if(!note)return null; const m=note.match(/\[Origin: (.*?)\]/); if(m){const k=m[1];const l=this.editableLists[k];return l?l.title.replace(/^[^\s]+\s/,''):k;} return null; }, getLogTimestamp() { const n=new Date(); return `${n.toLocaleDateString('en-CA')} ${n.toLocaleTimeString('en-US',{hour12:true})}`; },
             generateReadmeContent(p=false) { let md=`# 🛡️ Security Whitelist Documentation\n\n**Last Updated:** ${new Date().toUTCString()}\n\n> Auto-generated by Security Manager WebUI.\n\n`; const s=[{key:'GOOD_IPS',t:'🌍 Allowed IPs'},{key:'BLOCKED_THREATS',t:'⛔ Blocked Threats'},{key:'GOOD_REFERRERS',t:'🔗 Referrers'},{key:'SEARCH_BOTS',t:'🤖 Search Bots'},{key:'AI_BOTS',t:'🧠 AI Agents'}]; s.forEach(x=>{md+=`## ${x.t}\n`;const i=this.editableLists[x.key].items;if(!i.length)md+='*No records.*\n\n';else{i.forEach(j=>{md+=`- \`${j.val}\`${j.note?` | 📝 ${j.note}`:''}\n`;});md+='\n';}}); const h=`## 📜 Threat History (Permanent Log)`; let ht=''; if(this.existingReadmeContent.includes(h))ht=this.existingReadmeContent.split(h)[1].trim(); if(this.sessionHistory.length){const nl=this.sessionHistory.map(x=>{let c='⚪';if(x.action.includes('ADDED')||x.action.includes('BLOCKED'))c='🔴';else c='🟢'; return `- ${c} [${x.date}] **${x.action}**: \`${x.val}\` | Reason: *${x.note || 'No reason'}*`;}).join('\n');ht=ht?ht+'\n'+nl:nl;} md+=`\n${h}\n${ht||'*No history yet.*'}\n`; return md; },
-            async loadLog(t) { this.currentView=t+'-log'; this.activeLogContent=''; this.loadingLog=true; const octokit=new Octokit({auth:this.token}); try{const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${LOGS[t]}`); this.activeLogContent=decodeURIComponent(escape(atob(r.data.content)));}catch(e){if(e.status!==404)this.activeLogContent=`Error: ${e.message}`;}finally{this.loadingLog=false;} },
-            async loadJson(t) { this.currentView=t+'-json'; this.activeLogContent=''; this.loadingLog=true; const octokit=new Octokit({auth:this.token}); try{const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES[t]}`); const c=decodeURIComponent(escape(atob(r.data.content))); this.activeLogContent=c; this.parsedActiveJson=JSON.parse(c);}catch(e){if(e.status!==404)this.activeLogContent=`Error: ${e.message}`;}finally{this.loadingLog=false;} }
+            async loadLog(t) { this.currentView=t+'-log'; this.activeLogContent=''; this.loadingLog=true; const octokit=new Octokit({auth:this.token}); try{const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${LOGS[t]}`); this.activeLogContent=decodeURIComponent(escape(atob(r.data.content)));}catch(e){if(e.status!==404)this.activeLogContent=`Error: ${e.message}`;}finally{this.loadingLog=false;} }
         }
     }).mount('#app');
 </script>
