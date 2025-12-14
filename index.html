@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v5.0</title>
+    <title>Security Manager v5.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -37,14 +37,38 @@
         .markdown-body li { margin-bottom: 0.25rem; }
         .markdown-body code { background: #1e293b; padding: 0.2rem 0.4rem; rounded: 0.25rem; font-size: 0.875em; color: #cbd5e1; }
 
-        /* Toast Animation */
+        /* Transitions */
         .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
         .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(20px); }
+        .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; }
+        .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-darkbg text-slate-800 dark:text-slate-200 h-screen overflow-hidden flex flex-col transition-colors duration-300">
 
 <div id="app" class="h-full flex flex-col" v-cloak>
+
+    <transition name="fade">
+        <div v-if="modal.show" class="fixed inset-0 z-[100] flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
+            <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 w-full max-w-md rounded-2xl shadow-2xl overflow-hidden transform transition-all">
+                <div class="p-6">
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-2 flex items-center gap-2">
+                        <span class="text-xl">🛡️</span> Unblock Threat?
+                    </h3>
+                    <p class="text-sm text-slate-500 dark:text-slate-400 mb-4 leading-relaxed">
+                        You are about to remove <code class="text-indigo-600 dark:text-indigo-400 font-bold bg-indigo-50 dark:bg-indigo-900/20 px-1 rounded">{{ modal.val }}</code> from the block list.
+                        <br><br>
+                        Please provide a reason for the <b>Audit History</b>.
+                    </p>
+                    <textarea v-model="modal.reason" class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-xl p-3 text-sm focus:border-indigo-500 outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400" rows="3" placeholder="e.g. False positive, IP is now clean..."></textarea>
+                </div>
+                <div class="bg-slate-50 dark:bg-slate-950/50 p-4 flex gap-3 justify-end border-t border-slate-200 dark:border-slate-800">
+                    <button @click="closeModal" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">Cancel</button>
+                    <button @click="confirmRemoval" class="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-xs font-bold rounded-lg transition-colors shadow-lg shadow-red-500/20">Confirm Removal</button>
+                </div>
+            </div>
+        </div>
+    </transition>
 
     <transition name="toast">
         <div v-if="toast.show" class="fixed bottom-6 right-6 z-50 px-6 py-4 rounded-xl shadow-2xl flex items-center gap-4 border border-slate-200 dark:border-white/10 backdrop-blur-md" :class="toast.isError ? 'bg-red-100 text-red-800 dark:bg-red-900/90 dark:text-red-100' : 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/90 dark:text-emerald-100'">
@@ -66,7 +90,7 @@
         
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v5.0</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v5.1</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -79,7 +103,7 @@
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
                 <div>
                     <h1 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Security Hub</h1>
-                    <p class="text-[10px] text-slate-500">System v5.0</p>
+                    <p class="text-[10px] text-slate-500">System v5.1</p>
                 </div>
             </div>
 
@@ -93,7 +117,6 @@
                         <button @click="loadLog('whitelist')" :class="currentView === 'whitelist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📜</span> Audit Logs</button>
                     </div>
                 </div>
-
                 <div>
                     <h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Live Blacklist</h3>
                     <div class="space-y-1">
@@ -101,7 +124,6 @@
                         <button @click="loadLog('livelist')" :class="currentView === 'livelist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>⚡</span> Live Logs</button>
                     </div>
                 </div>
-
                 <div>
                     <h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Global Blacklist</h3>
                     <div class="space-y-1">
@@ -179,31 +201,18 @@
                 <div v-else class="max-w-4xl mx-auto bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl p-8 markdown-body shadow-sm dark:shadow-lg transition-colors duration-300" v-html="renderedReadme"></div>
             </div>
 
-            <div v-if="currentView.includes('-json')" class="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950 relative transition-colors duration-300">
+            <div v-if="currentView.includes('-json') || currentView.includes('-log')" class="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950 relative transition-colors duration-300">
                 <div v-if="loadingLog" class="absolute inset-0 flex items-center justify-center bg-slate-50 dark:bg-slate-950 z-20">
                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
                 </div>
                 <div v-else-if="!activeLogContent || activeLogContent.trim() === ''" class="flex flex-col items-center justify-center h-full text-slate-500 z-10">
-                    <div class="text-4xl mb-4 grayscale opacity-50">📦</div>
-                    <h3 class="font-bold text-sm mb-1">File Not Found</h3>
-                    <p class="text-xs">The R.00.json file for this list is missing.</p>
-                </div>
-                <div v-else class="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                    <pre class="font-mono text-xs text-emerald-600 dark:text-emerald-400 whitespace-pre-wrap">{{ activeLogContent }}</pre>
-                </div>
-            </div>
-
-            <div v-if="currentView.includes('-log')" class="flex-1 overflow-hidden flex flex-col bg-white dark:bg-slate-950 relative transition-colors duration-300">
-                <div v-if="loadingLog" class="absolute inset-0 flex items-center justify-center bg-white dark:bg-slate-950 z-20">
-                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
-                </div>
-                <div v-else-if="!activeLogContent || activeLogContent.trim() === ''" class="flex flex-col items-center justify-center h-full text-slate-500 z-10">
                     <div class="text-4xl mb-4 grayscale opacity-50">📂</div>
-                    <h3 class="font-bold text-sm mb-1">No Logs Available</h3>
-                    <p class="text-xs">This log file is empty or has not been generated yet.</p>
+                    <h3 class="font-bold text-sm mb-1">File Empty or Missing</h3>
+                    <p class="text-xs">No content retrieved from GitHub.</p>
                 </div>
                 <div v-else class="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                    <pre class="font-mono text-xs whitespace-pre-wrap" v-html="formattedLogContent"></pre>
+                    <pre v-if="currentView.includes('-json')" class="font-mono text-xs text-emerald-600 dark:text-emerald-400 whitespace-pre-wrap">{{ activeLogContent }}</pre>
+                    <pre v-else class="font-mono text-xs whitespace-pre-wrap" v-html="formattedLogContent"></pre>
                 </div>
             </div>
 
@@ -252,7 +261,6 @@
                 tokenInput: '',
                 loading: false,
                 loadingLog: false,
-                error: '',
                 sidebarOpen: false,
                 targetRepo: `${TARGET_OWNER}/${TARGET_REPO}`,
                 isDark: true,
@@ -264,13 +272,14 @@
                 activeLogContent: '',
                 toast: { show: false, title: '', message: '', isError: false },
                 
-                // HISTORY ENGINE STATE
+                // MODAL STATE (NEW)
+                modal: { show: false, key: null, index: null, val: '', reason: '' },
+
                 sessionHistory: [], 
                 existingReadmeContent: '',
 
                 editableLists: {
                     GOOD_IPS:        { title: '🌍 Allowed IPs',      placeholder: 'IP Address...', items: [] },
-                    // [UPDATED] RENAMED TO BLOCKED_THREATS
                     BLOCKED_THREATS: { title: '⛔ Blocked Threats',  placeholder: 'IP / UA / Domain...', items: [] },
                     GOOD_REFERRERS:  { title: '🔗 Referrers',        placeholder: 'Domain...',     items: [] },
                     SEARCH_BOTS:     { title: '🤖 Search Bots',      placeholder: 'User-Agent...', items: [] },
@@ -309,31 +318,19 @@
                     let matchedColor = null;
                     for (const key in STATUS_CONFIG) {
                         const config = STATUS_CONFIG[key];
-                        if (safeLine.includes(config.label)) {
-                            matchedColor = config.hex;
-                            break; 
-                        }
+                        if (safeLine.includes(config.label)) { matchedColor = config.hex; break; }
                     }
-                    if (matchedColor) {
-                        return `<span style="color: ${matchedColor}; font-weight: 600;">${safeLine}</span>`;
-                    } else {
-                        return `<span class="text-slate-600 dark:text-slate-400">${safeLine}</span>`;
-                    }
+                    if (matchedColor) return `<span style="color: ${matchedColor}; font-weight: 600;">${safeLine}</span>`;
+                    return `<span class="text-slate-600 dark:text-slate-400">${safeLine}</span>`;
                 }).join('\n');
             }
         },
         mounted() {
             this.initTheme();
-            if (this.token) {
-                this.loadWhitelistData();
-                this.startCountdown();
-            } else {
-                this.isInitializing = false;
-            }
+            if (this.token) { this.loadWhitelistData(); this.startCountdown(); } else { this.isInitializing = false; }
             ['mousemove','keydown','click'].forEach(e => window.addEventListener(e, this.resetActivity));
         },
         methods: {
-            // --- THEME ---
             initTheme() {
                 const savedTheme = localStorage.getItem('theme');
                 this.isDark = savedTheme ? savedTheme === 'dark' : true; 
@@ -352,8 +349,6 @@
                 this.toast = { show: true, title, message, isError };
                 setTimeout(() => { this.toast.show = false; }, 4000);
             },
-            
-            // --- AUTH ---
             setToken() {
                 if(!this.tokenInput.trim()) return;
                 this.token = this.tokenInput;
@@ -382,19 +377,16 @@
             },
             markDirty() { this.hasUnsavedChanges = true; this.resetActivity(); },
 
-            // --- DATA LOADERS ---
             async loadWhitelistData() {
                 this.loading = true;
                 const octokit = new Octokit({ auth: this.token });
                 try {
                     const jsonRes = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}`);
                     const jsonData = JSON.parse(decodeURIComponent(escape(atob(jsonRes.data.content))));
-                    
                     try {
                         const readmeRes = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`);
                         this.existingReadmeContent = decodeURIComponent(escape(atob(readmeRes.data.content)));
                     } catch (e) { this.existingReadmeContent = ''; }
-
                     this.mergeData(jsonData, this.existingReadmeContent);
                     this.isInitializing = false;
                     this.hasUnsavedChanges = false;
@@ -419,10 +411,7 @@
                     }));
                 };
                 populate('GOOD_IPS', json.GOOD_IPS);
-                
-                // BACKWARD COMPATIBILITY: Handle old 'BLOCKED_IPS' from JSON
                 populate('BLOCKED_THREATS', json.BLOCKED_THREATS || json.BLOCKED_IPS);
-                
                 populate('GOOD_REFERRERS', json.GOOD_REFERRERS);
                 populate('SEARCH_BOTS', json.GOOD_BOTS?.SEARCH_BOTS);
                 populate('AI_BOTS', json.GOOD_BOTS?.AI_BOTS);
@@ -458,14 +447,12 @@
                 } finally { this.loadingLog = false; }
             },
 
-            // --- CORE LOGIC: ITEM MANAGEMENT ---
+            // --- ITEM MANAGEMENT ---
             addItem(key) {
                 const val = this.inputs[key].val.trim();
                 const note = this.inputs[key].note.trim();
-                
                 if (!val) return;
-
-                // Rule: Threats REQUIRE a note
+                
                 if (key === 'BLOCKED_THREATS' && !note) {
                     this.showToast('Validation Error', 'You must add a note explaining why this threat is blocked.', true);
                     return;
@@ -475,38 +462,45 @@
                 this.inputs[key].val = '';
                 this.inputs[key].note = '';
                 
-                // History Engine: Record Addition
                 if (key === 'BLOCKED_THREATS') {
-                    this.sessionHistory.push({ 
-                        action: 'ADDED', 
-                        val, 
-                        note, 
-                        date: new Date().toISOString().split('T')[0] 
-                    });
+                    this.sessionHistory.push({ action: 'ADDED', val, note, date: new Date().toISOString().split('T')[0] });
                 }
-
                 this.markDirty();
             },
 
             removeItem(key, index, val) {
-                // Rule: Removing a threat prompts for reason
+                // If it's a threat, we use the custom Modal
                 if (key === 'BLOCKED_THREATS') {
-                    const reason = prompt(`Why are you unblocking "${val}"? (Required for audit history)`);
-                    if (!reason) {
-                        this.showToast('Action Cancelled', 'Removal requires a reason.', true);
-                        return;
-                    }
-                    // History Engine: Record Removal
-                    this.sessionHistory.push({ 
-                        action: 'REMOVED', 
-                        val, 
-                        note: reason, 
-                        date: new Date().toISOString().split('T')[0] 
-                    });
+                    this.modal = { show: true, key, index, val, reason: '' };
+                    return; // Stop here and wait for modal
                 }
-
+                // For other lists, remove immediately
                 this.editableLists[key].items.splice(index, 1);
                 this.markDirty();
+            },
+
+            // --- MODAL ACTIONS ---
+            closeModal() {
+                this.modal = { show: false, key: null, index: null, val: '', reason: '' };
+            },
+            confirmRemoval() {
+                if (!this.modal.reason.trim()) {
+                    this.showToast('Missing Reason', 'You must provide a reason for the audit log.', true);
+                    return;
+                }
+                // Perform Removal
+                this.editableLists[this.modal.key].items.splice(this.modal.index, 1);
+                
+                // Log History
+                this.sessionHistory.push({ 
+                    action: 'REMOVED', 
+                    val: this.modal.val, 
+                    note: this.modal.reason, 
+                    date: new Date().toISOString().split('T')[0] 
+                });
+                
+                this.markDirty();
+                this.closeModal();
             },
 
             generateReadmeContent(isPreview = false) {
@@ -521,7 +515,6 @@
                     { key: 'SEARCH_BOTS', title: '🤖 Search Bots' },
                     { key: 'AI_BOTS', title: '🧠 AI Agents' }
                 ];
-
                 sections.forEach(sec => {
                     md += `## ${sec.title}\n`;
                     const items = this.editableLists[sec.key].items;
@@ -535,27 +528,19 @@
                     }
                 });
 
-                // --- HISTORY ENGINE ---
                 const historyHeader = `## 📜 Threat History (Permanent Log)`;
                 let historyContent = "";
-
-                // A. Extract existing history from the old file content
                 if (this.existingReadmeContent && this.existingReadmeContent.includes(historyHeader)) {
                     const parts = this.existingReadmeContent.split(historyHeader);
                     if (parts[1]) historyContent = parts[1].trim();
                 }
-
-                // B. Append New Session Actions (If not previewing OR if previewing to show what will be added)
-                // We show these even in preview so user knows what will happen
                 if (this.sessionHistory.length > 0) {
                     const newLogLines = this.sessionHistory.map(h => {
-                        const icon = h.action === 'ADDED' ? '🔴' : '🟢'; // Red = Blocked, Green = Unblocked
+                        const icon = h.action === 'ADDED' ? '🔴' : '🟢';
                         return `- ${icon} [${h.date}] **${h.action}**: \`${h.val}\` | Reason: *${h.note}*`;
                     }).join('\n');
-                    
                     historyContent = historyContent ? (historyContent + '\n' + newLogLines) : newLogLines;
                 }
-
                 md += `\n${historyHeader}\n${historyContent || '*No history yet.*'}\n`;
                 return md;
             },
@@ -573,38 +558,24 @@
                             AI_BOTS: this.editableLists.AI_BOTS.items.map(i => i.val)
                         }
                     };
-                    
-                    // Generate README with History Attached
                     const readmePayload = this.generateReadmeContent(false);
-
                     let shaTemp = null;
-                    try {
-                        const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_TEMP}`);
-                        shaTemp = res.data.sha;
-                    } catch(e) {}
-
+                    try { const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_TEMP}`); shaTemp = res.data.sha; } catch(e) {}
                     await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_TEMP}`, {
                         message: '🛡️ Update Whitelist (WebUI)',
                         content: btoa(unescape(encodeURIComponent(JSON.stringify(jsonPayload, null, 2)))),
                         sha: shaTemp
                     });
-
                     let shaReadme = null;
-                    try {
-                        const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`);
-                        shaReadme = res.data.sha;
-                    } catch(e) {}
-
+                    try { const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`); shaReadme = res.data.sha; } catch(e) {}
                     await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`, {
                         message: '📝 Update Documentation & History',
                         content: btoa(unescape(encodeURIComponent(readmePayload))),
                         sha: shaReadme
                     });
-
-                    // RESET
                     this.hasUnsavedChanges = false;
-                    this.sessionHistory = []; // Clear session logs as they are now saved
-                    this.existingReadmeContent = readmePayload; // Update local cache with new version
+                    this.sessionHistory = []; 
+                    this.existingReadmeContent = readmePayload;
                     this.resetActivity();
                     this.showToast('Success', 'Changes committed successfully.');
                 } catch (e) {
