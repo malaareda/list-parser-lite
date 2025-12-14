@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v4.5</title>
+    <title>Security Manager v4.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -72,7 +72,7 @@
         
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v4.5</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v4.6</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -85,7 +85,7 @@
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
                 <div>
                     <h1 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Security Hub</h1>
-                    <p class="text-[10px] text-slate-500">System v4.5</p>
+                    <p class="text-[10px] text-slate-500">System v4.6</p>
                 </div>
             </div>
 
@@ -235,13 +235,13 @@
     
     // --- STATUS CONFIGURATION (COLOR MAP) ---
     const STATUS_CONFIG = {
-        SUCCESS: { label: 'SUCCESS', hex: '#16a34a', class: 'text-green-600' },
-        INFO:    { label: 'INFO',    hex: '#2563eb', class: 'text-blue-600' },
-        WARN:    { label: 'WARNING', hex: '#d97706', class: 'text-amber-600' },
-        ERROR:   { label: 'ERROR',   hex: '#dc2626', class: 'text-red-600' },
-        PROCESS: { label: 'PROCESS', hex: '#0891b2', class: 'text-cyan-600' },
-        START:   { label: 'START',   hex: '#9333ea', class: 'text-purple-600' },
-        CLEANUP: { label: 'CLEANUP', hex: '#4b5563', class: 'text-gray-500' }
+        SUCCESS: { label: 'SUCCESS', hex: '#16a34a' },
+        INFO:    { label: 'INFO',    hex: '#2563eb' },
+        WARN:    { label: 'WARNING', hex: '#d97706' },
+        ERROR:   { label: 'ERROR',   hex: '#dc2626' },
+        PROCESS: { label: 'PROCESS', hex: '#0891b2' },
+        START:   { label: 'START',   hex: '#9333ea' },
+        CLEANUP: { label: 'CLEANUP', hex: '#4b5563' }
     };
 
     const INACTIVITY_MINUTES = 10; 
@@ -308,7 +308,12 @@
                     // Escape HTML first
                     const safeLine = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
                     
-                    // Check for Status Keywords
+                    // --- HEADER DETECTION (Yellow in Dark, Black in Light) ---
+                    if (safeLine.startsWith('====') || safeLine.startsWith('----') || safeLine.includes('[SESSION:')) {
+                        return `<span class="text-slate-900 dark:text-yellow-400 font-bold">${safeLine}</span>`;
+                    }
+
+                    // --- STATUS DETECTION ---
                     let matchedColor = null;
                     
                     for (const key in STATUS_CONFIG) {
