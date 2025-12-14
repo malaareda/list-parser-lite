@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v4.0</title>
+    <title>Security Manager v4.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -50,7 +50,7 @@
         
         <div v-else class="bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-white tracking-widest uppercase text-xs">Security Manager v4.0</h2>
+            <h2 class="text-lg font-bold mb-6 text-white tracking-widest uppercase text-xs">Security Manager v4.1</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-900/50 border border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-white placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -63,7 +63,7 @@
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
                 <div>
                     <h1 class="font-bold text-slate-200 text-sm">Security Hub</h1>
-                    <p class="text-[10px] text-slate-500">System v4.0</p>
+                    <p class="text-[10px] text-slate-500">System v4.1</p>
                 </div>
             </div>
 
@@ -119,7 +119,6 @@
                             <h3 class="font-bold text-sm text-slate-700 dark:text-slate-200">{{ list.title }}</h3>
                             <span class="bg-slate-200 dark:bg-slate-700 text-xs px-2 py-0.5 rounded font-mono">{{ list.items.length }}</span>
                         </div>
-                        
                         <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
                             <div v-for="(item, index) in list.items" :key="index" class="p-3 bg-slate-50 dark:bg-slate-900/30 rounded-lg border border-transparent hover:border-indigo-500/30 group transition-all">
                                 <div class="flex justify-between items-start mb-1">
@@ -129,7 +128,6 @@
                                 <textarea v-model="item.note" @input="markDirty" placeholder="Add a note for this record..." class="w-full bg-transparent text-[11px] text-slate-400 focus:text-slate-200 border-none p-0 outline-none resize-none placeholder-slate-600" rows="1"></textarea>
                             </div>
                         </div>
-
                         <div class="p-3 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700">
                             <div class="flex gap-2 mb-2">
                                 <input v-model="inputs[key].val" @keyup.enter="addItem(key)" class="flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-xs font-mono outline-none focus:border-indigo-500" :placeholder="list.placeholder">
@@ -143,13 +141,29 @@
                 </div>
             </div>
 
-            <div v-if="currentView === 'whitelist-readme'" class="flex-1 overflow-y-auto p-6">
-                <div class="max-w-4xl mx-auto bg-slate-900 border border-slate-700 rounded-xl p-8 markdown-body" v-html="renderedReadme"></div>
+            <div v-if="currentView === 'whitelist-readme'" class="flex-1 overflow-y-auto p-6 relative">
+                <div v-if="totalItems === 0" class="flex flex-col items-center justify-center h-full text-slate-400 opacity-60">
+                    <div class="text-4xl mb-4">📝</div>
+                    <h3 class="font-bold text-sm mb-1">Documentation Empty</h3>
+                    <p class="text-xs text-center max-w-xs">No records found. Go to the "Update List" tab and add IPs to generate this documentation automatically.</p>
+                </div>
+                
+                <div v-else class="max-w-4xl mx-auto bg-slate-900 border border-slate-700 rounded-xl p-8 markdown-body shadow-lg" v-html="renderedReadme"></div>
             </div>
 
-            <div v-if="currentView.includes('-log')" class="flex-1 overflow-hidden flex flex-col">
-                <div class="bg-slate-950 flex-1 overflow-y-auto p-4 custom-scrollbar">
-                    <pre class="font-mono text-xs text-slate-300 whitespace-pre-wrap">{{ activeLogContent || 'Loading logs or log file is empty...' }}</pre>
+            <div v-if="currentView.includes('-log')" class="flex-1 overflow-hidden flex flex-col bg-slate-950 relative">
+                <div v-if="loadingLog" class="absolute inset-0 flex items-center justify-center bg-slate-950 z-20">
+                    <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
+                </div>
+
+                <div v-else-if="!activeLogContent || activeLogContent.trim() === ''" class="flex flex-col items-center justify-center h-full text-slate-600 z-10">
+                    <div class="text-4xl mb-4 grayscale opacity-50">📂</div>
+                    <h3 class="font-bold text-sm mb-1 text-slate-500">No Logs Available</h3>
+                    <p class="text-xs">This log file is empty or has not been generated yet.</p>
+                </div>
+
+                <div v-else class="flex-1 overflow-y-auto p-4 custom-scrollbar">
+                    <pre class="font-mono text-xs text-slate-300 whitespace-pre-wrap">{{ activeLogContent }}</pre>
                 </div>
             </div>
 
@@ -163,13 +177,10 @@
 
     const TARGET_OWNER = 'malaareda'; 
     const TARGET_REPO  = 'security-list';         
-    
-    // FILES
     const FILE_JSON   = 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json';
     const FILE_TEMP   = 'security-list-backup/security-whitelist-backup/security-whitelist-temp.json';
     const FILE_README = 'security-list-backup/security-whitelist-backup/README.md';
 
-    // LOG FILES
     const LOGS = {
         'whitelist': 'security-list-backup/security-whitelist-backup/whitelist-security-audit.log',
         'blacklist': 'security-list-backup/security-blacklist-backup/blacklist-security-audit.log',
@@ -185,25 +196,18 @@
                 token: localStorage.getItem('gh_token') || '',
                 tokenInput: '',
                 loading: false,
+                loadingLog: false, // Specific loading state for logs
                 error: '',
                 sidebarOpen: false,
                 targetRepo: `${TARGET_OWNER}/${TARGET_REPO}`,
                 isDark: true,
-                
-                // Navigation
                 currentView: 'whitelist-update',
-                
-                // Timer
                 targetTime: 0,
                 timeLeft: INACTIVITY_MINUTES * 60,
                 countdownInterval: null,
-
-                // Data State
                 hasUnsavedChanges: false,
                 activeLogContent: '',
                 
-                // Form Data (Merged JSON + Notes)
-                // Structure: { GOOD_IPS: { title: '..', placeholder: '..', items: [{val, note}, ...] } }
                 editableLists: {
                     GOOD_IPS:       { title: '🌍 Allowed IPs',     placeholder: 'IP Address...', items: [] },
                     BLOCKED_IPS:    { title: '⛔ Blocked IPs',    placeholder: 'IP Address...', items: [] },
@@ -228,12 +232,18 @@
                 return `${m}:${s}`;
             },
             renderedReadme() {
-                // Generate Markdown Preview dynamically based on current data
                 return marked.parse(this.generateReadmeContent());
+            },
+            totalItems() {
+                let count = 0;
+                for (const key in this.editableLists) {
+                    count += this.editableLists[key].items.length;
+                }
+                return count;
             }
         },
         mounted() {
-            document.documentElement.classList.add('dark'); // Force dark for sci-fi look
+            document.documentElement.classList.add('dark'); 
             if (this.token) {
                 this.loadWhitelistData();
                 this.startCountdown();
@@ -243,7 +253,6 @@
             ['mousemove','keydown','click'].forEach(e => window.addEventListener(e, this.resetActivity));
         },
         methods: {
-            // --- AUTH & TIMER ---
             setToken() {
                 if(!this.tokenInput.trim()) return;
                 this.token = this.tokenInput;
@@ -272,26 +281,18 @@
             },
             markDirty() { this.hasUnsavedChanges = true; this.resetActivity(); },
 
-            // --- DATA LOADING (MERGE LOGIC) ---
             async loadWhitelistData() {
                 this.loading = true;
                 const octokit = new Octokit({ auth: this.token });
-                
                 try {
-                    // 1. Fetch JSON (R.00)
                     const jsonRes = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_JSON}`);
                     const jsonData = JSON.parse(decodeURIComponent(escape(atob(jsonRes.data.content))));
-
-                    // 2. Fetch README (For Notes)
                     let readmeText = '';
                     try {
                         const readmeRes = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`);
                         readmeText = decodeURIComponent(escape(atob(readmeRes.data.content)));
-                    } catch (e) { console.log('No README found, starting fresh.'); }
-
-                    // 3. MERGE (JSON Source of Truth + Notes parsed from README)
+                    } catch (e) { }
                     this.mergeData(jsonData, readmeText);
-
                     this.isInitializing = false;
                     this.hasUnsavedChanges = false;
                 } catch (e) {
@@ -302,23 +303,18 @@
             },
 
             mergeData(json, readme) {
-                // Helper to parse notes from README
-                // We assume format: "- `VALUE` : NOTE"
                 const noteMap = {};
                 const lines = readme.split('\n');
                 lines.forEach(line => {
                     const match = line.match(/- `(.*?)` \| 📝 (.*)/);
                     if(match) noteMap[match[1]] = match[2];
                 });
-
-                // Populate UI Models
                 const populate = (key, sourceArr) => {
                     this.editableLists[key].items = (sourceArr || []).map(val => ({
                         val: val,
-                        note: noteMap[val] || '' // Attach note if found
+                        note: noteMap[val] || '' 
                     }));
                 };
-
                 populate('GOOD_IPS', json.GOOD_IPS);
                 populate('BLOCKED_IPS', json.BLOCKED_IPS);
                 populate('GOOD_REFERRERS', json.GOOD_REFERRERS);
@@ -326,26 +322,29 @@
                 populate('AI_BOTS', json.GOOD_BOTS?.AI_BOTS);
             },
 
-            // --- LOG VIEWING ---
             async loadLog(type) {
                 this.currentView = type + '-log';
-                this.activeLogContent = 'Fetching logs...';
+                this.activeLogContent = ''; // Clear previous content
+                this.loadingLog = true;     // Start Spinner
+                
                 const octokit = new Octokit({ auth: this.token });
                 
                 try {
                     const path = LOGS[type];
                     const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${path}`);
                     let content = decodeURIComponent(escape(atob(res.data.content)));
-                    
-                    // Basic ANSI Strip for web display (Optional: use library for colors)
                     content = content.replace(/\u001b\[[0-9;]*m/g, ''); 
                     this.activeLogContent = content;
                 } catch (e) {
-                    this.activeLogContent = `[Error] Could not load log file.\n${e.message}`;
+                    // If 404, we leave content empty so the "No Logs Available" screen shows
+                    if (e.status !== 404) {
+                        this.activeLogContent = `Error loading logs: ${e.message}`;
+                    }
+                } finally {
+                    this.loadingLog = false; // Stop Spinner
                 }
             },
 
-            // --- CRUD OPERATIONS ---
             addItem(key) {
                 const val = this.inputs[key].val.trim();
                 const note = this.inputs[key].note.trim();
@@ -361,12 +360,10 @@
                 this.markDirty();
             },
 
-            // --- MARKDOWN GENERATOR ---
             generateReadmeContent() {
                 let md = `# 🛡️ Security Whitelist Documentation\n\n`;
                 md += `**Last Updated:** ${new Date().toUTCString()}\n\n`;
                 md += `> This file is auto-generated by the Security Manager WebUI. It contains record details and notes.\n\n`;
-
                 const sections = [
                     { key: 'GOOD_IPS', title: '🌍 Allowed IPs' },
                     { key: 'BLOCKED_IPS', title: '⛔ Blocked IPs' },
@@ -374,7 +371,6 @@
                     { key: 'SEARCH_BOTS', title: '🤖 Search Bots' },
                     { key: 'AI_BOTS', title: '🧠 AI Agents' }
                 ];
-
                 sections.forEach(sec => {
                     md += `## ${sec.title}\n`;
                     const items = this.editableLists[sec.key].items;
@@ -390,13 +386,10 @@
                 return md;
             },
 
-            // --- SAVE (DUAL COMMIT) ---
             async saveChanges() {
                 this.loading = true;
                 const octokit = new Octokit({ auth: this.token });
-                
                 try {
-                    // 1. Prepare JSON Payload (For Temp File -> Script)
                     const jsonPayload = {
                         GOOD_IPS: this.editableLists.GOOD_IPS.items.map(i => i.val),
                         BLOCKED_IPS: this.editableLists.BLOCKED_IPS.items.map(i => i.val),
@@ -406,12 +399,8 @@
                             AI_BOTS: this.editableLists.AI_BOTS.items.map(i => i.val)
                         }
                     };
-
-                    // 2. Prepare Markdown Payload (For Direct Backup)
                     const readmePayload = this.generateReadmeContent();
 
-                    // 3. COMMIT JSON (To Temp)
-                    // Get SHA first
                     let shaTemp = null;
                     try {
                         const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_TEMP}`);
@@ -424,7 +413,6 @@
                         sha: shaTemp
                     });
 
-                    // 4. COMMIT README (To Backup Dir)
                     let shaReadme = null;
                     try {
                         const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`);
@@ -440,13 +428,10 @@
                     this.hasUnsavedChanges = false;
                     this.resetActivity();
                     alert('✅ Updates Committed!\n1. Staging file updated.\n2. ReadMe documentation updated.');
-
                 } catch (e) {
                     console.error(e);
                     alert('Save Failed: ' + e.message);
-                } finally {
-                    this.loading = false;
-                }
+                } finally { this.loading = false; }
             }
         }
     }).mount('#app');
