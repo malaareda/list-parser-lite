@@ -48,6 +48,7 @@
         .json-tree summary::-webkit-details-marker { display: none; }
         .json-tree summary:hover { background-color: rgba(255,255,255,0.05); border-radius: 4px; }
         
+        /* Interactive Arrow */
         .json-arrow { 
             display: inline-flex; justify-content: center; align-items: center;
             width: 14px; height: 14px; margin-right: 4px; 
@@ -55,12 +56,13 @@
         }
         details[open] > summary > .json-arrow { transform: rotate(90deg); }
 
-        .j-key { color: #60a5fa; font-weight: 600; }   
-        .j-str { color: #34d399; }                      
-        .j-num { color: #c084fc; }                      
-        .j-bool { color: #f87171; }                     
-        .j-null { color: #94a3b8; font-style: italic; } 
-        .j-meta { color: #64748b; }                     
+        /* Syntax Colors */
+        .j-key { color: #60a5fa; font-weight: 600; }   /* Blue */
+        .j-str { color: #34d399; }                      /* Green */
+        .j-num { color: #c084fc; }                      /* Purple */
+        .j-bool { color: #f87171; }                     /* Red */
+        .j-null { color: #94a3b8; font-style: italic; } /* Slate */
+        .j-meta { color: #64748b; }                     /* Brackets/Commas */
 
         /* Transitions */
         .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
@@ -150,7 +152,7 @@
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
                 <div>
                     <h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1>
-                    <p class="text-[10px] text-slate-400 font-bold">System v6.4</p>
+                    <p class="text-[10px] text-slate-400 font-bold">System v6.5</p>
                 </div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
