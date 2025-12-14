@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v5.2</title>
+    <title>Security Manager v5.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -78,8 +78,10 @@
                     </div>
 
                     <div>
-                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Reason (Required for Audit)</label>
-                        <textarea v-model="modal.reason" class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-sm focus:border-indigo-500 outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400" rows="2" :placeholder="modal.type === 'BLOCK' ? 'Why is this being blocked?' : 'Why is this safe now?'"></textarea>
+                        <label class="block text-xs font-bold text-slate-500 uppercase mb-1">
+                            {{ modal.type === 'BLOCK' ? 'Reason for Blocking (Required)' : 'Reason / New Note' }}
+                        </label>
+                        <textarea v-model="modal.reason" class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-sm focus:border-indigo-500 outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400" rows="3" :placeholder="modal.type === 'BLOCK' ? 'e.g. High traffic attack, Scraping...' : 'e.g. Verified safe, False positive...'"></textarea>
                     </div>
                 </div>
 
@@ -113,7 +115,7 @@
         
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v5.2</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v5.4</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -124,7 +126,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Security Hub</h1><p class="text-[10px] text-slate-500">System v5.2</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Security Hub</h1><p class="text-[10px] text-slate-500">System v5.4</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -269,6 +271,7 @@
         'livelist':  'security-list-backup/security-live-blacklist-backup/live-blacklist-security-audit.log'
     };
     
+    // Status colors for Logs
     const STATUS_CONFIG = {
         SUCCESS: { label: 'SUCCESS', hex: '#16a34a' },
         INFO:    { label: 'INFO',    hex: '#2563eb' },
@@ -329,7 +332,9 @@
                 const s = (total % 60).toString().padStart(2, '0');
                 return `${m}:${s}`;
             },
-            renderedReadme() { return marked.parse(this.generateReadmeContent(true)); },
+            renderedReadme() { 
+                return marked.parse(this.generateReadmeContent(true)); 
+            },
             totalItems() {
                 let count = 0;
                 for (const key in this.editableLists) count += this.editableLists[key].items.length;
@@ -340,9 +345,11 @@
                 const lines = this.activeLogContent.split('\n');
                 return lines.map(line => {
                     const safeLine = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    // Header detection
                     if (safeLine.startsWith('====') || safeLine.startsWith('----') || safeLine.includes('[SESSION:')) {
                         return `<span class="text-slate-900 dark:text-yellow-400 font-bold">${safeLine}</span>`;
                     }
+                    // Color detection
                     let matchedColor = null;
                     for (const key in STATUS_CONFIG) {
                         const config = STATUS_CONFIG[key];
@@ -355,7 +362,8 @@
         },
         mounted() {
             this.initTheme();
-            if (this.token) { this.loadWhitelistData(); this.startCountdown(); } else { this.isInitializing = false; }
+            if (this.token) { this.loadWhitelistData(); this.startCountdown(); } 
+            else { this.isInitializing = false; }
             ['mousemove','keydown','click'].forEach(e => window.addEventListener(e, this.resetActivity));
         },
         methods: {
@@ -377,6 +385,8 @@
                 this.toast = { show: true, title, message, isError };
                 setTimeout(() => { this.toast.show = false; }, 4000);
             },
+            
+            // --- AUTH ---
             setToken() {
                 if(!this.tokenInput.trim()) return;
                 this.token = this.tokenInput;
@@ -405,6 +415,7 @@
             },
             markDirty() { this.hasUnsavedChanges = true; this.resetActivity(); },
 
+            // --- DATA LOADERS ---
             async loadWhitelistData() {
                 this.loading = true;
                 const octokit = new Octokit({ auth: this.token });
@@ -479,11 +490,10 @@
             getOrigin(note) {
                 if(!note) return null;
                 const match = note.match(/\[Origin: (.*?)\]/);
-                // Return readable name instead of key
                 if(match) {
                     const key = match[1];
                     const list = this.editableLists[key];
-                    return list ? list.title.replace(/^[^\s]+\s/, '') : key; // Remove icon
+                    return list ? list.title.replace(/^[^\s]+\s/, '') : key; 
                 }
                 return null;
             },
@@ -517,14 +527,20 @@
             // --- ADVANCED MODAL ACTIONS ---
             openModal(type, key, index, item) {
                 let targetKey = '';
-                // Smart Restore Detection
+                
+                // Determine Initial Note for Modal:
+                // 1. BLOCKING: Empty string (Force user to type reason)
+                // 2. RESTORING: Keep existing note (Optional to edit)
+                const initialReason = type === 'BLOCK' ? '' : (item.note || '');
+
                 if(type === 'RESTORE') {
                     const originMatch = item.note ? item.note.match(/\[Origin: (.*?)\]/) : null;
                     if(originMatch && this.editableLists[originMatch[1]]) {
                         targetKey = originMatch[1];
                     }
                 }
-                this.modal = { show: true, type, sourceKey: key, index, val: item.val, reason: '', targetKey };
+                
+                this.modal = { show: true, type, sourceKey: key, index, val: item.val, reason: initialReason, targetKey };
             },
             
             closeModal() { this.modal.show = false; },
@@ -536,11 +552,10 @@
                 }
                 
                 // 1. Remove from Source
-                // We use [0] because splice returns an array
                 const removedItem = this.editableLists[this.modal.sourceKey].items.splice(this.modal.index, 1)[0];
 
                 if (this.modal.type === 'BLOCK') {
-                    // MOVE TO BLOCKED_THREATS
+                    // MOVE TO BLOCKED_THREATS (WITH TAG)
                     const newNote = `[Origin: ${this.modal.sourceKey}] ${this.modal.reason}`;
                     this.editableLists.BLOCKED_THREATS.items.unshift({ val: this.modal.val, note: newNote });
                     
@@ -613,8 +628,8 @@
                 if (this.sessionHistory.length > 0) {
                     const newLogLines = this.sessionHistory.map(h => {
                         let icon = '⚪';
-                        if (h.action === 'ADDED' || h.action === 'BLOCKED') icon = '🔴'; // Red for Block
-                        else if (h.action === 'REMOVED' || h.action === 'UNBLOCKED' || h.action === 'RESTORED') icon = '🟢'; // Green for Allow
+                        if (h.action === 'ADDED' || h.action === 'BLOCKED') icon = '🔴';
+                        else if (h.action === 'REMOVED' || h.action === 'UNBLOCKED' || h.action === 'RESTORED') icon = '🟢';
                         
                         return `- ${icon} [${h.date}] **${h.action}**: \`${h.val}\` | Reason: *${h.note}*`;
                     }).join('\n');
@@ -642,7 +657,10 @@
                     const readmePayload = this.generateReadmeContent(false);
 
                     let shaTemp = null;
-                    try { const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_TEMP}`); shaTemp = res.data.sha; } catch(e) {}
+                    try { 
+                        const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_TEMP}`); 
+                        shaTemp = res.data.sha; 
+                    } catch(e) {}
 
                     await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_TEMP}`, {
                         message: '🛡️ Update Whitelist (WebUI)',
@@ -651,7 +669,10 @@
                     });
 
                     let shaReadme = null;
-                    try { const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`); shaReadme = res.data.sha; } catch(e) {}
+                    try { 
+                        const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`); 
+                        shaReadme = res.data.sha; 
+                    } catch(e) {}
 
                     await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`, {
                         message: '📝 Update Documentation & History',
