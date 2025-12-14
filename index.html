@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v5.9</title>
+    <title>Security Manager v6.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -115,7 +115,7 @@
         
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v5.9</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v6.0</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -126,14 +126,14 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Security Hub</h1><p class="text-[10px] text-slate-500">System v5.9</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Security Hub</h1><p class="text-[10px] text-slate-500">System v6.0</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
                     <h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Whitelist</h3>
                     <div class="space-y-1">
                         <button @click="currentView = 'whitelist-update'" :class="currentView === 'whitelist-update' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📝</span> Update List</button>
-                        <button @click="currentView = 'whitelist-readme'" :class="currentView === 'whitelist-readme' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📖</span> ReadMe File</button>
+                        <button @click="currentView = 'whitelist-readme'" :class="currentView === 'whitelist-readme' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📖</span> ReadMe & History</button>
                         <button @click="loadJson('whitelist')" :class="currentView === 'whitelist-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📦</span> JSON Source</button>
                         <button @click="loadLog('whitelist')" :class="currentView === 'whitelist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📜</span> Audit Logs</button>
                     </div>
@@ -175,6 +175,7 @@
             <div v-if="currentView === 'whitelist-update'" class="flex-1 overflow-y-auto p-6">
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 pb-20">
                     <div v-for="(list, key) in editableLists" :key="key" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm flex flex-col h-[600px] transition-colors duration-300">
+                        
                         <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
                             <h3 class="font-bold text-sm text-slate-700 dark:text-slate-200 flex items-center gap-2">
                                 {{ list.title }}
@@ -182,6 +183,7 @@
                             </h3>
                             <span class="bg-slate-200 dark:bg-slate-700 text-xs px-2 py-0.5 rounded font-mono text-slate-600 dark:text-slate-300">{{ list.items.length }}</span>
                         </div>
+                        
                         <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
                             <div v-for="(item, index) in list.items" :key="index" class="p-3 bg-slate-50 dark:bg-slate-900/30 rounded-lg border border-transparent hover:border-indigo-500/30 group transition-all">
                                 <div class="flex flex-col gap-1 mb-1">
@@ -202,6 +204,7 @@
                                 <textarea v-model="item.note" @input="markDirty" class="w-full bg-transparent text-[11px] text-slate-500 dark:text-slate-400 focus:text-slate-800 dark:focus:text-slate-200 border-none p-0 outline-none resize-none placeholder-slate-400 dark:placeholder-slate-600" rows="1" placeholder="Add note..."></textarea>
                             </div>
                         </div>
+
                         <div class="p-3 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700">
                             <div class="flex gap-2 mb-2">
                                 <input v-model="inputs[key].val" @keyup.enter="addItem(key)" class="flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-xs font-mono outline-none focus:border-indigo-500 text-slate-800 dark:text-white" :placeholder="list.placeholder">
@@ -243,9 +246,12 @@
                     <div class="flex flex-col bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm h-full">
                         <div class="p-4 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50">
                             <h2 class="text-sm font-bold text-slate-700 dark:text-white mb-2">📜 Threat History (Permanent Log)</h2>
-                            <div class="relative">
-                                <span class="absolute left-3 top-2.5 text-slate-400 text-xs">🔍</span>
-                                <input v-model="historySearchQuery" placeholder="Search History by IP or Note..." class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs focus:border-indigo-500 outline-none text-slate-800 dark:text-white placeholder-slate-400">
+                            <div class="flex gap-2">
+                                <div class="relative flex-1">
+                                    <span class="absolute left-3 top-2.5 text-slate-400 text-xs">🔍</span>
+                                    <input v-model="historySearchQuery" placeholder="Search History by IP or Note..." class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs focus:border-indigo-500 outline-none text-slate-800 dark:text-white placeholder-slate-400">
+                                </div>
+                                <button class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-colors">Search</button>
                             </div>
                         </div>
                         
@@ -384,7 +390,7 @@
                 return count;
             },
             
-            // --- PARSE AND FILTER HISTORY ---
+            // --- PARSE AND FILTER HISTORY (FIXED REGEX) ---
             parsedHistory() {
                 const history = [];
                 
@@ -404,8 +410,9 @@
                     const rawLog = this.existingReadmeContent.split(historyHeader)[1];
                     const lines = rawLog.split('\n');
                     lines.forEach(line => {
-                        // Regex to parse: - 🔴 [DATE] **ACTION**: `VAL` | Reason: *NOTE*
-                        const match = line.match(/- (.) \[(.*?)\] \*\*(.*?)\*\*: \`(.*?)\` \| Reason: \*(.*?)\*/);
+                        // UPDATED REGEX: Matches "- (ANYTHING) [DATE] **ACTION**: `VAL` | Reason: *NOTE*"
+                        // This fixes the issue where unicode emojis broke the previous strict regex
+                        const match = line.match(/- (.*?) \[(.*?)\] \*\*(.*?)\*\*: \`(.*?)\` \| Reason: \*(.*?)\*/);
                         if (match) {
                             history.push({
                                 date: match[2],
@@ -586,7 +593,6 @@
             getLogTimestamp() {
                 const now = new Date();
                 const date = now.toLocaleDateString('en-CA'); // YYYY-MM-DD
-                // Force 12-hour format with AM/PM
                 const time = now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }); 
                 return `${date} ${time}`;
             },
@@ -717,7 +723,6 @@
                         let icon = '⚪';
                         if (h.action === 'ADDED' || h.action === 'BLOCKED') icon = '🔴';
                         else if (h.action === 'REMOVED' || h.action === 'UNBLOCKED' || h.action === 'RESTORED') icon = '🟢';
-                        
                         return `- ${icon} [${h.date}] **${h.action}**: \`${h.val}\` | Reason: *${h.note}*`;
                     }).join('\n');
                     
