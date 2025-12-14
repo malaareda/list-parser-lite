@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v4.3</title>
+    <title>Security Manager v4.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -65,7 +65,7 @@
         
         <div v-else class="bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-white tracking-widest uppercase text-xs">Security Manager v4.3</h2>
+            <h2 class="text-lg font-bold mb-6 text-white tracking-widest uppercase text-xs">Security Manager v4.4</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-900/50 border border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-white placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -78,7 +78,7 @@
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
                 <div>
                     <h1 class="font-bold text-slate-200 text-sm">Security Hub</h1>
-                    <p class="text-[10px] text-slate-500">System v4.3</p>
+                    <p class="text-[10px] text-slate-500">System v4.4</p>
                 </div>
             </div>
 
@@ -214,14 +214,12 @@
     const FILE_TEMP    = 'security-list-backup/security-whitelist-backup/security-whitelist-temp.json';
     const FILE_README  = 'security-list-backup/security-whitelist-backup/README.md';
 
-    // JSON PATHS
     const JSON_FILES = {
         'whitelist': 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json',
         'blacklist': 'security-list-backup/security-blacklist-backup/security-blacklist-R.00.json',
         'livelist':  'security-list-backup/security-live-blacklist-backup/security-live-blacklist-R.00.json'
     };
 
-    // LOG PATHS
     const LOGS = {
         'whitelist': 'security-list-backup/security-whitelist-backup/whitelist-security-audit.log',
         'blacklist': 'security-list-backup/security-blacklist-backup/blacklist-security-audit.log',
@@ -273,28 +271,47 @@
                 const s = (total % 60).toString().padStart(2, '0');
                 return `${m}:${s}`;
             },
-            renderedReadme() {
-                return marked.parse(this.generateReadmeContent());
-            },
+            renderedReadme() { return marked.parse(this.generateReadmeContent()); },
             totalItems() {
                 let count = 0;
-                for (const key in this.editableLists) {
-                    count += this.editableLists[key].items.length;
-                }
+                for (const key in this.editableLists) count += this.editableLists[key].items.length;
                 return count;
             },
+            
+            // --- LOG RE-COLORIZATION ENGINE ---
             formattedLogContent() {
                 if (!this.activeLogContent) return '';
-                return this.activeLogContent
-                    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;') 
-                    .replace(/\x1b\[31m/g, '<span class="text-red-400 font-bold">')     
-                    .replace(/\x1b\[32m/g, '<span class="text-emerald-400 font-bold">') 
-                    .replace(/\x1b\[33m/g, '<span class="text-amber-400 font-bold">')   
-                    .replace(/\x1b\[34m/g, '<span class="text-blue-400 font-bold">')    
-                    .replace(/\x1b\[35m/g, '<span class="text-pink-400 font-bold">')    
-                    .replace(/\x1b\[36m/g, '<span class="text-cyan-400 font-bold">')    
-                    .replace(/\x1b\[90m/g, '<span class="text-slate-500">')             
-                    .replace(/\x1b\[0m/g, '</span>');                                   
+                
+                // 1. Escape HTML first
+                let text = this.activeLogContent
+                    .replace(/&/g, '&amp;')
+                    .replace(/</g, '&lt;')
+                    .replace(/>/g, '&gt;');
+                
+                // 2. Highlight Keywords based on our Backend Logger styles
+                // Success
+                text = text.replace(/SUCCESS/g, '<span class="text-emerald-400 font-bold">SUCCESS</span>');
+                text = text.replace(/✅/g, '✅');
+                
+                // Error
+                text = text.replace(/ERROR/g, '<span class="text-red-500 font-bold">ERROR</span>');
+                text = text.replace(/CRITICAL/g, '<span class="text-red-500 font-bold animate-pulse">CRITICAL</span>');
+                text = text.replace(/❌/g, '❌');
+                
+                // Warning
+                text = text.replace(/WARN/g, '<span class="text-amber-400 font-bold">WARN</span>');
+                text = text.replace(/WARNING/g, '<span class="text-amber-400 font-bold">WARNING</span>');
+                text = text.replace(/⚠️/g, '⚠️');
+
+                // Info & Process
+                text = text.replace(/INFO/g, '<span class="text-blue-400 font-bold">INFO</span>');
+                text = text.replace(/PROCESS/g, '<span class="text-cyan-400 font-bold">PROCESS</span>');
+                
+                // Start & Cleanup
+                text = text.replace(/START/g, '<span class="text-pink-400 font-bold">START</span>');
+                text = text.replace(/CLEANUP/g, '<span class="text-slate-400 font-bold">CLEANUP</span>');
+
+                return text;
             }
         },
         mounted() {
@@ -312,8 +329,6 @@
                 this.toast = { show: true, title, message, isError };
                 setTimeout(() => { this.toast.show = false; }, 4000);
             },
-            
-            // --- THEME ---
             initTheme() {
                 const savedTheme = localStorage.getItem('theme');
                 this.isDark = savedTheme ? savedTheme === 'dark' : true; 
@@ -328,8 +343,6 @@
                 if (this.isDark) document.documentElement.classList.add('dark');
                 else document.documentElement.classList.remove('dark');
             },
-
-            // --- AUTH ---
             setToken() {
                 if(!this.tokenInput.trim()) return;
                 this.token = this.tokenInput;
@@ -357,8 +370,6 @@
                 this.targetTime = Date.now() + (INACTIVITY_MINUTES * 60 * 1000);
             },
             markDirty() { this.hasUnsavedChanges = true; this.resetActivity(); },
-
-            // --- DATA LOADERS ---
             async loadWhitelistData() {
                 this.loading = true;
                 const octokit = new Octokit({ auth: this.token });
@@ -379,7 +390,6 @@
                     this.logout();
                 } finally { this.loading = false; }
             },
-
             mergeData(json, readme) {
                 const noteMap = {};
                 const lines = readme.split('\n');
@@ -399,8 +409,6 @@
                 populate('SEARCH_BOTS', json.GOOD_BOTS?.SEARCH_BOTS);
                 populate('AI_BOTS', json.GOOD_BOTS?.AI_BOTS);
             },
-
-            // --- GENERIC FILE LOADERS ---
             async loadLog(type) {
                 this.currentView = type + '-log';
                 this.activeLogContent = '';
@@ -415,7 +423,6 @@
                     if (e.status !== 404) this.activeLogContent = `Error: ${e.message}`;
                 } finally { this.loadingLog = false; }
             },
-
             async loadJson(type) {
                 this.currentView = type + '-json';
                 this.activeLogContent = '';
@@ -425,13 +432,11 @@
                     const path = JSON_FILES[type];
                     const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${path}`);
                     const content = decodeURIComponent(escape(atob(res.data.content)));
-                    // Pretty Print
                     this.activeLogContent = JSON.stringify(JSON.parse(content), null, 4);
                 } catch (e) {
                     if (e.status !== 404) this.activeLogContent = `Error: ${e.message}`;
                 } finally { this.loadingLog = false; }
             },
-
             addItem(key) {
                 const val = this.inputs[key].val.trim();
                 const note = this.inputs[key].note.trim();
@@ -446,7 +451,6 @@
                 this.editableLists[key].items.splice(index, 1);
                 this.markDirty();
             },
-
             generateReadmeContent() {
                 let md = `# 🛡️ Security Whitelist Documentation\n\n`;
                 md += `**Last Updated:** ${new Date().toUTCString()}\n\n`;
@@ -472,7 +476,6 @@
                 });
                 return md;
             },
-
             async saveChanges() {
                 this.loading = true;
                 const octokit = new Octokit({ auth: this.token });
