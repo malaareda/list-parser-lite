@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v6.3</title>
+    <title>Security Manager v6.4</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -41,14 +41,18 @@
         .markdown-body code { background: #1e293b; padding: 0.2rem 0.4rem; rounded: 0.25rem; font-size: 0.875em; color: #cbd5e1; }
 
         /* Modern JSON Tree Styles */
-        .json-tree { font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.5; }
-        .json-tree details { margin-left: 10px; }
-        .json-tree summary { cursor: pointer; list-style: none; outline: none; }
+        .json-tree { font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; }
+        .json-tree details { margin-left: 15px; }
+        .json-tree summary { cursor: pointer; list-style: none; outline: none; display: flex; align-items: center; }
         .json-tree summary::-webkit-details-marker { display: none; }
         .json-tree summary:hover { background-color: rgba(255,255,255,0.05); border-radius: 4px; }
         
-        /* Arrow Icons */
-        .json-arrow { display: inline-block; width: 12px; transition: transform 0.15s; font-size: 10px; color: #64748b; }
+        /* Interactive Arrow */
+        .json-arrow { 
+            display: inline-flex; justify-content: center; align-items: center;
+            width: 14px; height: 14px; margin-right: 4px; 
+            font-size: 8px; color: #64748b; transition: transform 0.2s; 
+        }
         details[open] > summary > .json-arrow { transform: rotate(90deg); }
 
         /* Syntax Colors */
@@ -56,8 +60,8 @@
         .j-str { color: #34d399; }                      /* Green */
         .j-num { color: #c084fc; }                      /* Purple */
         .j-bool { color: #f87171; }                     /* Red */
-        .j-null { color: #94a3b8; italic; }             /* Slate */
-        .j-meta { color: #94a3b8; }                     /* Brackets/Commas */
+        .j-null { color: #94a3b8; font-style: italic; } /* Slate */
+        .j-meta { color: #64748b; }                     /* Brackets/Commas */
 
         /* Transitions */
         .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
@@ -76,7 +80,7 @@
                 
                 <div class="p-6 pb-2">
                     <h3 class="text-lg font-bold text-slate-800 dark:text-white mb-1 flex items-center gap-2">
-                        <span class="text-xl">{{ modal.type === 'BLOCK' ? '⛔ Block Threat' : '♻️ Restore Item' }}</span>
+                        <span class="text-xl">{{ modal.type === 'BLOCK' ? '⛔ Block Threat' : '♻️ Manage Blocked Item' }}</span>
                     </h3>
                     <p class="text-xs text-slate-500 font-mono break-all bg-slate-100 dark:bg-slate-800 p-2 rounded border border-slate-200 dark:border-slate-700">
                         {{ modal.val }}
@@ -88,7 +92,7 @@
                     <div v-if="modal.type === 'RESTORE'">
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">Action / Destination</label>
                         <select v-model="modal.targetKey" class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200">
-                            <option value="">🚫 Just Unblock (Delete)</option>
+                            <option value="">🚫 Just Unblock (Delete from System)</option>
                             <option value="GOOD_IPS">🌍 Restore to Allowed IPs</option>
                             <option value="GOOD_REFERRERS">🔗 Restore to Referrers</option>
                             <option value="SEARCH_BOTS">🤖 Restore to Search Bots</option>
@@ -98,7 +102,7 @@
 
                     <div>
                         <label class="block text-xs font-bold text-slate-500 uppercase mb-1">
-                            {{ modal.type === 'BLOCK' ? 'Reason for Blocking (Required)' : 'Reason / New Note' }}
+                            {{ modal.type === 'BLOCK' ? 'Reason for Blocking (Required)' : 'Reason / Audit Note' }}
                         </label>
                         <textarea v-model="modal.reason" class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-3 text-sm focus:border-indigo-500 outline-none text-slate-800 dark:text-slate-200 placeholder-slate-400" rows="3" :placeholder="modal.type === 'BLOCK' ? 'e.g. High traffic attack, Scraping...' : 'e.g. False positive, Verified safe...'"></textarea>
                     </div>
@@ -107,7 +111,7 @@
                 <div class="bg-slate-50 dark:bg-slate-950/50 p-4 flex gap-3 justify-end border-t border-slate-200 dark:border-slate-800 mt-2">
                     <button @click="closeModal" class="px-4 py-2 text-xs font-bold text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 transition-colors">Cancel</button>
                     <button @click="confirmAction" class="px-4 py-2 text-white text-xs font-bold rounded-lg transition-colors shadow-lg" :class="modal.type === 'BLOCK' ? 'bg-red-600 hover:bg-red-700 shadow-red-500/20' : 'bg-emerald-600 hover:bg-emerald-700 shadow-emerald-500/20'">
-                        {{ modal.type === 'BLOCK' ? 'Confirm Block' : 'Confirm Restore' }}
+                        Confirm Action
                     </button>
                 </div>
             </div>
@@ -134,7 +138,7 @@
         
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v6.3</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v6.4</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -147,7 +151,7 @@
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
                 <div>
                     <h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1>
-                    <p class="text-[10px] text-slate-400 font-bold">System v6.3</p>
+                    <p class="text-[10px] text-slate-400 font-bold">System v6.4</p>
                 </div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
@@ -308,14 +312,15 @@
                 
                 <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center sticky top-0 z-10" v-if="activeLogContent && !activeLogContent.startsWith('Error')">
                     <div class="text-xs font-mono text-slate-500 font-bold">JSON Explorer</div>
-                    <div class="flex gap-2">
-                        <button @click="expandAll" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700">Expand All</button>
-                        <button @click="collapseAll" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700">Collapse All</button>
-                        <button @click="copyJson" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700">📋 Copy</button>
+                    <div class="flex gap-2 items-center">
+                        <button @click="showRawJson = !showRawJson" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700">
+                            {{ showRawJson ? 'Show Tree' : 'Show Raw' }}
+                        </button>
+                        <button @click="expandAll" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700" v-if="!showRawJson">Expand All</button>
+                        <button @click="collapseAll" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700" v-if="!showRawJson">Collapse All</button>
                         
-                        <div class="relative">
-                            <input v-model="jsonSearchQuery" placeholder="Filter..." class="bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-xs outline-none focus:border-indigo-500 text-slate-800 dark:text-white w-40">
-                            <button @click="triggerJsonSearch" class="ml-1 bg-indigo-600 hover:bg-indigo-700 text-white rounded px-2 py-1 text-xs font-bold">🔍</button>
+                        <div class="relative" v-if="!showRawJson">
+                            <input v-model="jsonSearchQuery" placeholder="Filter..." class="bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-xs outline-none focus:border-indigo-500 text-slate-800 dark:text-white w-32">
                         </div>
                     </div>
                 </div>
@@ -325,7 +330,8 @@
                     <h3 class="font-bold text-sm mb-1">File Empty or Missing</h3>
                 </div>
                 <div v-else class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-[#0d1117]" ref="jsonContainer">
-                    <div class="json-tree" v-html="renderJsonTree(filteredJsonObj)"></div>
+                    <pre v-if="showRawJson" class="font-mono text-xs text-emerald-400 whitespace-pre-wrap">{{ activeLogContent }}</pre>
+                    <div v-else class="json-tree" v-html="renderJsonTree(filteredJsonObj)"></div>
                 </div>
             </div>
 
@@ -400,7 +406,8 @@
                 existingReadmeContent: '',
                 historySearchQuery: '', 
                 jsonSearchQuery: '',
-                parsedActiveJson: null, // Store raw object for JSON viewer
+                parsedActiveJson: null,
+                showRawJson: false, // Toggle state
 
                 editableLists: {
                     GOOD_IPS:        { title: '🌍 Allowed IPs',      placeholder: 'IP Address...', items: [] },
@@ -434,7 +441,7 @@
                 return count;
             },
             
-            // --- PARSE AND FILTER HISTORY ---
+            // --- PARSE AND FILTER HISTORY (FIXED REGEX) ---
             parsedHistory() {
                 const history = [];
                 // 1. Add current session items
@@ -512,6 +519,8 @@
                 if (this.isDark) document.documentElement.classList.add('dark');
                 else document.documentElement.classList.remove('dark');
             },
+            
+            // Safe Toast: Only show if initialized to prevent hard-refresh noise
             showToast(title, message, isError = false) {
                 if(this.isInitializing) return; 
                 this.toast = { show: true, title, message, isError };
@@ -561,8 +570,14 @@
                     this.hasUnsavedChanges = false;
                 } catch (e) {
                     console.error(e);
-                    if(!this.isInitializing) this.showToast('Login Failed', e.message, true);
-                    this.logout();
+                    // SILENT FAIL on 404/Empty Repo (Treat as New)
+                    if (e.status === 404) {
+                        this.isInitializing = false;
+                        this.hasUnsavedChanges = false;
+                    } else {
+                        if(!this.isInitializing) this.showToast('Login Failed', e.message, true);
+                        this.logout();
+                    }
                 } finally { this.loading = false; }
             },
 
@@ -689,7 +704,7 @@
                 }
             },
             triggerJsonSearch() {
-                // Triggered by v-model reactivity, but button can be used for explicit feel
+                // Triggered by v-model reactivity
             },
 
             getOrigin(note) {
@@ -708,6 +723,7 @@
                 if(key==='BLOCKED_THREATS') this.sessionHistory.push({action:'ADDED',val,note,date:this.getLogTimestamp()});
                 this.markDirty();
             },
+            // [FIXED] Updated signature to capture 'item' for modal
             deleteItem(key, index, item) {
                 if (key === 'BLOCKED_THREATS') { this.openModal('RESTORE', key, index, item); return; }
                 this.editableLists[key].items.splice(index, 1); this.markDirty();
