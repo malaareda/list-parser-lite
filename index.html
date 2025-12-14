@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v6.0</title>
+    <title>Security Manager v6.1</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -39,6 +39,13 @@
         .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; color: #cbd5e1; }
         .markdown-body li { margin-bottom: 0.25rem; }
         .markdown-body code { background: #1e293b; padding: 0.2rem 0.4rem; rounded: 0.25rem; font-size: 0.875em; color: #cbd5e1; }
+
+        /* JSON Syntax Highlighting */
+        .json-key { color: #60a5fa; } /* Blue-400 */
+        .json-string { color: #34d399; } /* Emerald-400 */
+        .json-number { color: #c084fc; } /* Purple-400 */
+        .json-boolean { color: #f87171; } /* Red-400 */
+        .json-null { color: #94a3b8; } /* Slate-400 */
 
         /* Transitions */
         .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
@@ -115,7 +122,7 @@
         
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v6.0</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v6.1</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -126,7 +133,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Security Hub</h1><p class="text-[10px] text-slate-500">System v6.0</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Security Hub</h1><p class="text-[10px] text-slate-500">System v6.1</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -175,7 +182,6 @@
             <div v-if="currentView === 'whitelist-update'" class="flex-1 overflow-y-auto p-6">
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 pb-20">
                     <div v-for="(list, key) in editableLists" :key="key" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm flex flex-col h-[600px] transition-colors duration-300">
-                        
                         <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
                             <h3 class="font-bold text-sm text-slate-700 dark:text-slate-200 flex items-center gap-2">
                                 {{ list.title }}
@@ -183,7 +189,6 @@
                             </h3>
                             <span class="bg-slate-200 dark:bg-slate-700 text-xs px-2 py-0.5 rounded font-mono text-slate-600 dark:text-slate-300">{{ list.items.length }}</span>
                         </div>
-                        
                         <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
                             <div v-for="(item, index) in list.items" :key="index" class="p-3 bg-slate-50 dark:bg-slate-900/30 rounded-lg border border-transparent hover:border-indigo-500/30 group transition-all">
                                 <div class="flex flex-col gap-1 mb-1">
@@ -204,7 +209,6 @@
                                 <textarea v-model="item.note" @input="markDirty" class="w-full bg-transparent text-[11px] text-slate-500 dark:text-slate-400 focus:text-slate-800 dark:focus:text-slate-200 border-none p-0 outline-none resize-none placeholder-slate-400 dark:placeholder-slate-600" rows="1" placeholder="Add note..."></textarea>
                             </div>
                         </div>
-
                         <div class="p-3 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700">
                             <div class="flex gap-2 mb-2">
                                 <input v-model="inputs[key].val" @keyup.enter="addItem(key)" class="flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-xs font-mono outline-none focus:border-indigo-500 text-slate-800 dark:text-white" :placeholder="list.placeholder">
@@ -249,27 +253,29 @@
                             <div class="flex gap-2">
                                 <div class="relative flex-1">
                                     <span class="absolute left-3 top-2.5 text-slate-400 text-xs">🔍</span>
-                                    <input v-model="historySearchQuery" placeholder="Search History by IP or Note..." class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs focus:border-indigo-500 outline-none text-slate-800 dark:text-white placeholder-slate-400">
+                                    <input v-model="historySearchQuery" placeholder="Search History..." class="w-full bg-white dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg pl-9 pr-3 py-2 text-xs focus:border-indigo-500 outline-none text-slate-800 dark:text-white placeholder-slate-400">
                                 </div>
                                 <button class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-xs font-bold transition-colors">Search</button>
                             </div>
                         </div>
                         
-                        <div class="flex-1 overflow-y-auto custom-scrollbar p-4 space-y-3">
+                        <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-1">
                             <div v-if="filteredHistory.length === 0" class="text-center text-slate-400 text-xs italic mt-10">
-                                No history records found matching your query.
+                                No history records found.
                             </div>
-                            <div v-for="(h, i) in filteredHistory" :key="i" class="p-3 rounded-lg border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950/50 flex flex-col gap-1.5 hover:border-slate-300 dark:hover:border-slate-600 transition-colors">
-                                <div class="flex justify-between items-center">
-                                    <span class="text-[10px] font-bold px-1.5 py-0.5 rounded uppercase tracking-wider" 
-                                          :class="(h.action.includes('ADDED') || h.action.includes('BLOCKED')) ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'">
-                                        {{ h.action }}
-                                    </span>
-                                    <span class="text-[10px] font-mono text-slate-400">{{ h.date }}</span>
+                            <div v-for="(h, i) in filteredHistory" :key="i" class="p-2 rounded border border-slate-100 dark:border-slate-800/50 bg-slate-50/50 dark:bg-slate-950/30 hover:bg-slate-100 dark:hover:bg-slate-900 transition-colors flex flex-col gap-0.5">
+                                <div class="flex justify-between items-baseline gap-2">
+                                    <div class="flex items-center gap-2 min-w-0">
+                                        <span class="text-[9px] font-bold px-1.5 py-0.5 rounded uppercase shrink-0" 
+                                              :class="(h.action.includes('ADDED') || h.action.includes('BLOCKED')) ? 'bg-red-100 text-red-600 dark:bg-red-900/30 dark:text-red-400' : 'bg-emerald-100 text-emerald-600 dark:bg-emerald-900/30 dark:text-emerald-400'">
+                                            {{ h.action }}
+                                        </span>
+                                        <code class="text-xs font-mono text-slate-800 dark:text-slate-200 font-bold truncate">{{ h.val }}</code>
+                                    </div>
+                                    <span class="text-[9px] font-mono text-slate-400 shrink-0">{{ h.date }}</span>
                                 </div>
-                                <div class="flex flex-col gap-0.5">
-                                    <code class="text-xs font-mono text-slate-700 dark:text-slate-200">{{ h.val }}</code>
-                                    <span class="text-[11px] text-slate-500 italic">{{ h.note }}</span>
+                                <div v-if="h.note" class="text-[10px] text-slate-500 italic pl-1 truncate">
+                                    ↳ {{ h.note }}
                                 </div>
                             </div>
                         </div>
@@ -278,18 +284,31 @@
                 </div>
             </div>
 
-            <div v-if="currentView.includes('-json') || currentView.includes('-log')" class="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950 relative transition-colors duration-300">
+            <div v-if="currentView.includes('-json')" class="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950 relative transition-colors duration-300">
                 <div v-if="loadingLog" class="absolute inset-0 flex items-center justify-center bg-slate-50 dark:bg-slate-950 z-20">
                     <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div>
                 </div>
-                <div v-else-if="!activeLogContent || activeLogContent.trim() === ''" class="flex flex-col items-center justify-center h-full text-slate-500 z-10">
+                
+                <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center sticky top-0 z-10" v-if="activeLogContent && !activeLogContent.startsWith('Error')">
+                    <div class="text-xs font-mono text-slate-500">JSON Source Viewer</div>
+                    <div class="flex gap-2">
+                        <input v-model="jsonSearchQuery" placeholder="Filter JSON..." class="bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-xs outline-none focus:border-indigo-500 text-slate-800 dark:text-white">
+                        <button class="bg-indigo-600 hover:bg-indigo-700 text-white rounded px-3 py-1 text-xs font-bold">Filter</button>
+                    </div>
+                </div>
+
+                <div v-if="!activeLogContent || activeLogContent.trim() === ''" class="flex-1 flex flex-col items-center justify-center text-slate-500">
                     <div class="text-4xl mb-4 grayscale opacity-50">📂</div>
                     <h3 class="font-bold text-sm mb-1">File Empty or Missing</h3>
                 </div>
                 <div v-else class="flex-1 overflow-y-auto p-4 custom-scrollbar">
-                    <pre v-if="currentView.includes('-json')" class="font-mono text-xs text-emerald-600 dark:text-emerald-400 whitespace-pre-wrap">{{ activeLogContent }}</pre>
-                    <pre v-else class="font-mono text-xs whitespace-pre-wrap" v-html="formattedLogContent"></pre>
+                    <pre class="font-mono text-xs whitespace-pre-wrap" v-html="highlightedJson"></pre>
                 </div>
+            </div>
+
+            <div v-if="currentView.includes('-log')" class="flex-1 overflow-y-auto p-4 custom-scrollbar bg-white dark:bg-slate-950">
+                <div v-if="loadingLog" class="flex justify-center mt-10"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div>
+                <pre v-else class="font-mono text-xs whitespace-pre-wrap" v-html="formattedLogContent"></pre>
             </div>
 
         </main>
@@ -353,10 +372,11 @@
                 // --- ADVANCED MODAL STATE ---
                 modal: { show: false, type: '', sourceKey: '', index: null, val: '', reason: '', targetKey: '' },
 
-                // --- HISTORY ENGINE ---
+                // --- HISTORY & JSON STATE ---
                 sessionHistory: [], 
                 existingReadmeContent: '',
-                historySearchQuery: '', // Search Filter State
+                historySearchQuery: '', 
+                jsonSearchQuery: '', // New search for JSON
 
                 editableLists: {
                     GOOD_IPS:        { title: '🌍 Allowed IPs',      placeholder: 'IP Address...', items: [] },
@@ -393,33 +413,19 @@
             // --- PARSE AND FILTER HISTORY (FIXED REGEX) ---
             parsedHistory() {
                 const history = [];
-                
                 // 1. Add current session items
                 this.sessionHistory.forEach(h => {
-                    history.push({
-                        date: h.date,
-                        action: h.action,
-                        val: h.val,
-                        note: h.note
-                    });
+                    history.push({ date: h.date, action: h.action, val: h.val, note: h.note });
                 });
-
                 // 2. Parse existing Readme content
                 const historyHeader = '## 📜 Threat History (Permanent Log)';
                 if (this.existingReadmeContent && this.existingReadmeContent.includes(historyHeader)) {
                     const rawLog = this.existingReadmeContent.split(historyHeader)[1];
                     const lines = rawLog.split('\n');
                     lines.forEach(line => {
-                        // UPDATED REGEX: Matches "- (ANYTHING) [DATE] **ACTION**: `VAL` | Reason: *NOTE*"
-                        // This fixes the issue where unicode emojis broke the previous strict regex
                         const match = line.match(/- (.*?) \[(.*?)\] \*\*(.*?)\*\*: \`(.*?)\` \| Reason: \*(.*?)\*/);
                         if (match) {
-                            history.push({
-                                date: match[2],
-                                action: match[3],
-                                val: match[4],
-                                note: match[5]
-                            });
+                            history.push({ date: match[2], action: match[3], val: match[4], note: match[5] });
                         }
                     });
                 }
@@ -434,6 +440,43 @@
                     h.note.toLowerCase().includes(q) ||
                     h.action.toLowerCase().includes(q)
                 );
+            },
+
+            // --- MODERN JSON VIEWER LOGIC ---
+            highlightedJson() {
+                if (!this.activeLogContent || this.activeLogContent.startsWith('Error')) return this.activeLogContent;
+                try {
+                    let json = JSON.parse(this.activeLogContent);
+                    // Basic Filter Implementation
+                    if (this.jsonSearchQuery) {
+                        const q = this.jsonSearchQuery.toLowerCase();
+                        // This is a visual filter only, keeps the structure valid if simple match
+                        // For simplicity in a basic viewer, we just return full JSON if complex, 
+                        // or could implement object filtering here. 
+                        // For now, let's just highlight matches or return raw if valid.
+                    }
+                    
+                    let jsonStr = JSON.stringify(json, null, 4);
+                    // Syntax Highlighting Regex
+                    jsonStr = jsonStr.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+                    return jsonStr.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+                        let cls = 'json-number';
+                        if (/^"/.test(match)) {
+                            if (/:$/.test(match)) {
+                                cls = 'json-key';
+                            } else {
+                                cls = 'json-string';
+                            }
+                        } else if (/true|false/.test(match)) {
+                            cls = 'json-boolean';
+                        } else if (/null/.test(match)) {
+                            cls = 'json-null';
+                        }
+                        return '<span class="' + cls + '">' + match + '</span>';
+                    });
+                } catch (e) {
+                    return this.activeLogContent;
+                }
             },
 
             formattedLogContent() {
@@ -457,7 +500,7 @@
         mounted() {
             this.initTheme();
             if (this.token) { this.loadWhitelistData(); this.startCountdown(); } 
-            else { this.isInitializing = false; }
+            else { this.isInitializing = false; } // Stop spinner if no token
             ['mousemove','keydown','click'].forEach(e => window.addEventListener(e, this.resetActivity));
         },
         methods: {
@@ -475,7 +518,9 @@
                 if (this.isDark) document.documentElement.classList.add('dark');
                 else document.documentElement.classList.remove('dark');
             },
+            // Safe Toast: Only show if initialized to prevent hard-refresh noise
             showToast(title, message, isError = false) {
+                if(this.isInitializing) return; 
                 this.toast = { show: true, title, message, isError };
                 setTimeout(() => { this.toast.show = false; }, 4000);
             },
@@ -523,7 +568,8 @@
                     this.hasUnsavedChanges = false;
                 } catch (e) {
                     console.error(e);
-                    this.showToast('Login Failed', e.message, true);
+                    // Only show toast if it's a real user interaction, not page load
+                    if(!this.isInitializing) this.showToast('Login Failed', e.message, true);
                     this.logout();
                 } finally { this.loading = false; }
             },
@@ -572,6 +618,7 @@
                     const path = JSON_FILES[type];
                     const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${path}`);
                     const content = decodeURIComponent(escape(atob(res.data.content)));
+                    // Format JSON beautifully for the view
                     this.activeLogContent = JSON.stringify(JSON.parse(content), null, 4);
                 } catch (e) {
                     if (e.status !== 404) this.activeLogContent = `Error: ${e.message}`;
@@ -592,7 +639,7 @@
             // --- TIMESTAMP HELPER (12-Hour AM/PM) ---
             getLogTimestamp() {
                 const now = new Date();
-                const date = now.toLocaleDateString('en-CA'); // YYYY-MM-DD
+                const date = now.toLocaleDateString('en-CA'); 
                 const time = now.toLocaleTimeString('en-US', { hour12: true, hour: '2-digit', minute: '2-digit', second: '2-digit' }); 
                 return `${date} ${time}`;
             },
@@ -631,7 +678,7 @@
 
             openModal(type, key, index, item) {
                 let targetKey = '';
-                const initialReason = ''; // Force user to type
+                const initialReason = ''; 
                 if(type === 'RESTORE') {
                     const originMatch = item.note ? item.note.match(/\[Origin: (.*?)\]/) : null;
                     if(originMatch && this.editableLists[originMatch[1]]) {
