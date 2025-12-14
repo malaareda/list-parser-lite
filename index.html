@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v4.6</title>
+    <title>Security Manager v5.0</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -32,16 +32,10 @@
         [v-cloak] { display: none; }
         
         /* Markdown Styles */
-        .markdown-body h2 { border-bottom: 1px solid #e2e8f0; padding-bottom: 0.5rem; margin-top: 1.5rem; margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600; color: #1e293b; }
-        .dark .markdown-body h2 { border-color: #334155; color: #e2e8f0; }
-        
-        .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; color: #334155; }
-        .dark .markdown-body ul { color: #cbd5e1; }
-        
+        .markdown-body h2 { border-bottom: 1px solid #334155; padding-bottom: 0.5rem; margin-top: 1.5rem; margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600; color: #e2e8f0; }
+        .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; color: #cbd5e1; }
         .markdown-body li { margin-bottom: 0.25rem; }
-        
-        .markdown-body code { background: #f1f5f9; padding: 0.2rem 0.4rem; rounded: 0.25rem; font-size: 0.875em; color: #0f172a; }
-        .dark .markdown-body code { background: #1e293b; color: #cbd5e1; }
+        .markdown-body code { background: #1e293b; padding: 0.2rem 0.4rem; rounded: 0.25rem; font-size: 0.875em; color: #cbd5e1; }
 
         /* Toast Animation */
         .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; }
@@ -72,7 +66,7 @@
         
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v4.6</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v5.0</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -85,7 +79,7 @@
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
                 <div>
                     <h1 class="font-bold text-slate-800 dark:text-slate-200 text-sm">Security Hub</h1>
-                    <p class="text-[10px] text-slate-500">System v4.6</p>
+                    <p class="text-[10px] text-slate-500">System v5.0</p>
                 </div>
             </div>
 
@@ -146,18 +140,23 @@
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 pb-20">
                     <div v-for="(list, key) in editableLists" :key="key" class="bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-xl overflow-hidden shadow-sm flex flex-col h-[600px] transition-colors duration-300">
                         <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 flex justify-between items-center">
-                            <h3 class="font-bold text-sm text-slate-700 dark:text-slate-200">{{ list.title }}</h3>
+                            <h3 class="font-bold text-sm text-slate-700 dark:text-slate-200 flex items-center gap-2">
+                                {{ list.title }}
+                                <span v-if="key === 'BLOCKED_THREATS'" class="text-[10px] bg-red-100 dark:bg-red-500/20 text-red-600 dark:text-red-400 px-1.5 py-0.5 rounded uppercase tracking-wider font-bold">Audit Logged</span>
+                            </h3>
                             <span class="bg-slate-200 dark:bg-slate-700 text-xs px-2 py-0.5 rounded font-mono text-slate-600 dark:text-slate-300">{{ list.items.length }}</span>
                         </div>
+                        
                         <div class="flex-1 overflow-y-auto custom-scrollbar p-2 space-y-2">
                             <div v-for="(item, index) in list.items" :key="index" class="p-3 bg-slate-50 dark:bg-slate-900/30 rounded-lg border border-transparent hover:border-indigo-500/30 group transition-all">
                                 <div class="flex justify-between items-start mb-1">
-                                    <span class="font-mono text-sm text-indigo-600 dark:text-indigo-400 font-bold">{{ item.val }}</span>
-                                    <button @click="removeItem(key, index)" class="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
+                                    <span class="font-mono text-sm text-indigo-600 dark:text-indigo-400 font-bold break-all">{{ item.val }}</span>
+                                    <button @click="removeItem(key, index, item.val)" class="text-slate-400 hover:text-red-500 opacity-0 group-hover:opacity-100 transition-opacity">✕</button>
                                 </div>
                                 <textarea v-model="item.note" @input="markDirty" placeholder="Add a note for this record..." class="w-full bg-transparent text-[11px] text-slate-500 dark:text-slate-400 focus:text-slate-800 dark:focus:text-slate-200 border-none p-0 outline-none resize-none placeholder-slate-400 dark:placeholder-slate-600" rows="1"></textarea>
                             </div>
                         </div>
+
                         <div class="p-3 bg-slate-100 dark:bg-slate-900 border-t border-slate-200 dark:border-slate-700">
                             <div class="flex gap-2 mb-2">
                                 <input v-model="inputs[key].val" @keyup.enter="addItem(key)" class="flex-1 bg-white dark:bg-slate-800 border border-slate-300 dark:border-slate-600 rounded px-3 py-2 text-xs font-mono outline-none focus:border-indigo-500 text-slate-800 dark:text-white" :placeholder="list.placeholder">
@@ -233,7 +232,6 @@
         'livelist':  'security-list-backup/security-live-blacklist-backup/live-blacklist-security-audit.log'
     };
     
-    // --- STATUS CONFIGURATION (COLOR MAP) ---
     const STATUS_CONFIG = {
         SUCCESS: { label: 'SUCCESS', hex: '#16a34a' },
         INFO:    { label: 'INFO',    hex: '#2563eb' },
@@ -266,16 +264,21 @@
                 activeLogContent: '',
                 toast: { show: false, title: '', message: '', isError: false },
                 
+                // HISTORY ENGINE STATE
+                sessionHistory: [], 
+                existingReadmeContent: '',
+
                 editableLists: {
-                    GOOD_IPS:       { title: '🌍 Allowed IPs',     placeholder: 'IP Address...', items: [] },
-                    BLOCKED_IPS:    { title: '⛔ Blocked IPs',    placeholder: 'IP Address...', items: [] },
-                    GOOD_REFERRERS: { title: '🔗 Referrers',      placeholder: 'Domain...',     items: [] },
-                    SEARCH_BOTS:    { title: '🤖 Search Bots',    placeholder: 'User-Agent...', items: [] },
-                    AI_BOTS:        { title: '🧠 AI Agents',      placeholder: 'User-Agent...', items: [] }
+                    GOOD_IPS:        { title: '🌍 Allowed IPs',      placeholder: 'IP Address...', items: [] },
+                    // [UPDATED] RENAMED TO BLOCKED_THREATS
+                    BLOCKED_THREATS: { title: '⛔ Blocked Threats',  placeholder: 'IP / UA / Domain...', items: [] },
+                    GOOD_REFERRERS:  { title: '🔗 Referrers',        placeholder: 'Domain...',     items: [] },
+                    SEARCH_BOTS:     { title: '🤖 Search Bots',      placeholder: 'User-Agent...', items: [] },
+                    AI_BOTS:         { title: '🧠 AI Agents',        placeholder: 'User-Agent...', items: [] }
                 },
                 inputs: {
                     GOOD_IPS: { val: '', note: '' },
-                    BLOCKED_IPS: { val: '', note: '' },
+                    BLOCKED_THREATS: { val: '', note: '' },
                     GOOD_REFERRERS: { val: '', note: '' },
                     SEARCH_BOTS: { val: '', note: '' },
                     AI_BOTS: { val: '', note: '' }
@@ -289,47 +292,31 @@
                 const s = (total % 60).toString().padStart(2, '0');
                 return `${m}:${s}`;
             },
-            renderedReadme() { return marked.parse(this.generateReadmeContent()); },
+            renderedReadme() { return marked.parse(this.generateReadmeContent(true)); },
             totalItems() {
                 let count = 0;
                 for (const key in this.editableLists) count += this.editableLists[key].items.length;
                 return count;
             },
-            
-            // --- ENHANCED COLORIZATION ENGINE ---
             formattedLogContent() {
                 if (!this.activeLogContent) return '';
-                
-                // 1. Split into lines
                 const lines = this.activeLogContent.split('\n');
-                
-                // 2. Process each line
                 return lines.map(line => {
-                    // Escape HTML first
                     const safeLine = line.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-                    
-                    // --- HEADER DETECTION (Yellow in Dark, Black in Light) ---
                     if (safeLine.startsWith('====') || safeLine.startsWith('----') || safeLine.includes('[SESSION:')) {
                         return `<span class="text-slate-900 dark:text-yellow-400 font-bold">${safeLine}</span>`;
                     }
-
-                    // --- STATUS DETECTION ---
                     let matchedColor = null;
-                    
                     for (const key in STATUS_CONFIG) {
                         const config = STATUS_CONFIG[key];
-                        // If line contains the label (e.g. "SUCCESS")
                         if (safeLine.includes(config.label)) {
                             matchedColor = config.hex;
-                            break; // Stop at first match
+                            break; 
                         }
                     }
-
                     if (matchedColor) {
-                        // Apply color to the ENTIRE line
                         return `<span style="color: ${matchedColor}; font-weight: 600;">${safeLine}</span>`;
                     } else {
-                        // Default Fallback Color (Adaptive)
                         return `<span class="text-slate-600 dark:text-slate-400">${safeLine}</span>`;
                     }
                 }).join('\n');
@@ -346,10 +333,7 @@
             ['mousemove','keydown','click'].forEach(e => window.addEventListener(e, this.resetActivity));
         },
         methods: {
-            showToast(title, message, isError = false) {
-                this.toast = { show: true, title, message, isError };
-                setTimeout(() => { this.toast.show = false; }, 4000);
-            },
+            // --- THEME ---
             initTheme() {
                 const savedTheme = localStorage.getItem('theme');
                 this.isDark = savedTheme ? savedTheme === 'dark' : true; 
@@ -364,6 +348,12 @@
                 if (this.isDark) document.documentElement.classList.add('dark');
                 else document.documentElement.classList.remove('dark');
             },
+            showToast(title, message, isError = false) {
+                this.toast = { show: true, title, message, isError };
+                setTimeout(() => { this.toast.show = false; }, 4000);
+            },
+            
+            // --- AUTH ---
             setToken() {
                 if(!this.tokenInput.trim()) return;
                 this.token = this.tokenInput;
@@ -391,18 +381,21 @@
                 this.targetTime = Date.now() + (INACTIVITY_MINUTES * 60 * 1000);
             },
             markDirty() { this.hasUnsavedChanges = true; this.resetActivity(); },
+
+            // --- DATA LOADERS ---
             async loadWhitelistData() {
                 this.loading = true;
                 const octokit = new Octokit({ auth: this.token });
                 try {
                     const jsonRes = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}`);
                     const jsonData = JSON.parse(decodeURIComponent(escape(atob(jsonRes.data.content))));
-                    let readmeText = '';
+                    
                     try {
                         const readmeRes = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`);
-                        readmeText = decodeURIComponent(escape(atob(readmeRes.data.content)));
-                    } catch (e) { }
-                    this.mergeData(jsonData, readmeText);
+                        this.existingReadmeContent = decodeURIComponent(escape(atob(readmeRes.data.content)));
+                    } catch (e) { this.existingReadmeContent = ''; }
+
+                    this.mergeData(jsonData, this.existingReadmeContent);
                     this.isInitializing = false;
                     this.hasUnsavedChanges = false;
                 } catch (e) {
@@ -411,6 +404,7 @@
                     this.logout();
                 } finally { this.loading = false; }
             },
+
             mergeData(json, readme) {
                 const noteMap = {};
                 const lines = readme.split('\n');
@@ -425,11 +419,15 @@
                     }));
                 };
                 populate('GOOD_IPS', json.GOOD_IPS);
-                populate('BLOCKED_IPS', json.BLOCKED_IPS);
+                
+                // BACKWARD COMPATIBILITY: Handle old 'BLOCKED_IPS' from JSON
+                populate('BLOCKED_THREATS', json.BLOCKED_THREATS || json.BLOCKED_IPS);
+                
                 populate('GOOD_REFERRERS', json.GOOD_REFERRERS);
                 populate('SEARCH_BOTS', json.GOOD_BOTS?.SEARCH_BOTS);
                 populate('AI_BOTS', json.GOOD_BOTS?.AI_BOTS);
             },
+
             async loadLog(type) {
                 this.currentView = type + '-log';
                 this.activeLogContent = '';
@@ -444,6 +442,7 @@
                     if (e.status !== 404) this.activeLogContent = `Error: ${e.message}`;
                 } finally { this.loadingLog = false; }
             },
+
             async loadJson(type) {
                 this.currentView = type + '-json';
                 this.activeLogContent = '';
@@ -458,31 +457,71 @@
                     if (e.status !== 404) this.activeLogContent = `Error: ${e.message}`;
                 } finally { this.loadingLog = false; }
             },
+
+            // --- CORE LOGIC: ITEM MANAGEMENT ---
             addItem(key) {
                 const val = this.inputs[key].val.trim();
                 const note = this.inputs[key].note.trim();
-                if(val) {
-                    this.editableLists[key].items.unshift({ val, note });
-                    this.inputs[key].val = '';
-                    this.inputs[key].note = '';
-                    this.markDirty();
+                
+                if (!val) return;
+
+                // Rule: Threats REQUIRE a note
+                if (key === 'BLOCKED_THREATS' && !note) {
+                    this.showToast('Validation Error', 'You must add a note explaining why this threat is blocked.', true);
+                    return;
                 }
+
+                this.editableLists[key].items.unshift({ val, note });
+                this.inputs[key].val = '';
+                this.inputs[key].note = '';
+                
+                // History Engine: Record Addition
+                if (key === 'BLOCKED_THREATS') {
+                    this.sessionHistory.push({ 
+                        action: 'ADDED', 
+                        val, 
+                        note, 
+                        date: new Date().toISOString().split('T')[0] 
+                    });
+                }
+
+                this.markDirty();
             },
-            removeItem(key, index) {
+
+            removeItem(key, index, val) {
+                // Rule: Removing a threat prompts for reason
+                if (key === 'BLOCKED_THREATS') {
+                    const reason = prompt(`Why are you unblocking "${val}"? (Required for audit history)`);
+                    if (!reason) {
+                        this.showToast('Action Cancelled', 'Removal requires a reason.', true);
+                        return;
+                    }
+                    // History Engine: Record Removal
+                    this.sessionHistory.push({ 
+                        action: 'REMOVED', 
+                        val, 
+                        note: reason, 
+                        date: new Date().toISOString().split('T')[0] 
+                    });
+                }
+
                 this.editableLists[key].items.splice(index, 1);
                 this.markDirty();
             },
-            generateReadmeContent() {
+
+            generateReadmeContent(isPreview = false) {
                 let md = `# 🛡️ Security Whitelist Documentation\n\n`;
                 md += `**Last Updated:** ${new Date().toUTCString()}\n\n`;
                 md += `> This file is auto-generated by the Security Manager WebUI. It contains record details and notes.\n\n`;
+                
                 const sections = [
                     { key: 'GOOD_IPS', title: '🌍 Allowed IPs' },
-                    { key: 'BLOCKED_IPS', title: '⛔ Blocked IPs' },
+                    { key: 'BLOCKED_THREATS', title: '⛔ Blocked Threats' },
                     { key: 'GOOD_REFERRERS', title: '🔗 Referrers' },
                     { key: 'SEARCH_BOTS', title: '🤖 Search Bots' },
                     { key: 'AI_BOTS', title: '🧠 AI Agents' }
                 ];
+
                 sections.forEach(sec => {
                     md += `## ${sec.title}\n`;
                     const items = this.editableLists[sec.key].items;
@@ -495,22 +534,48 @@
                         md += `\n`;
                     }
                 });
+
+                // --- HISTORY ENGINE ---
+                const historyHeader = `## 📜 Threat History (Permanent Log)`;
+                let historyContent = "";
+
+                // A. Extract existing history from the old file content
+                if (this.existingReadmeContent && this.existingReadmeContent.includes(historyHeader)) {
+                    const parts = this.existingReadmeContent.split(historyHeader);
+                    if (parts[1]) historyContent = parts[1].trim();
+                }
+
+                // B. Append New Session Actions (If not previewing OR if previewing to show what will be added)
+                // We show these even in preview so user knows what will happen
+                if (this.sessionHistory.length > 0) {
+                    const newLogLines = this.sessionHistory.map(h => {
+                        const icon = h.action === 'ADDED' ? '🔴' : '🟢'; // Red = Blocked, Green = Unblocked
+                        return `- ${icon} [${h.date}] **${h.action}**: \`${h.val}\` | Reason: *${h.note}*`;
+                    }).join('\n');
+                    
+                    historyContent = historyContent ? (historyContent + '\n' + newLogLines) : newLogLines;
+                }
+
+                md += `\n${historyHeader}\n${historyContent || '*No history yet.*'}\n`;
                 return md;
             },
+
             async saveChanges() {
                 this.loading = true;
                 const octokit = new Octokit({ auth: this.token });
                 try {
                     const jsonPayload = {
                         GOOD_IPS: this.editableLists.GOOD_IPS.items.map(i => i.val),
-                        BLOCKED_IPS: this.editableLists.BLOCKED_IPS.items.map(i => i.val),
+                        BLOCKED_THREATS: this.editableLists.BLOCKED_THREATS.items.map(i => i.val),
                         GOOD_REFERRERS: this.editableLists.GOOD_REFERRERS.items.map(i => i.val),
                         GOOD_BOTS: {
                             SEARCH_BOTS: this.editableLists.SEARCH_BOTS.items.map(i => i.val),
                             AI_BOTS: this.editableLists.AI_BOTS.items.map(i => i.val)
                         }
                     };
-                    const readmePayload = this.generateReadmeContent();
+                    
+                    // Generate README with History Attached
+                    const readmePayload = this.generateReadmeContent(false);
 
                     let shaTemp = null;
                     try {
@@ -531,12 +596,15 @@
                     } catch(e) {}
 
                     await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`, {
-                        message: '📝 Update Documentation (WebUI)',
+                        message: '📝 Update Documentation & History',
                         content: btoa(unescape(encodeURIComponent(readmePayload))),
                         sha: shaReadme
                     });
 
+                    // RESET
                     this.hasUnsavedChanges = false;
+                    this.sessionHistory = []; // Clear session logs as they are now saved
+                    this.existingReadmeContent = readmePayload; // Update local cache with new version
                     this.resetActivity();
                     this.showToast('Success', 'Changes committed successfully.');
                 } catch (e) {
