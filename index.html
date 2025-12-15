@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v7.7</title>
+    <title>Security Manager v7.7.2</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -98,7 +98,7 @@
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.7</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.7.2</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -108,7 +108,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.7</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.7.2</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -499,6 +499,20 @@
                 const pop=(k,arr)=>{ this.editableLists[k].items=(arr||[]).map(v=>({val:v,note:map[v]||''})); };
                 pop('GOOD_IPS',json.GOOD_IPS); pop('BLOCKED_THREATS',json.BLOCKED_THREATS||json.BLOCKED_IPS); pop('GOOD_REFERRERS',json.GOOD_REFERRERS); pop('SEARCH_BOTS',json.GOOD_BOTS?.SEARCH_BOTS); pop('AI_BOTS',json.GOOD_BOTS?.AI_BOTS);
             },
+            
+            // Helper for File Sizes
+            formatFileSize(bytes) {
+                if (bytes === 0) return '0 KB';
+                const k = 1024;
+                const m = k * k; // 1 MB = 1024 * 1024 bytes
+                // Rule: Below 1 MB (1,048,576 bytes) show KB, else MB
+                if (bytes < m) {
+                    return (bytes / k).toFixed(2) + ' KB';
+                } else {
+                    return (bytes / m).toFixed(2) + ' MB';
+                }
+            },
+
             async loadDashboard() {
                 this.currentView = 'dashboard';
                 this.loadingStats = true;
@@ -506,7 +520,6 @@
                 let totalBytes = 0;
                 
                 try {
-                    // Fetch all 3 JSONs in parallel
                     const [resWhite, resBlack, resLive] = await Promise.all([
                         octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}`),
                         octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['blacklist']}`),
@@ -530,18 +543,20 @@
                     this.stats.global.malicious = b.MALICIOUS_IPS?.length || 0;
                     this.stats.global.tor = b.TOR_IPS?.length || 0;
                     this.stats.global.bots = b.BAD_BOTS?.length || 0;
-                    this.stats.global.referrers = b.BAD_REFERRERS?.length || 0;
+                    // [FIX] Use BAD_REFERERS (Single R) for Global List
+                    this.stats.global.referrers = b.BAD_REFERERS?.length || 0;
+                    
                     this.stats.global.total = this.stats.global.malicious + this.stats.global.tor + this.stats.global.bots + this.stats.global.referrers;
 
-                    // Update Live Stats
+                    // Update Live Stats (Uses Double R)
                     this.stats.live.ips = l.BLOCKED_IPS?.length || 0;
                     this.stats.live.bots = l.BAD_BOTS?.length || 0;
                     this.stats.live.referrers = l.BAD_REFERRERS?.length || 0;
                     this.stats.live.brands = l.meta?.includedBrands?.length || 0;
                     this.stats.live.total = this.stats.live.ips + this.stats.live.bots + this.stats.live.referrers;
 
-                    // Update Meta
-                    this.stats.totalSize = (totalBytes / (1024*1024)).toFixed(2) + ' MB';
+                    // Update Meta using helper
+                    this.stats.totalSize = this.formatFileSize(totalBytes);
                     this.stats.lastUpdate = b.meta?.generatedAt ? new Date(b.meta.generatedAt).toLocaleString() : 'Unknown';
 
                 } catch (e) {
@@ -620,11 +635,10 @@
                 const octokit=new Octokit({auth:this.token}); 
                 try {
                     const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES[t]}`); 
-                    // Calculate Size
+                    // Calculate Size using Helper
                     const rawContent = atob(r.data.content);
                     const bytes = rawContent.length;
-                    this.currentFileSize = (bytes / 1024).toFixed(2) + ' KB';
-                    if (bytes > 1024 * 1024) this.currentFileSize = (bytes / (1024*1024)).toFixed(2) + ' MB';
+                    this.currentFileSize = this.formatFileSize(bytes);
 
                     const c=decodeURIComponent(escape(rawContent)); 
                     this.activeLogContent=c; 
