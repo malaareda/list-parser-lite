@@ -3,7 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v7.7.3</title>
+    <title>Security Manager v7.8.0</title>
+    
+    <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
+
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -31,7 +34,6 @@
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
         [v-cloak] { display: none !important; }
         
-        /* JSON Tree Typography & Theme Handling */
         .json-tree { font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; }
         .json-tree details { margin-left: 15px; }
         .json-tree summary { cursor: pointer; list-style: none; outline: none; display: flex; align-items: center; }
@@ -41,22 +43,22 @@
         .json-arrow { display: inline-flex; justify-content: center; align-items: center; width: 14px; height: 14px; margin-right: 4px; font-size: 8px; color: #64748b; transition: transform 0.2s; }
         details[open] > summary > .json-arrow { transform: rotate(90deg); }
 
-        /* [UPDATED] Light Mode JSON Colors (High Contrast) */
-        .j-key { color: #0369a1; font-weight: 600; }   /* Blue-700 */
-        .j-str { color: #15803d; }                     /* Green-700 */
-        .j-num { color: #7e22ce; }                     /* Purple-700 */
-        .j-bool { color: #b91c1c; }                    /* Red-700 */
-        .j-null { color: #64748b; font-style: italic;} /* Slate-500 */
-        .j-meta { color: #475569; }                    /* Slate-600 */
+        /* Light Mode JSON Colors (High Contrast) */
+        .j-key { color: #0369a1; font-weight: 600; }   
+        .j-str { color: #15803d; }                     
+        .j-num { color: #7e22ce; }                     
+        .j-bool { color: #b91c1c; }                    
+        .j-null { color: #64748b; font-style: italic;} 
+        .j-meta { color: #475569; }                    
         .j-dup { color: #d97706 !important; font-weight: bold; background: rgba(217, 119, 6, 0.1); padding: 0 4px; border-radius: 4px; }
 
-        /* [UPDATED] Dark Mode JSON Colors (Neon/Pastel) */
-        .dark .j-key { color: #60a5fa; }               /* Blue-400 */
-        .dark .j-str { color: #34d399; }               /* Emerald-400 */
-        .dark .j-num { color: #c084fc; }               /* Purple-400 */
-        .dark .j-bool { color: #f87171; }              /* Red-400 */
-        .dark .j-null { color: #94a3b8; }              /* Slate-400 */
-        .dark .j-meta { color: #64748b; }              /* Slate-500 */
+        /* Dark Mode JSON Colors (Neon/Pastel) */
+        .dark .j-key { color: #60a5fa; }               
+        .dark .j-str { color: #34d399; }               
+        .dark .j-num { color: #c084fc; }               
+        .dark .j-bool { color: #f87171; }              
+        .dark .j-null { color: #94a3b8; }              
+        .dark .j-meta { color: #64748b; }              
         .dark .j-dup { color: #fbbf24 !important; background: rgba(251, 191, 36, 0.1); }
 
         .dark ::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; opacity: 0.6; }
@@ -117,7 +119,7 @@
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.7.3</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.8.0</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -127,7 +129,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.7.3</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.8.0</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -217,7 +219,7 @@
                         </div>
                     </div>
 
-                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
                             <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold text-xs text-slate-600 dark:text-slate-300">🌍 Global Threat Composition</div>
                             <div class="divide-y divide-slate-100 dark:divide-slate-800">
@@ -262,6 +264,34 @@
                             </div>
                         </div>
                     </div>
+
+                    <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden mt-6">
+                        <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold text-xs text-slate-600 dark:text-slate-300 flex items-center gap-2">
+                            <span>🤖 Automation Health Hub</span>
+                            <span class="text-[10px] font-normal text-slate-400">(GitHub Actions)</span>
+                        </div>
+                        <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                            <div v-if="automationStats.length === 0" class="p-4 text-center text-xs text-slate-400 italic">No workflow runs found or permissions missing.</div>
+                            <div v-for="flow in automationStats" :key="flow.name" class="px-4 py-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                <div class="flex items-center gap-3">
+                                    <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm bg-slate-100 dark:bg-slate-800 text-slate-500 dark:text-slate-300">
+                                        {{ flow.name.includes('Aggregator') ? '🛡️' : (flow.name.includes('Report') ? '📊' : '⚡') }}
+                                    </div>
+                                    <div>
+                                        <div class="text-xs font-bold text-slate-700 dark:text-slate-200">{{ flow.name }}</div>
+                                        <div class="text-[10px] text-slate-400 flex items-center gap-1">
+                                            <span>Last: {{ flow.lastRun }}</span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="flex flex-col items-end">
+                                    <span class="text-[10px] font-bold bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400 px-1.5 py-0.5 rounded">Active</span>
+                                    <span class="text-[9px] text-slate-400 mt-1">{{ flow.count }} runs (last 100)</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
                 </div>
             </div>
 
@@ -436,7 +466,8 @@
                     live: { total: 0, ips: 0, bots: 0, referrers: 0, brands: 0 },
                     whitelist: { total: 0 },
                     totalSize: '0 KB', lastUpdate: '-'
-                }
+                },
+                automationStats: []
             }
         },
         computed: {
@@ -519,17 +550,15 @@
                 pop('GOOD_IPS',json.GOOD_IPS); pop('BLOCKED_THREATS',json.BLOCKED_THREATS||json.BLOCKED_IPS); pop('GOOD_REFERRERS',json.GOOD_REFERRERS); pop('SEARCH_BOTS',json.GOOD_BOTS?.SEARCH_BOTS); pop('AI_BOTS',json.GOOD_BOTS?.AI_BOTS);
             },
             
-            // [UPDATED] Helper for File Sizes with 1000 KB Cutoff
+            // Helper for File Sizes with 1000 KB Cutoff
             formatFileSize(bytes) {
                 if (bytes === 0) return '0 KB';
                 const k = 1024;
                 const kbVal = bytes / k;
                 
-                // If less than 1000 KB, show KB
                 if (kbVal < 1000) {
                     return kbVal.toFixed(2) + ' KB';
                 }
-                // Else show MB
                 return (kbVal / 1024).toFixed(2) + ' MB';
             },
 
@@ -540,6 +569,30 @@
                 let totalBytes = 0;
                 
                 try {
+                    // Fetch Automation Stats (Actions)
+                    this.automationStats = [];
+                    try {
+                        const runs = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/actions/runs`, {
+                            status: 'success', per_page: 100
+                        });
+                        
+                        const grouped = {};
+                        runs.data.workflow_runs.forEach(run => {
+                            if (!grouped[run.name]) {
+                                grouped[run.name] = { 
+                                    name: run.name, 
+                                    lastRun: new Date(run.created_at).toLocaleString(), 
+                                    count: 0 
+                                };
+                            }
+                            grouped[run.name].count++;
+                        });
+                        this.automationStats = Object.values(grouped);
+                    } catch (e) {
+                        console.warn("Automation Stats fetch failed (likely permissions):", e);
+                    }
+
+                    // Fetch JSON Lists
                     const [resWhite, resBlack, resLive] = await Promise.all([
                         octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}`),
                         octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['blacklist']}`),
@@ -567,7 +620,7 @@
                     
                     this.stats.global.total = this.stats.global.malicious + this.stats.global.tor + this.stats.global.bots + this.stats.global.referrers;
 
-                    // Update Live Stats (Uses Double R)
+                    // Update Live Stats
                     this.stats.live.ips = l.BLOCKED_IPS?.length || 0;
                     this.stats.live.bots = l.BAD_BOTS?.length || 0;
                     this.stats.live.referrers = l.BAD_REFERRERS?.length || 0;
