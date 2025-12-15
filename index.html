@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v7.6</title>
+    <title>Security Manager v7.7</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -30,10 +30,6 @@
         .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #94a3b8; border-radius: 20px; }
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
         [v-cloak] { display: none !important; }
-        .markdown-body h2 { border-bottom: 1px solid #334155; padding-bottom: 0.5rem; margin-top: 1.5rem; margin-bottom: 1rem; font-size: 1.25rem; font-weight: 600; color: #e2e8f0; }
-        .markdown-body ul { list-style-type: disc; padding-left: 1.5rem; color: #cbd5e1; }
-        .markdown-body li { margin-bottom: 0.25rem; }
-        .markdown-body code { background: #1e293b; padding: 0.2rem 0.4rem; rounded: 0.25rem; font-size: 0.875em; color: #cbd5e1; }
         
         .json-tree { font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; }
         .json-tree details { margin-left: 15px; }
@@ -102,7 +98,7 @@
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.6</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.7</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -112,9 +108,13 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.6</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.7</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
+                <div>
+                    <button @click="loadDashboard" :class="currentView === 'dashboard' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-bold transition-colors mb-2"><span>📊</span> Dashboard</button>
+                </div>
+
                 <div>
                     <h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Whitelist</h3>
                     <div class="space-y-1">
@@ -147,6 +147,104 @@
                     </button>
                 </div>
             </header>
+
+            <div v-if="currentView === 'dashboard'" class="flex-1 overflow-y-auto p-6">
+                <div v-if="loadingStats" class="flex flex-col items-center justify-center h-full">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 mb-4"></div>
+                    <p class="text-sm text-slate-500 animate-pulse">Analyzing Global Security Data...</p>
+                </div>
+                <div v-else class="space-y-6">
+                    <h2 class="text-xl font-bold text-slate-800 dark:text-white">Security Posture Overview</h2>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-xl shadow-sm relative overflow-hidden group">
+                            <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><span class="text-6xl">🌍</span></div>
+                            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Global Shield</h3>
+                            <div class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">{{ stats.global.total.toLocaleString() }}</div>
+                            <p class="text-[10px] text-slate-400 mt-2">Tor, Malicious IPs, Botnets</p>
+                            <div class="mt-3 flex gap-2">
+                                <span class="text-[10px] bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-300 px-1.5 py-0.5 rounded">IPv4</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-xl shadow-sm relative overflow-hidden group">
+                            <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><span class="text-6xl">⚡</span></div>
+                            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Live Threats</h3>
+                            <div class="text-3xl font-bold text-amber-600 dark:text-amber-400">{{ stats.live.total.toLocaleString() }}</div>
+                            <p class="text-[10px] text-slate-400 mt-2">Active Brand Attacks</p>
+                            <div class="mt-3">
+                                <span class="text-[10px] bg-amber-50 dark:bg-amber-900/30 text-amber-600 dark:text-amber-300 px-1.5 py-0.5 rounded">{{ stats.live.brands }} Brands Protected</span>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-xl shadow-sm relative overflow-hidden group">
+                            <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><span class="text-6xl">🛡️</span></div>
+                            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Whitelist</h3>
+                            <div class="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{{ stats.whitelist.total.toLocaleString() }}</div>
+                            <p class="text-[10px] text-slate-400 mt-2">Allowed IPs & Entities</p>
+                            <div class="mt-3">
+                                <span class="text-[10px] bg-emerald-50 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-300 px-1.5 py-0.5 rounded">Manual Entry</span>
+                            </div>
+                        </div>
+                        
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-xl shadow-sm relative overflow-hidden group">
+                             <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><span class="text-6xl">💾</span></div>
+                             <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Dataset</h3>
+                             <div class="text-3xl font-bold text-slate-700 dark:text-slate-200">{{ stats.totalSize }}</div>
+                             <p class="text-[10px] text-slate-400 mt-2">Combined JSON Size</p>
+                             <div class="mt-3">
+                                <span class="text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-1.5 py-0.5 rounded">Last: {{ stats.lastUpdate }}</span>
+                             </div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                            <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold text-xs text-slate-600 dark:text-slate-300">🌍 Global Threat Composition</div>
+                            <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <div class="px-4 py-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-xs font-mono text-slate-600 dark:text-slate-400">MALICIOUS_IPS (CINS, ET, Feodo...)</span>
+                                    <span class="text-xs font-bold text-red-500">{{ stats.global.malicious.toLocaleString() }}</span>
+                                </div>
+                                <div class="px-4 py-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-xs font-mono text-slate-600 dark:text-slate-400">TOR_IPS (Exit Nodes)</span>
+                                    <span class="text-xs font-bold text-amber-500">{{ stats.global.tor.toLocaleString() }}</span>
+                                </div>
+                                <div class="px-4 py-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-xs font-mono text-slate-600 dark:text-slate-400">BAD_BOTS (User-Agents)</span>
+                                    <span class="text-xs font-bold text-orange-500">{{ stats.global.bots.toLocaleString() }}</span>
+                                </div>
+                                <div class="px-4 py-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-xs font-mono text-slate-600 dark:text-slate-400">BAD_REFERRERS (Spam Domains)</span>
+                                    <span class="text-xs font-bold text-slate-500">{{ stats.global.referrers.toLocaleString() }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                            <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold text-xs text-slate-600 dark:text-slate-300">⚡ Live Threat Breakdown</div>
+                            <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <div class="px-4 py-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-xs font-mono text-slate-600 dark:text-slate-400">BLOCKED_IPS (Targeted Attacks)</span>
+                                    <span class="text-xs font-bold text-red-500">{{ stats.live.ips.toLocaleString() }}</span>
+                                </div>
+                                <div class="px-4 py-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-xs font-mono text-slate-600 dark:text-slate-400">BAD_BOTS (Custom Block)</span>
+                                    <span class="text-xs font-bold text-orange-500">{{ stats.live.bots.toLocaleString() }}</span>
+                                </div>
+                                <div class="px-4 py-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-xs font-mono text-slate-600 dark:text-slate-400">BAD_REFERRERS (Custom Block)</span>
+                                    <span class="text-xs font-bold text-slate-500">{{ stats.live.referrers.toLocaleString() }}</span>
+                                </div>
+                                <div class="px-4 py-3 flex justify-between items-center bg-slate-50/50 dark:bg-slate-900/30">
+                                    <span class="text-[10px] text-slate-400 italic">Source: Consolidated from {{ stats.live.brands }} Brands</span>
+                                    <button @click="loadDashboard" class="text-[10px] text-indigo-500 hover:underline">Refresh Data</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
 
             <div v-if="currentView === 'whitelist-update'" class="flex-1 overflow-y-auto p-6">
                 <div class="grid grid-cols-1 xl:grid-cols-2 gap-6 pb-20">
@@ -248,6 +346,7 @@
                     <div class="text-xs font-mono text-slate-500 font-bold flex items-center gap-2">
                         JSON Explorer
                         <span v-if="jsonRecordCount > 0" class="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-0.5 rounded text-[10px]">{{ jsonRecordCount.toLocaleString() }} Records</span>
+                        <span v-if="currentFileSize" class="bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-400 px-2 py-0.5 rounded text-[10px]">💾 {{ currentFileSize }}</span>
                     </div>
                     <div class="flex gap-2 items-center">
                         <button @click="showRawJson = !showRawJson" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700">{{ showRawJson ? 'Show Tree' : 'Show Raw' }}</button>
@@ -299,25 +398,26 @@
     const FILE_TEMP    = 'security-list-backup/security-whitelist-backup/security-whitelist-temp.json';
     const FILE_README  = 'security-list-backup/security-whitelist-backup/README.md';
     const JSON_FILES = { 'whitelist': 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json', 'blacklist': 'security-list-backup/security-blacklist-backup/security-blacklist-R.00.json', 'livelist':  'security-list-backup/security-live-blacklist-backup/security-live-blacklist-R.00.json' };
-    const LOGS = { 
-        'whitelist': 'security-list-backup/security-whitelist-backup/whitelist-security-audit.log', 
-        'blacklist': 'security-list-backup/security-blacklist-backup/blacklist-security-audit.log', 
-        'livelist':  'security-list-backup/security-live-blacklist-backup/live-blacklist-security-audit.log',
-        'system':    'security-list-backup/system-reports.log' // [NEW] System Log Path
-    };
+    const LOGS = { 'whitelist': 'security-list-backup/security-whitelist-backup/whitelist-security-audit.log', 'blacklist': 'security-list-backup/security-blacklist-backup/blacklist-security-audit.log', 'livelist':  'security-list-backup/security-live-blacklist-backup/live-blacklist-security-audit.log', 'system': 'security-list-backup/system-reports.log' };
     const STATUS_CONFIG = { SUCCESS:{label:'SUCCESS',hex:'#16a34a'}, INFO:{label:'INFO',hex:'#2563eb'}, WARN:{label:'WARNING',hex:'#d97706'}, ERROR:{label:'ERROR',hex:'#dc2626'}, PROCESS:{label:'PROCESS',hex:'#0891b2'}, START:{label:'START',hex:'#9333ea'}, CLEANUP:{label:'CLEANUP',hex:'#4b5563'} };
     const INACTIVITY_MINUTES = 10; 
 
     createApp({
         data() {
             return {
-                isInitializing: true, token: localStorage.getItem('gh_token') || '', tokenInput: '', loading: false, loadingLog: false, sidebarOpen: false, targetRepo: `${TARGET_OWNER}/${TARGET_REPO}`, isDark: true, currentView: 'whitelist-update', targetTime: 0, timeLeft: INACTIVITY_MINUTES * 60, countdownInterval: null, hasUnsavedChanges: false, activeLogContent: '',
+                isInitializing: true, token: localStorage.getItem('gh_token') || '', tokenInput: '', loading: false, loadingLog: false, loadingStats: false, sidebarOpen: false, targetRepo: `${TARGET_OWNER}/${TARGET_REPO}`, isDark: true, currentView: 'whitelist-update', targetTime: 0, timeLeft: INACTIVITY_MINUTES * 60, countdownInterval: null, hasUnsavedChanges: false, activeLogContent: '', currentFileSize: '',
                 toast: { show: false, title: '', message: '', isError: false },
                 modal: { show: false, type: '', sourceKey: '', index: null, val: '', reason: '', targetKey: '' },
                 sessionHistory: [], existingReadmeContent: '', historySearchQuery: '', historyStartDate: '', historyEndDate: '', historyUniqueOnly: false,
                 jsonSearchQuery: '', parsedActiveJson: null, showRawJson: false, duplicateMap: new Map(), isPolling: false, pollInterval: null, currentGeneratedAt: null,
                 editableLists: { GOOD_IPS:{title:'🌍 Allowed IPs',placeholder:'IP Address...',items:[]}, BLOCKED_THREATS:{title:'⛔ Blocked Threats',placeholder:'IP / UA / Domain...',items:[]}, GOOD_REFERRERS:{title:'🔗 Referrers',placeholder:'Domain...',items:[]}, SEARCH_BOTS:{title:'🤖 Search Bots',placeholder:'User-Agent...',items:[]}, AI_BOTS:{title:'🧠 AI Agents',placeholder:'User-Agent...',items:[]} },
-                inputs: { GOOD_IPS:{val:'',note:''}, BLOCKED_THREATS:{val:'',note:''}, GOOD_REFERRERS:{val:'',note:''}, SEARCH_BOTS:{val:'',note:''}, AI_BOTS:{val:'',note:''} }
+                inputs: { GOOD_IPS:{val:'',note:''}, BLOCKED_THREATS:{val:'',note:''}, GOOD_REFERRERS:{val:'',note:''}, SEARCH_BOTS:{val:'',note:''}, AI_BOTS:{val:'',note:''} },
+                stats: { 
+                    global: { total: 0, tor: 0, malicious: 0, bots: 0, referrers: 0 },
+                    live: { total: 0, ips: 0, bots: 0, referrers: 0, brands: 0 },
+                    whitelist: { total: 0 },
+                    totalSize: '0 KB', lastUpdate: '-'
+                }
             }
         },
         computed: {
@@ -386,7 +486,6 @@
             async loadWhitelistData() {
                 this.loading=true; const octokit=new Octokit({auth:this.token});
                 try {
-                    // [UPDATED] Added cache-busting timestamp
                     const r1=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}?t=${Date.now()}`);
                     const json=JSON.parse(decodeURIComponent(escape(atob(r1.data.content))));
                     if(json.meta && json.meta.generatedAt) this.currentGeneratedAt = json.meta.generatedAt;
@@ -400,26 +499,70 @@
                 const pop=(k,arr)=>{ this.editableLists[k].items=(arr||[]).map(v=>({val:v,note:map[v]||''})); };
                 pop('GOOD_IPS',json.GOOD_IPS); pop('BLOCKED_THREATS',json.BLOCKED_THREATS||json.BLOCKED_IPS); pop('GOOD_REFERRERS',json.GOOD_REFERRERS); pop('SEARCH_BOTS',json.GOOD_BOTS?.SEARCH_BOTS); pop('AI_BOTS',json.GOOD_BOTS?.AI_BOTS);
             },
+            async loadDashboard() {
+                this.currentView = 'dashboard';
+                this.loadingStats = true;
+                const octokit = new Octokit({ auth: this.token });
+                let totalBytes = 0;
+                
+                try {
+                    // Fetch all 3 JSONs in parallel
+                    const [resWhite, resBlack, resLive] = await Promise.all([
+                        octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}`),
+                        octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['blacklist']}`),
+                        octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['livelist']}`)
+                    ]);
+                    
+                    const process = (res) => {
+                        const raw = atob(res.data.content);
+                        totalBytes += raw.length;
+                        return JSON.parse(decodeURIComponent(escape(raw)));
+                    };
+
+                    const w = process(resWhite);
+                    const b = process(resBlack);
+                    const l = process(resLive);
+
+                    // Update Whitelist Stats
+                    this.stats.whitelist.total = (w.GOOD_IPS?.length||0) + (w.GOOD_REFERRERS?.length||0) + (w.GOOD_BOTS?.SEARCH_BOTS?.length||0) + (w.GOOD_BOTS?.AI_BOTS?.length||0);
+                    
+                    // Update Global Stats
+                    this.stats.global.malicious = b.MALICIOUS_IPS?.length || 0;
+                    this.stats.global.tor = b.TOR_IPS?.length || 0;
+                    this.stats.global.bots = b.BAD_BOTS?.length || 0;
+                    this.stats.global.referrers = b.BAD_REFERRERS?.length || 0;
+                    this.stats.global.total = this.stats.global.malicious + this.stats.global.tor + this.stats.global.bots + this.stats.global.referrers;
+
+                    // Update Live Stats
+                    this.stats.live.ips = l.BLOCKED_IPS?.length || 0;
+                    this.stats.live.bots = l.BAD_BOTS?.length || 0;
+                    this.stats.live.referrers = l.BAD_REFERRERS?.length || 0;
+                    this.stats.live.brands = l.meta?.includedBrands?.length || 0;
+                    this.stats.live.total = this.stats.live.ips + this.stats.live.bots + this.stats.live.referrers;
+
+                    // Update Meta
+                    this.stats.totalSize = (totalBytes / (1024*1024)).toFixed(2) + ' MB';
+                    this.stats.lastUpdate = b.meta?.generatedAt ? new Date(b.meta.generatedAt).toLocaleString() : 'Unknown';
+
+                } catch (e) {
+                    this.showToast('Stats Error', 'Failed to fetch global lists.', true);
+                    console.error(e);
+                } finally {
+                    this.loadingStats = false;
+                }
+            },
             startPolling() {
                 this.isPolling = true; this.showToast('Processing', 'Updates sent. Waiting for automation...');
                 if (this.pollInterval) clearInterval(this.pollInterval);
-                
-                // [UPDATED] Poll every 2 seconds
                 this.pollInterval = setInterval(async () => {
                     const octokit = new Octokit({ auth: this.token });
                     try {
                         const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}?t=${Date.now()}`);
                         const content = JSON.parse(decodeURIComponent(escape(atob(res.data.content))));
                         const newGenTime = content.meta?.generatedAt;
-                        
                         if (newGenTime && newGenTime !== this.currentGeneratedAt) {
-                            clearInterval(this.pollInterval); 
-                            this.isPolling = false; 
-                            this.currentGeneratedAt = newGenTime;
-                            
-                            // [CRITICAL] Immediately load the new data
-                            this.loadWhitelistData(); 
-                            this.showToast('Sync Complete', 'Data reloaded from GitHub.', false);
+                            clearInterval(this.pollInterval); this.isPolling = false; this.currentGeneratedAt = newGenTime;
+                            this.loadWhitelistData(); this.showToast('Sync Complete', 'Data reloaded from GitHub.', false);
                         }
                     } catch (e) {}
                 }, 2000);
@@ -436,7 +579,6 @@
                     this.hasUnsavedChanges=false; this.sessionHistory=[]; this.existingReadmeContent=md; this.resetActivity(); this.startPolling();
                 } catch(e) { console.error(e); this.showToast('Error',e.message,true); } finally { this.loading=false; }
             },
-            
             addItem(key) { 
                 const v=this.inputs[key].val.trim(); const n=this.inputs[key].note.trim(); 
                 if(!v)return; 
@@ -446,14 +588,11 @@
                 this.markDirty(); 
             },
             deleteItem(key,index,item) { this.openModal('DELETE', key, index, item); }, 
-            
             openModal(t,k,i,v) { let tk=''; if(t==='RESTORE'){const m=v.note?v.note.match(/\[Origin: (.*?)\]/):null;if(m&&this.editableLists[m[1]])tk=m[1];} this.modal={show:true,type:t,sourceKey:k,index:i,val:v.val,reason:'',targetKey:tk}; },
             closeModal() { this.modal.show=false; },
-            
             confirmAction() { 
                 this.editableLists[this.modal.sourceKey].items.splice(this.modal.index,1); 
                 const reasonText = this.modal.reason || 'No reason provided';
-                
                 if (this.modal.type === 'BLOCK') {
                     const n = `[Origin: ${this.modal.sourceKey}] ${reasonText}`;
                     this.editableLists.BLOCKED_THREATS.items.unshift({val:this.modal.val, note:n});
@@ -466,78 +605,57 @@
                         this.sessionHistory.push({action:'UNBLOCKED', val:this.modal.val, note:reasonText, date:this.getLogTimestamp()});
                     }
                 }
-                
-                this.markDirty(); 
-                this.closeModal(); 
+                this.markDirty(); this.closeModal(); 
             },
-
             calculateDuplicates(obj) {
                 if (typeof obj === 'object' && obj !== null) {
-                    if (Array.isArray(obj)) {
-                        obj.forEach(i => this.calculateDuplicates(i));
-                    } else {
-                        Object.values(obj).forEach(v => this.calculateDuplicates(v));
-                    }
+                    if (Array.isArray(obj)) { obj.forEach(i => this.calculateDuplicates(i)); } 
+                    else { Object.values(obj).forEach(v => this.calculateDuplicates(v)); }
                 } else if (['string', 'number'].includes(typeof obj)) {
-                    const val = String(obj);
-                    this.duplicateMap.set(val, (this.duplicateMap.get(val) || 0) + 1);
+                    const val = String(obj); this.duplicateMap.set(val, (this.duplicateMap.get(val) || 0) + 1);
                 }
             },
-
             async loadJson(t) { 
-                this.currentView=t+'-json'; this.activeLogContent=''; this.loadingLog=true; 
+                this.currentView=t+'-json'; this.activeLogContent=''; this.currentFileSize=''; this.loadingLog=true; 
                 const octokit=new Octokit({auth:this.token}); 
                 try {
                     const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES[t]}`); 
-                    const c=decodeURIComponent(escape(atob(r.data.content))); 
+                    // Calculate Size
+                    const rawContent = atob(r.data.content);
+                    const bytes = rawContent.length;
+                    this.currentFileSize = (bytes / 1024).toFixed(2) + ' KB';
+                    if (bytes > 1024 * 1024) this.currentFileSize = (bytes / (1024*1024)).toFixed(2) + ' MB';
+
+                    const c=decodeURIComponent(escape(rawContent)); 
                     this.activeLogContent=c; 
                     this.parsedActiveJson=JSON.parse(c);
-                    
                     this.duplicateMap = new Map();
                     this.calculateDuplicates(this.parsedActiveJson);
-                    
                 } catch(e) {
                     if(e.status!==404)this.activeLogContent=`Error: ${e.message}`;
                 } finally {
                     this.loadingLog=false;
                 } 
             },
-
             filterObject(obj, query) { if (!query) return obj; if (typeof obj!=='object'||obj===null) return String(obj).toLowerCase().includes(query)?obj:undefined; if(Array.isArray(obj)){const f=obj.map(i=>this.filterObject(i,query)).filter(i=>i!==undefined);return f.length?f:undefined;} const r={};let h=false;Object.keys(obj).forEach(k=>{if(k.toLowerCase().includes(query)){r[k]=obj[k];h=true;}else{const v=this.filterObject(obj[k],query);if(v!==undefined){r[k]=v;h=true;}}}); return h?r:undefined; },
-            
             renderJsonTree(data) { 
                 if(data===undefined)return '<span class="j-null">No matches.</span>'; 
                 if(data===null)return '<span class="j-null">null</span>'; 
-                
                 if(['string','number','boolean'].includes(typeof data)) {
-                    const valStr = String(data);
-                    const count = this.duplicateMap.get(valStr) || 0;
+                    const valStr = String(data); const count = this.duplicateMap.get(valStr) || 0;
                     let html = '';
                     if(typeof data==='string') html = `<span class="j-str">"${data}"</span>`;
                     else if(typeof data==='number') html = `<span class="j-num">${data}</span>`;
                     else html = `<span class="j-bool">${data}</span>`;
-                    
-                    if (count > 1) {
-                        html += ` <span class="j-dup" title="This value appears ${count} times">⚠️ (x${count})</span>`;
-                    }
+                    if (count > 1) { html += ` <span class="j-dup" title="This value appears ${count} times">⚠️ (x${count})</span>`; }
                     return html;
                 }
-                
-                const arr=Array.isArray(data); 
-                const k=Object.keys(data); 
+                const arr=Array.isArray(data); const k=Object.keys(data); 
                 if(!k.length)return arr?'<span class="j-meta">[]</span>':'<span class="j-meta">{}</span>'; 
-                
                 let h=`<details open><summary><span class="json-arrow">▶</span> <span class="j-meta">${arr?`Array(${k.length})`:`Object{${k.length}}`}</span></summary>`; 
-                k.forEach(key=>{
-                    h+=`<div>`;
-                    if(!arr)h+=`<span class="j-key">"${key}"</span>: `;
-                    h+=this.renderJsonTree(data[key]);
-                    h+=`<span class="j-meta">,</span></div>`;
-                }); 
-                h+=`</details>`; 
-                return h; 
+                k.forEach(key=>{ h+=`<div>`; if(!arr)h+=`<span class="j-key">"${key}"</span>: `; h+=this.renderJsonTree(data[key]); h+=`<span class="j-meta">,</span></div>`; }); 
+                h+=`</details>`; return h; 
             },
-            
             expandAll() { this.$refs.jsonContainer.querySelectorAll('details').forEach(d=>d.open=true); }, collapseAll() { this.$refs.jsonContainer.querySelectorAll('details').forEach(d=>d.open=false); }, copyJson() { if(this.parsedActiveJson) { navigator.clipboard.writeText(JSON.stringify(this.parsedActiveJson,null,4)); this.showToast('Copied','JSON copied.'); } }, triggerJsonSearch() {}, getOrigin(note) { if(!note)return null; const m=note.match(/\[Origin: (.*?)\]/); if(m){const k=m[1];const l=this.editableLists[k];return l?l.title.replace(/^[^\s]+\s/,''):k;} return null; }, getLogTimestamp() { const n=new Date(); return `${n.toLocaleDateString('en-CA')} ${n.toLocaleTimeString('en-US',{hour12:true})}`; },
             generateReadmeContent(p=false) { let md=`# 🛡️ Security Whitelist Documentation\n\n**Last Updated:** ${new Date().toUTCString()}\n\n> Auto-generated by Security Manager WebUI.\n\n`; const s=[{key:'GOOD_IPS',t:'🌍 Allowed IPs'},{key:'BLOCKED_THREATS',t:'⛔ Blocked Threats'},{key:'GOOD_REFERRERS',t:'🔗 Referrers'},{key:'SEARCH_BOTS',t:'🤖 Search Bots'},{key:'AI_BOTS',t:'🧠 AI Agents'}]; s.forEach(x=>{md+=`## ${x.t}\n`;const i=this.editableLists[x.key].items;if(!i.length)md+='*No records.*\n\n';else{i.forEach(j=>{md+=`- \`${j.val}\`${j.note?` | 📝 ${j.note}`:''}\n`;});md+='\n';}}); const h=`## 📜 Threat History (Permanent Log)`; let ht=''; if(this.existingReadmeContent.includes(h))ht=this.existingReadmeContent.split(h)[1].trim(); if(this.sessionHistory.length){const nl=this.sessionHistory.map(x=>{let c='⚪';if(x.action.includes('ADDED')||x.action.includes('BLOCKED'))c='🔴';else c='🟢'; return `- ${c} [${x.date}] **${x.action}**: \`${x.val}\` | Reason: *${x.note || 'No reason'}*`;}).join('\n');ht=ht?ht+'\n'+nl:nl;} md+=`\n${h}\n${ht||'*No history yet.*'}\n`; return md; },
             async loadLog(t) { this.currentView=t+'-log'; this.activeLogContent=''; this.loadingLog=true; const octokit=new Octokit({auth:this.token}); try{const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${LOGS[t]}`); this.activeLogContent=decodeURIComponent(escape(atob(r.data.content)));}catch(e){if(e.status!==404)this.activeLogContent=`Error: ${e.message}`;}finally{this.loadingLog=false;} }
