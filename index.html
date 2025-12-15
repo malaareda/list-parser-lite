@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v7.4</title>
+    <title>Security Manager v7.6</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -35,7 +35,6 @@
         .markdown-body li { margin-bottom: 0.25rem; }
         .markdown-body code { background: #1e293b; padding: 0.2rem 0.4rem; rounded: 0.25rem; font-size: 0.875em; color: #cbd5e1; }
         
-        /* JSON Tree */
         .json-tree { font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; }
         .json-tree details { margin-left: 15px; }
         .json-tree summary { cursor: pointer; list-style: none; outline: none; display: flex; align-items: center; }
@@ -44,11 +43,9 @@
         .json-arrow { display: inline-flex; justify-content: center; align-items: center; width: 14px; height: 14px; margin-right: 4px; font-size: 8px; color: #64748b; transition: transform 0.2s; }
         details[open] > summary > .json-arrow { transform: rotate(90deg); }
         .j-key { color: #60a5fa; font-weight: 600; } .j-str { color: #34d399; } .j-num { color: #c084fc; } .j-bool { color: #f87171; } .j-null { color: #94a3b8; font-style: italic; } .j-meta { color: #64748b; } .j-dup { color: #fbbf24 !important; font-weight: bold; background: rgba(251, 191, 36, 0.1); padding: 0 4px; border-radius: 4px; }
-
-        /* [NEW] Fix Date Picker Icon in Dark Mode */
+        
         .dark ::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; opacity: 0.6; }
         .dark ::-webkit-calendar-picker-indicator:hover { opacity: 1; }
-
         .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; } .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(20px); }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; } .fade-enter-from, .fade-leave-to { opacity: 0; }
     </style>
@@ -105,7 +102,7 @@
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.4</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.6</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -115,7 +112,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.4</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.6</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -129,6 +126,7 @@
                 </div>
                 <div><h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Live Blacklist</h3><div class="space-y-1"><button @click="loadJson('livelist')" :class="currentView === 'livelist-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📦</span> JSON Source</button><button @click="loadLog('livelist')" :class="currentView === 'livelist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>⚡</span> Live Logs</button></div></div>
                 <div><h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Global Blacklist</h3><div class="space-y-1"><button @click="loadJson('blacklist')" :class="currentView === 'blacklist-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📦</span> JSON Source</button><button @click="loadLog('blacklist')" :class="currentView === 'blacklist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>⛔</span> Block Logs</button></div></div>
+                <div><h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">System</h3><div class="space-y-1"><button @click="loadLog('system')" :class="currentView === 'system-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>🖥️</span> System Reports</button></div></div>
             </nav>
             <div class="p-4 border-t border-slate-200 dark:border-slate-800">
                 <button @click="logout" class="w-full flex items-center justify-center gap-2 px-4 py-2 bg-slate-100 hover:bg-red-50 hover:text-red-500 dark:bg-slate-800 dark:hover:bg-red-900/20 dark:hover:text-red-400 text-slate-500 dark:text-slate-400 text-xs font-bold rounded-lg transition-colors">Disconnect</button>
@@ -144,7 +142,7 @@
                     <button @click="toggleTheme" class="p-2 rounded-full hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors text-slate-500 dark:text-slate-400"><span v-if="isDark" class="text-lg">☀️</span><span v-else class="text-lg">🌙</span></button>
                     <button v-if="currentView === 'whitelist-update'" @click="saveChanges" :disabled="loading || isPolling" class="flex items-center gap-2 px-4 py-1.5 rounded-lg text-xs font-bold text-white shadow-lg transition-all active:scale-95 disabled:opacity-50" :class="hasUnsavedChanges ? 'bg-amber-500 hover:bg-amber-600' : (isPolling ? 'bg-indigo-400 cursor-wait' : 'bg-indigo-600 hover:bg-indigo-700')">
                         <span v-if="loading" class="animate-spin">⏳</span>
-                        <span v-else-if="isPolling" class="animate-pulse">🔄 Processing...</span>
+                        <span v-else-if="isPolling" class="animate-pulse">🔄 Syncing...</span>
                         <span v-else>{{ hasUnsavedChanges ? '⚠️ Unsaved Changes' : '💾 Commit' }}</span>
                     </button>
                 </div>
@@ -247,7 +245,10 @@
             <div v-if="currentView.includes('-json')" class="flex-1 overflow-hidden flex flex-col bg-slate-50 dark:bg-slate-950 relative transition-colors duration-300">
                 <div v-if="loadingLog" class="absolute inset-0 flex items-center justify-center bg-slate-50 dark:bg-slate-950 z-20"><div class="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-500"></div></div>
                 <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900 flex justify-between items-center sticky top-0 z-10" v-if="activeLogContent && !activeLogContent.startsWith('Error')">
-                    <div class="text-xs font-mono text-slate-500 font-bold">JSON Explorer</div>
+                    <div class="text-xs font-mono text-slate-500 font-bold flex items-center gap-2">
+                        JSON Explorer
+                        <span v-if="jsonRecordCount > 0" class="bg-indigo-100 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400 px-2 py-0.5 rounded text-[10px]">{{ jsonRecordCount.toLocaleString() }} Records</span>
+                    </div>
                     <div class="flex gap-2 items-center">
                         <button @click="showRawJson = !showRawJson" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700">{{ showRawJson ? 'Show Tree' : 'Show Raw' }}</button>
                         <button @click="expandAll" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700" v-if="!showRawJson">Expand All</button>
@@ -263,7 +264,6 @@
                         <pre v-if="showRawJson" class="font-mono text-xs text-emerald-400 whitespace-pre-wrap">{{ activeLogContent }}</pre>
                         <div v-else class="json-tree" v-html="renderJsonTree(filteredJsonObj)"></div>
                     </div>
-
                     <div class="w-72 bg-slate-50 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col" v-if="!showRawJson">
                         <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 font-bold text-xs text-slate-500 uppercase tracking-wider flex items-center gap-2">
                             <span>⚠️ Duplicate Inspector</span>
@@ -299,7 +299,12 @@
     const FILE_TEMP    = 'security-list-backup/security-whitelist-backup/security-whitelist-temp.json';
     const FILE_README  = 'security-list-backup/security-whitelist-backup/README.md';
     const JSON_FILES = { 'whitelist': 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json', 'blacklist': 'security-list-backup/security-blacklist-backup/security-blacklist-R.00.json', 'livelist':  'security-list-backup/security-live-blacklist-backup/security-live-blacklist-R.00.json' };
-    const LOGS = { 'whitelist': 'security-list-backup/security-whitelist-backup/whitelist-security-audit.log', 'blacklist': 'security-list-backup/security-blacklist-backup/blacklist-security-audit.log', 'livelist':  'security-list-backup/security-live-blacklist-backup/live-blacklist-security-audit.log' };
+    const LOGS = { 
+        'whitelist': 'security-list-backup/security-whitelist-backup/whitelist-security-audit.log', 
+        'blacklist': 'security-list-backup/security-blacklist-backup/blacklist-security-audit.log', 
+        'livelist':  'security-list-backup/security-live-blacklist-backup/live-blacklist-security-audit.log',
+        'system':    'security-list-backup/system-reports.log' // [NEW] System Log Path
+    };
     const STATUS_CONFIG = { SUCCESS:{label:'SUCCESS',hex:'#16a34a'}, INFO:{label:'INFO',hex:'#2563eb'}, WARN:{label:'WARNING',hex:'#d97706'}, ERROR:{label:'ERROR',hex:'#dc2626'}, PROCESS:{label:'PROCESS',hex:'#0891b2'}, START:{label:'START',hex:'#9333ea'}, CLEANUP:{label:'CLEANUP',hex:'#4b5563'} };
     const INACTIVITY_MINUTES = 10; 
 
@@ -322,6 +327,12 @@
             sortedDuplicates() {
                 if (!this.duplicateMap.size) return [];
                 return Array.from(this.duplicateMap.entries()).filter(x => x[1] > 1).sort((a, b) => b[1] - a[1]); 
+            },
+            jsonRecordCount() {
+                if (!this.duplicateMap.size) return 0;
+                let total = 0;
+                for (let count of this.duplicateMap.values()) total += count;
+                return total;
             },
             parsedHistory() {
                 const h = [];
@@ -375,7 +386,8 @@
             async loadWhitelistData() {
                 this.loading=true; const octokit=new Octokit({auth:this.token});
                 try {
-                    const r1=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}`);
+                    // [UPDATED] Added cache-busting timestamp
+                    const r1=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}?t=${Date.now()}`);
                     const json=JSON.parse(decodeURIComponent(escape(atob(r1.data.content))));
                     if(json.meta && json.meta.generatedAt) this.currentGeneratedAt = json.meta.generatedAt;
                     try{const r2=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_README}`); this.existingReadmeContent=decodeURIComponent(escape(atob(r2.data.content)));}catch(e){this.existingReadmeContent='';}
@@ -391,18 +403,26 @@
             startPolling() {
                 this.isPolling = true; this.showToast('Processing', 'Updates sent. Waiting for automation...');
                 if (this.pollInterval) clearInterval(this.pollInterval);
+                
+                // [UPDATED] Poll every 2 seconds
                 this.pollInterval = setInterval(async () => {
                     const octokit = new Octokit({ auth: this.token });
                     try {
                         const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}?t=${Date.now()}`);
                         const content = JSON.parse(decodeURIComponent(escape(atob(res.data.content))));
                         const newGenTime = content.meta?.generatedAt;
+                        
                         if (newGenTime && newGenTime !== this.currentGeneratedAt) {
-                            clearInterval(this.pollInterval); this.isPolling = false; this.currentGeneratedAt = newGenTime;
-                            this.loadWhitelistData(); this.showToast('Sync Complete', 'Data reloaded.', false);
+                            clearInterval(this.pollInterval); 
+                            this.isPolling = false; 
+                            this.currentGeneratedAt = newGenTime;
+                            
+                            // [CRITICAL] Immediately load the new data
+                            this.loadWhitelistData(); 
+                            this.showToast('Sync Complete', 'Data reloaded from GitHub.', false);
                         }
                     } catch (e) {}
-                }, 3000);
+                }, 2000);
             },
             async saveChanges() {
                 this.loading=true; const octokit=new Octokit({auth:this.token});
