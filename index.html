@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v7.9.0</title>
+    <title>Security Manager v7.9.1</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -45,8 +45,6 @@
         .dark ::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; } .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(20px); }
         .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; } .fade-enter-from, .fade-leave-to { opacity: 0; }
-        
-        /* Tab Animation */
         .tab-active { border-bottom: 2px solid #6366f1; color: #6366f1; font-weight: 700; background: rgba(99, 102, 241, 0.05); }
         .dark .tab-active { border-bottom: 2px solid #818cf8; color: #818cf8; background: rgba(129, 140, 248, 0.1); }
     </style>
@@ -103,7 +101,7 @@
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.9.0</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.9.1</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -113,7 +111,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.9.0</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.9.1</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -185,6 +183,48 @@
                              <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Dataset</h3>
                              <div class="text-3xl font-bold text-slate-700 dark:text-slate-200">{{ stats.totalSize }}</div>
                              <p class="text-[10px] text-slate-400 mt-2">Combined JSON Size</p>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                            <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold text-xs text-slate-600 dark:text-slate-300">🌍 Global Threat Composition</div>
+                            <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <div class="px-4 py-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-xs font-mono text-slate-600 dark:text-slate-400">MALICIOUS_IPS</span>
+                                    <span class="text-xs font-bold text-red-500">{{ stats.global.malicious.toLocaleString() }}</span>
+                                </div>
+                                <div class="px-4 py-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-xs font-mono text-slate-600 dark:text-slate-400">TOR_IPS</span>
+                                    <span class="text-xs font-bold text-amber-500">{{ stats.global.tor.toLocaleString() }}</span>
+                                </div>
+                                <div class="px-4 py-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-xs font-mono text-slate-600 dark:text-slate-400">BAD_BOTS</span>
+                                    <span class="text-xs font-bold text-orange-500">{{ stats.global.bots.toLocaleString() }}</span>
+                                </div>
+                                <div class="px-4 py-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-xs font-mono text-slate-600 dark:text-slate-400">BAD_REFERRERS</span>
+                                    <span class="text-xs font-bold text-slate-500">{{ stats.global.referrers.toLocaleString() }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                            <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold text-xs text-slate-600 dark:text-slate-300">⚡ Live Threat Breakdown</div>
+                            <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <div class="px-4 py-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-xs font-mono text-slate-600 dark:text-slate-400">BLOCKED_IPS</span>
+                                    <span class="text-xs font-bold text-red-500">{{ stats.live.ips.toLocaleString() }}</span>
+                                </div>
+                                <div class="px-4 py-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-xs font-mono text-slate-600 dark:text-slate-400">BAD_BOTS</span>
+                                    <span class="text-xs font-bold text-orange-500">{{ stats.live.bots.toLocaleString() }}</span>
+                                </div>
+                                <div class="px-4 py-3 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-xs font-mono text-slate-600 dark:text-slate-400">BAD_REFERRERS</span>
+                                    <span class="text-xs font-bold text-slate-500">{{ stats.live.referrers.toLocaleString() }}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -420,7 +460,7 @@
                     whitelist: { total: 0 },
                     totalSize: '0 KB', lastUpdate: '-'
                 },
-                // [NEW] Automation Data
+                // Automation Data
                 workflows: [],
                 runsByWorkflow: {},
                 selectedWorkflowId: null,
@@ -479,7 +519,6 @@
                     return `<span class="text-slate-600 dark:text-slate-400">${l}</span>`; 
                 }).join('\n'); 
             },
-            // [NEW] Computed for Automation Tab
             sortedWorkflows() {
                 return this.workflows.sort((a, b) => a.name.localeCompare(b.name));
             },
@@ -525,7 +564,6 @@
                 return (kbVal / 1024).toFixed(2) + ' MB';
             },
 
-            // [NEW] Helper for Cairo Time
             formatCairoTime(isoString) {
                 if (!isoString) return '-';
                 try {
@@ -538,19 +576,16 @@
                 } catch(e) { return isoString; }
             },
 
-            // [NEW] Automation Logic
             async fetchAllWorkflows() {
                 const octokit = new Octokit({ auth: this.token });
                 try {
                     const res = await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/actions/workflows`);
                     this.workflows = res.data.workflows.filter(w => w.state === 'active');
                     
-                    // If none selected, select first
                     if (!this.selectedWorkflowId && this.workflows.length > 0) {
                         this.selectedWorkflowId = this.workflows[0].id;
                     }
                     
-                    // Fetch runs for all known workflows
                     await Promise.all(this.workflows.map(w => this.fetchWorkflowRuns(w.id)));
                 } catch (e) { console.warn("Workflow fetch failed", e); }
             },
@@ -578,10 +613,8 @@
                 let totalBytes = 0;
                 
                 try {
-                    // 1. Initial Automation Fetch
                     await this.fetchAllWorkflows();
 
-                    // 2. Fetch JSON Lists
                     const [resWhite, resBlack, resLive] = await Promise.all([
                         octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}`),
                         octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['blacklist']}`),
@@ -620,11 +653,9 @@
                 }
             },
             
-            // Polling Engines
             startPolling() {
                 this.isPolling = true; this.showToast('Processing', 'Updates sent. Waiting for automation...');
                 
-                // 1. JSON Poll (2s)
                 if (this.pollInterval) clearInterval(this.pollInterval);
                 this.pollInterval = setInterval(async () => {
                     const octokit = new Octokit({ auth: this.token });
@@ -639,16 +670,14 @@
                     } catch (e) {}
                 }, 2000);
 
-                // 2. Action Poll (15s) - Only when on Dashboard
                 if (this.actionPollInterval) clearInterval(this.actionPollInterval);
                 this.actionPollInterval = setInterval(async () => {
                     if (this.currentView === 'dashboard' && this.selectedWorkflowId) {
                         this.isRefreshingActions = true;
-                        // Refresh ALL workflows to catch new runs
                         await Promise.all(this.workflows.map(w => this.fetchWorkflowRuns(w.id)));
                         this.isRefreshingActions = false;
                     }
-                }, 15000); // 15 seconds
+                }, 15000); 
             },
             
             async saveChanges() {
