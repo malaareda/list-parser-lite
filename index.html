@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v8.0.0</title>
+    <title>Security Manager v8.1.0</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -101,7 +101,7 @@
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v8.0.0</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v8.1.0</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -111,7 +111,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v8.0.0</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v8.1.0</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -128,14 +128,7 @@
                     </div>
                 </div>
                 
-                <div>
-                    <h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Universal Firewall</h3>
-                    <div class="space-y-1">
-                        <button @click="loadJson('universal')" :class="currentView === 'universal-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>🌐</span> JSON Source</button>
-                        <button @click="loadLog('universal')" :class="currentView === 'universal-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>🏗️</span> Build Logs</button>
-                    </div>
-                </div>
-
+                <div><h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Universal Firewall</h3><div class="space-y-1"><button @click="loadJson('universal')" :class="currentView === 'universal-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>🌐</span> JSON Source</button><button @click="loadLog('universal')" :class="currentView === 'universal-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>🏗️</span> Build Logs</button></div></div>
                 <div><h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Live Blacklist</h3><div class="space-y-1"><button @click="loadJson('livelist')" :class="currentView === 'livelist-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📦</span> JSON Source</button><button @click="loadLog('livelist')" :class="currentView === 'livelist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>⚡</span> Live Logs</button></div></div>
                 <div><h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Global Blacklist</h3><div class="space-y-1"><button @click="loadJson('blacklist')" :class="currentView === 'blacklist-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📦</span> JSON Source</button><button @click="loadLog('blacklist')" :class="currentView === 'blacklist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>⛔</span> Block Logs</button></div></div>
                 <div><h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">System</h3><div class="space-y-1"><button @click="loadLog('system')" :class="currentView === 'system-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>🖥️</span> System Reports</button></div></div>
@@ -168,40 +161,75 @@
                 <div v-else class="space-y-6">
                     <h2 class="text-xl font-bold text-slate-800 dark:text-white">Security Posture Overview</h2>
                     
-                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-5 gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                         <div class="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-500/30 p-5 rounded-xl shadow-sm relative overflow-hidden group">
                             <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><span class="text-6xl">🌐</span></div>
                             <h3 class="text-xs font-bold text-indigo-600 dark:text-indigo-400 uppercase tracking-wider mb-1">Universal Firewall</h3>
                             <div class="text-3xl font-bold text-slate-800 dark:text-white">{{ stats.universal.total.toLocaleString() }}</div>
-                            <p class="text-[10px] text-slate-500 mt-2">Consolidated & Filtered</p>
+                            <div class="mt-3 text-[10px] bg-indigo-100 dark:bg-indigo-900/30 text-indigo-700 dark:text-indigo-300 px-2 py-0.5 rounded w-fit font-bold">Size: {{ stats.universal.size }}</div>
                         </div>
 
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-xl shadow-sm relative overflow-hidden group">
                             <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><span class="text-6xl">🌍</span></div>
-                            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Global Shield</h3>
-                            <div class="text-3xl font-bold text-slate-700 dark:text-slate-200">{{ stats.global.total.toLocaleString() }}</div>
-                            <p class="text-[10px] text-slate-400 mt-2">Raw Intelligence</p>
+                            <h3 class="text-xs font-bold text-rose-500 uppercase tracking-wider mb-1">Global Blacklist</h3>
+                            <div class="text-3xl font-bold text-slate-800 dark:text-white">{{ stats.global.total.toLocaleString() }}</div>
+                            <div class="mt-3 text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded w-fit font-bold">Size: {{ stats.global.size }}</div>
                         </div>
 
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-xl shadow-sm relative overflow-hidden group">
                             <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><span class="text-6xl">⚡</span></div>
-                            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Live Threats</h3>
-                            <div class="text-3xl font-bold text-amber-600 dark:text-amber-400">{{ stats.live.total.toLocaleString() }}</div>
-                            <p class="text-[10px] text-slate-400 mt-2">Active Brand Attacks</p>
+                            <h3 class="text-xs font-bold text-amber-500 uppercase tracking-wider mb-1">Live Blacklist</h3>
+                            <div class="text-3xl font-bold text-slate-800 dark:text-white">{{ stats.live.total.toLocaleString() }}</div>
+                            <div class="mt-3 text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded w-fit font-bold">Size: {{ stats.live.size }}</div>
                         </div>
 
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-xl shadow-sm relative overflow-hidden group">
                             <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><span class="text-6xl">🛡️</span></div>
-                            <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Whitelist</h3>
-                            <div class="text-3xl font-bold text-emerald-600 dark:text-emerald-400">{{ stats.whitelist.total.toLocaleString() }}</div>
-                            <p class="text-[10px] text-slate-400 mt-2">Allowed Entities</p>
+                            <h3 class="text-xs font-bold text-emerald-500 uppercase tracking-wider mb-1">Whitelist</h3>
+                            <div class="text-3xl font-bold text-slate-800 dark:text-white">{{ stats.whitelist.total.toLocaleString() }}</div>
+                            <div class="mt-3 text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded w-fit font-bold">Size: {{ stats.whitelist.size }}</div>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                            <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold text-xs text-indigo-600 dark:text-indigo-400">🌐 Universal Firewall Composition</div>
+                            <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <div v-for="(val, key) in stats.universal.breakdown" :key="key" class="px-4 py-2 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-[10px] font-mono text-slate-600 dark:text-slate-400">{{ key }}</span>
+                                    <span class="text-[10px] font-bold text-slate-800 dark:text-white">{{ val.toLocaleString() }}</span>
+                                </div>
+                            </div>
                         </div>
 
-                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 p-5 rounded-xl shadow-sm relative overflow-hidden group">
-                             <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><span class="text-6xl">💾</span></div>
-                             <h3 class="text-xs font-bold text-slate-500 uppercase tracking-wider mb-1">Total Dataset</h3>
-                             <div class="text-3xl font-bold text-slate-700 dark:text-slate-200">{{ stats.totalSize }}</div>
-                             <p class="text-[10px] text-slate-400 mt-2">Combined Size</p>
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                            <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold text-xs text-rose-500">🌍 Global Blacklist Breakdown</div>
+                            <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <div v-for="(val, key) in stats.global.breakdown" :key="key" class="px-4 py-2 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-[10px] font-mono text-slate-600 dark:text-slate-400">{{ key }}</span>
+                                    <span class="text-[10px] font-bold text-slate-800 dark:text-white">{{ val.toLocaleString() }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                            <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold text-xs text-amber-500">⚡ Live Blacklist Breakdown</div>
+                            <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <div v-for="(val, key) in stats.live.breakdown" :key="key" class="px-4 py-2 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-[10px] font-mono text-slate-600 dark:text-slate-400">{{ key }}</span>
+                                    <span class="text-[10px] font-bold text-slate-800 dark:text-white">{{ val.toLocaleString() }}</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
+                            <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold text-xs text-emerald-500">🛡️ Whitelist Breakdown</div>
+                            <div class="divide-y divide-slate-100 dark:divide-slate-800">
+                                <div v-for="(val, key) in stats.whitelist.breakdown" :key="key" class="px-4 py-2 flex justify-between items-center hover:bg-slate-50 dark:hover:bg-slate-800/50">
+                                    <span class="text-[10px] font-mono text-slate-600 dark:text-slate-400">{{ key }}</span>
+                                    <span class="text-[10px] font-bold text-slate-800 dark:text-white">{{ val.toLocaleString() }}</span>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -415,20 +443,20 @@
     const FILE_TEMP    = 'security-list-backup/security-whitelist-backup/security-whitelist-temp.json';
     const FILE_README  = 'security-list-backup/security-whitelist-backup/README.md';
     
-    // [UPDATED] File Map including Universal List
+    // File Map
     const JSON_FILES = { 
         'whitelist': 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json', 
         'blacklist': 'security-list-backup/security-blacklist-backup/security-blacklist-R.00.json', 
         'livelist':  'security-list-backup/security-live-blacklist-backup/security-live-blacklist-R.00.json',
-        'universal': 'security-list-backup/security-universal-list-backup/security-Universal-list-R.00.json' // NEW
+        'universal': 'security-list-backup/security-universal-list-backup/security-Universal-list-R.00.json'
     };
     
-    // [UPDATED] Log Map including Universal Log
+    // Log Map
     const LOGS = { 
         'whitelist': 'security-list-backup/security-whitelist-backup/whitelist-security-audit.log', 
         'blacklist': 'security-list-backup/security-blacklist-backup/blacklist-security-audit.log', 
         'livelist':  'security-list-backup/security-live-blacklist-backup/live-blacklist-security-audit.log', 
-        'universal': 'security-list-backup/security-universal-list-backup/universal-gen.log', // NEW
+        'universal': 'security-list-backup/security-universal-list-backup/universal-gen.log',
         'system': 'security-list-backup/system-reports.log' 
     };
     
@@ -446,11 +474,10 @@
                 editableLists: { GOOD_IPS:{title:'🌍 Allowed IPs',placeholder:'IP Address...',items:[]}, BLOCKED_THREATS:{title:'⛔ Blocked Threats',placeholder:'IP / UA / Domain...',items:[]}, GOOD_REFERRERS:{title:'🔗 Referrers',placeholder:'Domain...',items:[]}, SEARCH_BOTS:{title:'🤖 Search Bots',placeholder:'User-Agent...',items:[]}, AI_BOTS:{title:'🧠 AI Agents',placeholder:'User-Agent...',items:[]} },
                 inputs: { GOOD_IPS:{val:'',note:''}, BLOCKED_THREATS:{val:'',note:''}, GOOD_REFERRERS:{val:'',note:''}, SEARCH_BOTS:{val:'',note:''}, AI_BOTS:{val:'',note:''} },
                 stats: { 
-                    global: { total: 0, tor: 0, malicious: 0, bots: 0, referrers: 0 },
-                    live: { total: 0, ips: 0, bots: 0, referrers: 0, brands: 0 },
-                    whitelist: { total: 0 },
-                    // [NEW] Universal Stats
-                    universal: { total: 0 },
+                    global: { total: 0, size: '0 KB', breakdown: {} },
+                    live: { total: 0, size: '0 KB', breakdown: {} },
+                    whitelist: { total: 0, size: '0 KB', breakdown: {} },
+                    universal: { total: 0, size: '0 KB', breakdown: {} },
                     totalSize: '0 KB', lastUpdate: '-'
                 },
                 workflows: [], runsByWorkflow: {}, selectedWorkflowId: null, loadingRuns: false, isRefreshingActions: false, actionPollInterval: null
@@ -593,42 +620,76 @@
                 try {
                     await this.fetchAllWorkflows();
 
-                    // [UPDATED] Fetch 4 Files
+                    // Fetch 4 Files
                     const [resWhite, resBlack, resLive, resUniv] = await Promise.all([
                         octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['whitelist']}`),
                         octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['blacklist']}`),
                         octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['livelist']}`),
-                        octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['universal']}`) // NEW
+                        octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${JSON_FILES['universal']}`)
                     ]);
                     
                     const process = (res) => {
                         const raw = atob(res.data.content);
-                        totalBytes += raw.length;
-                        return JSON.parse(decodeURIComponent(escape(raw)));
+                        const size = raw.length;
+                        totalBytes += size;
+                        return { data: JSON.parse(decodeURIComponent(escape(raw))), size };
                     };
 
                     const w = process(resWhite);
                     const b = process(resBlack);
                     const l = process(resLive);
-                    const u = process(resUniv); // Universal
+                    const u = process(resUniv);
 
-                    this.stats.whitelist.total = (w.GOOD_IPS?.length||0) + (w.GOOD_REFERRERS?.length||0) + (w.GOOD_BOTS?.SEARCH_BOTS?.length||0) + (w.GOOD_BOTS?.AI_BOTS?.length||0);
-                    this.stats.global.malicious = b.MALICIOUS_IPS?.length || 0;
-                    this.stats.global.tor = b.TOR_IPS?.length || 0;
-                    this.stats.global.bots = b.BAD_BOTS?.length || 0;
-                    this.stats.global.referrers = b.BAD_REFERRERS?.length || 0;
-                    this.stats.global.total = this.stats.global.malicious + this.stats.global.tor + this.stats.global.bots + this.stats.global.referrers;
-                    this.stats.live.ips = l.BLOCKED_IPS?.length || 0;
-                    this.stats.live.bots = l.BAD_BOTS?.length || 0;
-                    this.stats.live.referrers = l.BAD_REFERRERS?.length || 0;
-                    this.stats.live.brands = l.meta?.includedBrands?.length || 0;
-                    this.stats.live.total = this.stats.live.ips + this.stats.live.bots + this.stats.live.referrers;
-                    
-                    // [NEW] Universal Logic
-                    this.stats.universal.total = (u.UNIVERSAL_BLOCK_LIST?.length||0) + (u.UNIVERSAL_BLACK_LIST?.length||0) + (u.UNIVERSAL_WHITE_LIST?.length||0) + (u.UNIVERSAL_SEARCH_BOTS?.length||0) + (u.UNIVERSAL_AI_BOTS?.length||0);
+                    // 1. Whitelist Stats
+                    const wData = w.data;
+                    const wIps = (wData.GOOD_IPS||[]).length;
+                    const wRefs = (wData.GOOD_REFERRERS||[]).length;
+                    const wSBots = (wData.GOOD_BOTS?.SEARCH_BOTS||[]).length;
+                    const wABots = (wData.GOOD_BOTS?.AI_BOTS||[]).length;
+                    this.stats.whitelist = {
+                        total: wIps + wRefs + wSBots + wABots,
+                        size: this.formatFileSize(w.size),
+                        breakdown: { 'GOOD_IPS': wIps, 'GOOD_REFERRERS': wRefs, 'SEARCH_BOTS': wSBots, 'AI_BOTS': wABots }
+                    };
+
+                    // 2. Global Stats
+                    const bData = b.data;
+                    const bMal = (bData.MALICIOUS_IPS||[]).length;
+                    const bTor = (bData.TOR_IPS||[]).length;
+                    const bBots = (bData.BAD_BOTS||[]).length;
+                    const bRefs = (bData.BAD_REFERERS||[]).length; // Single R
+                    this.stats.global = {
+                        total: bMal + bTor + bBots + bRefs,
+                        size: this.formatFileSize(b.size),
+                        breakdown: { 'MALICIOUS_IPS': bMal, 'TOR_IPS': bTor, 'BAD_BOTS': bBots, 'BAD_REFERRERS': bRefs }
+                    };
+
+                    // 3. Live Stats
+                    const lData = l.data;
+                    const lIps = (lData.BLOCKED_IPS||[]).length;
+                    const lBots = (lData.BAD_BOTS||[]).length;
+                    const lRefs = (lData.BAD_REFERRERS||[]).length; // Double R
+                    this.stats.live = {
+                        total: lIps + lBots + lRefs,
+                        size: this.formatFileSize(l.size),
+                        breakdown: { 'BLOCKED_IPS': lIps, 'BAD_BOTS': lBots, 'BAD_REFERRERS': lRefs }
+                    };
+
+                    // 4. Universal Stats
+                    const uData = u.data;
+                    const uBlock = (uData.UNIVERSAL_BLOCK_LIST||[]).length;
+                    const uBlack = (uData.UNIVERSAL_BLACK_LIST||[]).length;
+                    const uWhite = (uData.UNIVERSAL_WHITE_LIST||[]).length;
+                    const uSBots = (uData.UNIVERSAL_SEARCH_BOTS||[]).length;
+                    const uABots = (uData.UNIVERSAL_AI_BOTS||[]).length;
+                    this.stats.universal = {
+                        total: uBlock + uBlack + uWhite + uSBots + uABots,
+                        size: this.formatFileSize(u.size),
+                        breakdown: { 'BLOCK_LIST (Global)': uBlock, 'BLACK_LIST (Live)': uBlack, 'WHITE_LIST': uWhite, 'SEARCH_BOTS': uSBots, 'AI_BOTS': uABots }
+                    };
 
                     this.stats.totalSize = this.formatFileSize(totalBytes);
-                    this.stats.lastUpdate = b.meta?.generatedAt ? new Date(b.meta.generatedAt).toLocaleString() : 'Unknown';
+                    this.stats.lastUpdate = bData.meta?.generatedAt ? new Date(bData.meta.generatedAt).toLocaleString() : 'Unknown';
 
                 } catch (e) {
                     this.showToast('Stats Error', 'Failed to fetch global lists.', true);
