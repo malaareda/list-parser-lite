@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v7.7.2</title>
+    <title>Security Manager v7.7.3</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -31,15 +31,34 @@
         .dark .custom-scrollbar::-webkit-scrollbar-thumb { background-color: #475569; }
         [v-cloak] { display: none !important; }
         
+        /* JSON Tree Typography & Theme Handling */
         .json-tree { font-family: 'JetBrains Mono', monospace; font-size: 13px; line-height: 1.6; }
         .json-tree details { margin-left: 15px; }
         .json-tree summary { cursor: pointer; list-style: none; outline: none; display: flex; align-items: center; }
         .json-tree summary::-webkit-details-marker { display: none; }
-        .json-tree summary:hover { background-color: rgba(255,255,255,0.05); border-radius: 4px; }
+        .json-tree summary:hover { background-color: rgba(0,0,0,0.05); border-radius: 4px; }
+        .dark .json-tree summary:hover { background-color: rgba(255,255,255,0.05); }
         .json-arrow { display: inline-flex; justify-content: center; align-items: center; width: 14px; height: 14px; margin-right: 4px; font-size: 8px; color: #64748b; transition: transform 0.2s; }
         details[open] > summary > .json-arrow { transform: rotate(90deg); }
-        .j-key { color: #60a5fa; font-weight: 600; } .j-str { color: #34d399; } .j-num { color: #c084fc; } .j-bool { color: #f87171; } .j-null { color: #94a3b8; font-style: italic; } .j-meta { color: #64748b; } .j-dup { color: #fbbf24 !important; font-weight: bold; background: rgba(251, 191, 36, 0.1); padding: 0 4px; border-radius: 4px; }
-        
+
+        /* [UPDATED] Light Mode JSON Colors (High Contrast) */
+        .j-key { color: #0369a1; font-weight: 600; }   /* Blue-700 */
+        .j-str { color: #15803d; }                     /* Green-700 */
+        .j-num { color: #7e22ce; }                     /* Purple-700 */
+        .j-bool { color: #b91c1c; }                    /* Red-700 */
+        .j-null { color: #64748b; font-style: italic;} /* Slate-500 */
+        .j-meta { color: #475569; }                    /* Slate-600 */
+        .j-dup { color: #d97706 !important; font-weight: bold; background: rgba(217, 119, 6, 0.1); padding: 0 4px; border-radius: 4px; }
+
+        /* [UPDATED] Dark Mode JSON Colors (Neon/Pastel) */
+        .dark .j-key { color: #60a5fa; }               /* Blue-400 */
+        .dark .j-str { color: #34d399; }               /* Emerald-400 */
+        .dark .j-num { color: #c084fc; }               /* Purple-400 */
+        .dark .j-bool { color: #f87171; }              /* Red-400 */
+        .dark .j-null { color: #94a3b8; }              /* Slate-400 */
+        .dark .j-meta { color: #64748b; }              /* Slate-500 */
+        .dark .j-dup { color: #fbbf24 !important; background: rgba(251, 191, 36, 0.1); }
+
         .dark ::-webkit-calendar-picker-indicator { filter: invert(1); cursor: pointer; opacity: 0.6; }
         .dark ::-webkit-calendar-picker-indicator:hover { opacity: 1; }
         .toast-enter-active, .toast-leave-active { transition: all 0.3s ease; } .toast-enter-from, .toast-leave-to { opacity: 0; transform: translateY(20px); }
@@ -98,7 +117,7 @@
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.7.2</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v7.7.3</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -108,7 +127,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.7.2</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v7.7.3</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -359,8 +378,8 @@
                 <div v-if="!activeLogContent || activeLogContent.trim() === ''" class="flex-1 flex flex-col items-center justify-center text-slate-500"><div class="text-4xl mb-4 grayscale opacity-50">📂</div><h3 class="font-bold text-sm mb-1">File Empty or Missing</h3></div>
                 
                 <div v-else class="flex-1 flex overflow-hidden">
-                    <div class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-[#0d1117] border-r border-slate-800" ref="jsonContainer">
-                        <pre v-if="showRawJson" class="font-mono text-xs text-emerald-400 whitespace-pre-wrap">{{ activeLogContent }}</pre>
+                    <div class="flex-1 overflow-y-auto p-6 custom-scrollbar bg-slate-50 dark:bg-[#0d1117] border-r border-slate-200 dark:border-slate-800" ref="jsonContainer">
+                        <pre v-if="showRawJson" class="font-mono text-xs text-slate-800 dark:text-emerald-400 whitespace-pre-wrap">{{ activeLogContent }}</pre>
                         <div v-else class="json-tree" v-html="renderJsonTree(filteredJsonObj)"></div>
                     </div>
                     <div class="w-72 bg-slate-50 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col" v-if="!showRawJson">
@@ -500,17 +519,18 @@
                 pop('GOOD_IPS',json.GOOD_IPS); pop('BLOCKED_THREATS',json.BLOCKED_THREATS||json.BLOCKED_IPS); pop('GOOD_REFERRERS',json.GOOD_REFERRERS); pop('SEARCH_BOTS',json.GOOD_BOTS?.SEARCH_BOTS); pop('AI_BOTS',json.GOOD_BOTS?.AI_BOTS);
             },
             
-            // Helper for File Sizes
+            // [UPDATED] Helper for File Sizes with 1000 KB Cutoff
             formatFileSize(bytes) {
                 if (bytes === 0) return '0 KB';
                 const k = 1024;
-                const m = k * k; // 1 MB = 1024 * 1024 bytes
-                // Rule: Below 1 MB (1,048,576 bytes) show KB, else MB
-                if (bytes < m) {
-                    return (bytes / k).toFixed(2) + ' KB';
-                } else {
-                    return (bytes / m).toFixed(2) + ' MB';
+                const kbVal = bytes / k;
+                
+                // If less than 1000 KB, show KB
+                if (kbVal < 1000) {
+                    return kbVal.toFixed(2) + ' KB';
                 }
+                // Else show MB
+                return (kbVal / 1024).toFixed(2) + ' MB';
             },
 
             async loadDashboard() {
@@ -543,7 +563,6 @@
                     this.stats.global.malicious = b.MALICIOUS_IPS?.length || 0;
                     this.stats.global.tor = b.TOR_IPS?.length || 0;
                     this.stats.global.bots = b.BAD_BOTS?.length || 0;
-                    // [FIX] Use BAD_REFERERS (Single R) for Global List
                     this.stats.global.referrers = b.BAD_REFERERS?.length || 0;
                     
                     this.stats.global.total = this.stats.global.malicious + this.stats.global.tor + this.stats.global.bots + this.stats.global.referrers;
