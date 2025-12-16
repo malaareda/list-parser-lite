@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v8.2.0</title>
+    <title>Security Manager v8.3.0</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -74,7 +74,7 @@
                         <select v-model="modal.targetKey" class="w-full bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-sm outline-none focus:border-indigo-500 text-slate-800 dark:text-slate-200">
                             <option value="">🚫 Just Unblock (Delete)</option>
                             <option value="GOOD_IPS">🌍 Restore to Allowed IPs</option>
-                            <option value="GOOD_REFERRERS">🔗 Restore to Referrers</option>
+                            <option value="GOOD_REFERERS">🔗 Restore to Referers</option>
                             <option value="SEARCH_BOTS">🤖 Restore to Search Bots</option>
                             <option value="AI_BOTS">🧠 Restore to AI Agents</option>
                         </select>
@@ -403,7 +403,10 @@
                         <button @click="showRawJson = !showRawJson" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700">{{ showRawJson ? 'Show Tree' : 'Show Raw' }}</button>
                         <button @click="expandAll" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700" v-if="!showRawJson">Expand All</button>
                         <button @click="collapseAll" class="px-2 py-1 bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 rounded text-[10px] hover:bg-slate-200 dark:hover:bg-slate-700" v-if="!showRawJson">Collapse All</button>
-                        <div class="relative" v-if="!showRawJson"><input v-model="jsonSearchQuery" placeholder="Filter..." class="bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded px-2 py-1 text-xs outline-none focus:border-indigo-500 text-slate-800 dark:text-white w-32"></div>
+                        <div class="relative group" v-if="!showRawJson">
+                            <input v-model="jsonSearchQuery" placeholder="Filter JSON..." class="bg-slate-100 dark:bg-slate-950 border border-slate-300 dark:border-slate-700 rounded-lg px-3 py-1.5 pr-8 text-xs outline-none focus:border-indigo-500 text-slate-800 dark:text-white w-64 transition-all">
+                            <button v-if="jsonSearchQuery" @click="jsonSearchQuery = ''" class="absolute right-2 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">✕</button>
+                        </div>
                     </div>
                 </div>
 
@@ -425,7 +428,7 @@
                                 <span>No duplicates found.</span>
                             </div>
                             <div v-else class="divide-y divide-slate-200 dark:divide-slate-800">
-                                <div v-for="[val, count] in sortedDuplicates" :key="val" class="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex justify-between items-center group">
+                                <div v-for="[val, count] in sortedDuplicates" :key="val" class="p-3 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors flex justify-between items-center group cursor-pointer" @click="jsonSearchQuery = val">
                                     <code class="text-xs font-mono text-slate-700 dark:text-slate-300 break-all">{{ val }}</code>
                                     <span class="text-[10px] font-bold bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400 px-2 py-0.5 rounded-full">x{{ count }}</span>
                                 </div>
@@ -475,8 +478,8 @@
                 modal: { show: false, type: '', sourceKey: '', index: null, val: '', reason: '', targetKey: '' },
                 sessionHistory: [], existingReadmeContent: '', historySearchQuery: '', historyStartDate: '', historyEndDate: '', historyUniqueOnly: false,
                 jsonSearchQuery: '', parsedActiveJson: null, showRawJson: false, duplicateMap: new Map(), isPolling: false, pollInterval: null, currentGeneratedAt: null,
-                editableLists: { GOOD_IPS:{title:'🌍 Allowed IPs',placeholder:'IP Address...',items:[]}, BLOCKED_THREATS:{title:'⛔ Blocked Threats',placeholder:'IP / UA / Domain...',items:[]}, GOOD_REFERRERS:{title:'🔗 Referrers',placeholder:'Domain...',items:[]}, SEARCH_BOTS:{title:'🤖 Search Bots',placeholder:'User-Agent...',items:[]}, AI_BOTS:{title:'🧠 AI Agents',placeholder:'User-Agent...',items:[]} },
-                inputs: { GOOD_IPS:{val:'',note:''}, BLOCKED_THREATS:{val:'',note:''}, GOOD_REFERRERS:{val:'',note:''}, SEARCH_BOTS:{val:'',note:''}, AI_BOTS:{val:'',note:''} },
+                editableLists: { GOOD_IPS:{title:'🌍 Allowed IPs',placeholder:'IP Address...',items:[]}, BLOCKED_THREATS:{title:'⛔ Blocked Threats',placeholder:'IP / UA / Domain...',items:[]}, GOOD_REFERERS:{title:'🔗 Referers',placeholder:'Domain...',items:[]}, SEARCH_BOTS:{title:'🤖 Search Bots',placeholder:'User-Agent...',items:[]}, AI_BOTS:{title:'🧠 AI Agents',placeholder:'User-Agent...',items:[]} },
+                inputs: { GOOD_IPS:{val:'',note:''}, BLOCKED_THREATS:{val:'',note:''}, GOOD_REFERERS:{val:'',note:''}, SEARCH_BOTS:{val:'',note:''}, AI_BOTS:{val:'',note:''} },
                 stats: { 
                     global: { total: 0, size: '0 KB', breakdown: {} },
                     live: { total: 0, size: '0 KB', breakdown: {} },
@@ -547,7 +550,7 @@
             applyTheme() { if(this.isDark)document.documentElement.classList.add('dark'); else document.documentElement.classList.remove('dark'); },
             showToast(t,m,e=false) { if(this.isInitializing)return; this.toast={show:true,title:t,message:m,isError:e}; setTimeout(()=>{this.toast.show=false},4000); },
             setToken() { if(!this.tokenInput.trim())return; this.token=this.tokenInput; localStorage.setItem('gh_token',this.token); this.loadWhitelistData(); this.startCountdown(); },
-            logout() { this.token=''; localStorage.removeItem('gh_token'); clearInterval(this.countdownInterval); if(this.actionPollInterval) clearInterval(this.actionPollInterval); this.isInitializing=false; },
+            logout() { this.token=''; this.tokenInput=''; localStorage.removeItem('gh_token'); clearInterval(this.countdownInterval); if(this.actionPollInterval) clearInterval(this.actionPollInterval); this.isInitializing=false; },
             startCountdown() { this.resetActivity(); if(this.countdownInterval)clearInterval(this.countdownInterval); this.countdownInterval=setInterval(()=>{ const n=Date.now(); this.timeLeft=Math.ceil((this.targetTime-n)/1000); if(this.timeLeft<=0)this.logout(); },1000); },
             resetActivity() { if(!this.token)return; this.targetTime=Date.now()+(INACTIVITY_MINUTES*60*1000); },
             markDirty() { this.hasUnsavedChanges=true; this.resetActivity(); },
@@ -566,7 +569,7 @@
             mergeData(json, readme) {
                 const map={}; readme.split('\n').forEach(l=>{const m=l.match(/- `(.*?)` \| 📝 (.*)/); if(m)map[m[1]]=m[2];});
                 const pop=(k,arr)=>{ this.editableLists[k].items=(arr||[]).map(v=>({val:v,note:map[v]||''})); };
-                pop('GOOD_IPS',json.GOOD_IPS); pop('BLOCKED_THREATS',json.BLOCKED_THREATS||json.BLOCKED_IPS); pop('GOOD_REFERRERS',json.GOOD_REFERRERS); pop('SEARCH_BOTS',json.GOOD_BOTS?.SEARCH_BOTS); pop('AI_BOTS',json.GOOD_BOTS?.AI_BOTS);
+                pop('GOOD_IPS',json.GOOD_IPS); pop('BLOCKED_THREATS',json.BLOCKED_THREATS||json.BLOCKED_IPS); pop('GOOD_REFERERS',json.GOOD_REFERERS); pop('SEARCH_BOTS',json.GOOD_BOTS?.SEARCH_BOTS); pop('AI_BOTS',json.GOOD_BOTS?.AI_BOTS);
             },
             
             formatFileSize(bytes) {
@@ -647,13 +650,13 @@
                     // 1. Whitelist Stats
                     const wData = w.data;
                     const wIps = (wData.GOOD_IPS||[]).length;
-                    const wRefs = (wData.GOOD_REFERRERS||[]).length;
+                    const wRefs = (wData.GOOD_REFERERS||[]).length;
                     const wSBots = (wData.GOOD_BOTS?.SEARCH_BOTS||[]).length;
                     const wABots = (wData.GOOD_BOTS?.AI_BOTS||[]).length;
                     this.stats.whitelist = {
                         total: wIps + wRefs + wSBots + wABots,
                         size: this.formatFileSize(w.size),
-                        breakdown: { 'GOOD_IPS': wIps, 'GOOD_REFERRERS': wRefs, 'SEARCH_BOTS': wSBots, 'AI_BOTS': wABots }
+                        breakdown: { 'GOOD_IPS': wIps, 'GOOD_REFERERS': wRefs, 'SEARCH_BOTS': wSBots, 'AI_BOTS': wABots }
                     };
 
                     // 2. Global Stats
@@ -665,18 +668,18 @@
                     this.stats.global = {
                         total: bMal + bTor + bBots + bRefs,
                         size: this.formatFileSize(b.size),
-                        breakdown: { 'MALICIOUS_IPS': bMal, 'TOR_IPS': bTor, 'BAD_BOTS': bBots, 'BAD_REFERRERS': bRefs }
+                        breakdown: { 'MALICIOUS_IPS': bMal, 'TOR_IPS': bTor, 'BAD_BOTS': bBots, 'BAD_REFERERS': bRefs }
                     };
 
                     // 3. Live Stats
                     const lData = l.data;
                     const lIps = (lData.BLOCKED_IPS||[]).length;
                     const lBots = (lData.BAD_BOTS||[]).length;
-                    const lRefs = (lData.BAD_REFERRERS||[]).length; // Double R
+                    const lRefs = (lData.BAD_REFERERS||[]).length; // Double R
                     this.stats.live = {
                         total: lIps + lBots + lRefs,
                         size: this.formatFileSize(l.size),
-                        breakdown: { 'BLOCKED_IPS': lIps, 'BAD_BOTS': lBots, 'BAD_REFERRERS': lRefs }
+                        breakdown: { 'BLOCKED_IPS': lIps, 'BAD_BOTS': lBots, 'BAD_REFERERS': lRefs }
                     };
 
                     // 4. Universal Stats
@@ -732,7 +735,7 @@
             async saveChanges() {
                 this.loading=true; const octokit=new Octokit({auth:this.token});
                 try {
-                    const pl = { GOOD_IPS:this.editableLists.GOOD_IPS.items.map(i=>i.val), BLOCKED_THREATS:this.editableLists.BLOCKED_THREATS.items.map(i=>i.val), GOOD_REFERRERS:this.editableLists.GOOD_REFERRERS.items.map(i=>i.val), GOOD_BOTS:{ SEARCH_BOTS:this.editableLists.SEARCH_BOTS.items.map(i=>i.val), AI_BOTS:this.editableLists.AI_BOTS.items.map(i=>i.val) } };
+                    const pl = { GOOD_IPS:this.editableLists.GOOD_IPS.items.map(i=>i.val), BLOCKED_THREATS:this.editableLists.BLOCKED_THREATS.items.map(i=>i.val), GOOD_REFERERS:this.editableLists.GOOD_REFERERS.items.map(i=>i.val), GOOD_BOTS:{ SEARCH_BOTS:this.editableLists.SEARCH_BOTS.items.map(i=>i.val), AI_BOTS:this.editableLists.AI_BOTS.items.map(i=>i.val) } };
                     const md = this.generateReadmeContent(false);
                     let sha1=null; try{const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_TEMP}`); sha1=r.data.sha;}catch(e){}
                     await octokit.request(`PUT /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${FILE_TEMP}`, { message:'🛡️ Update Whitelist (WebUI)', content:btoa(unescape(encodeURIComponent(JSON.stringify(pl,null,2)))), sha:sha1 });
@@ -827,7 +830,7 @@
                 h+=`</details>`; return h; 
             },
             expandAll() { this.$refs.jsonContainer.querySelectorAll('details').forEach(d=>d.open=true); }, collapseAll() { this.$refs.jsonContainer.querySelectorAll('details').forEach(d=>d.open=false); }, copyJson() { if(this.parsedActiveJson) { navigator.clipboard.writeText(JSON.stringify(this.parsedActiveJson,null,4)); this.showToast('Copied','JSON copied.'); } }, triggerJsonSearch() {}, getOrigin(note) { if(!note)return null; const m=note.match(/\[Origin: (.*?)\]/); if(m){const k=m[1];const l=this.editableLists[k];return l?l.title.replace(/^[^\s]+\s/,''):k;} return null; }, getLogTimestamp() { const n=new Date(); return `${n.toLocaleDateString('en-CA')} ${n.toLocaleTimeString('en-US',{hour12:true})}`; },
-            generateReadmeContent(p=false) { let md=`# 🛡️ Security Whitelist Documentation\n\n**Last Updated:** ${new Date().toUTCString()}\n\n> Auto-generated by Security Manager WebUI.\n\n`; const s=[{key:'GOOD_IPS',t:'🌍 Allowed IPs'},{key:'BLOCKED_THREATS',t:'⛔ Blocked Threats'},{key:'GOOD_REFERRERS',t:'🔗 Referrers'},{key:'SEARCH_BOTS',t:'🤖 Search Bots'},{key:'AI_BOTS',t:'🧠 AI Agents'}]; s.forEach(x=>{md+=`## ${x.t}\n`;const i=this.editableLists[x.key].items;if(!i.length)md+='*No records.*\n\n';else{i.forEach(j=>{md+=`- \`${j.val}\`${j.note?` | 📝 ${j.note}`:''}\n`;});md+='\n';}}); const h=`## 📜 Threat History (Permanent Log)`; let ht=''; if(this.existingReadmeContent.includes(h))ht=this.existingReadmeContent.split(h)[1].trim(); if(this.sessionHistory.length){const nl=this.sessionHistory.map(x=>{let c='⚪';if(x.action.includes('ADDED')||x.action.includes('BLOCKED'))c='🔴';else c='🟢'; return `- ${c} [${x.date}] **${x.action}**: \`${x.val}\` | Reason: *${x.note || 'No reason'}*`;}).join('\n');ht=ht?ht+'\n'+nl:nl;} md+=`\n${h}\n${ht||'*No history yet.*'}\n`; return md; },
+            generateReadmeContent(p=false) { let md=`# 🛡️ Security Whitelist Documentation\n\n**Last Updated:** ${new Date().toUTCString()}\n\n> Auto-generated by Security Manager WebUI.\n\n`; const s=[{key:'GOOD_IPS',t:'🌍 Allowed IPs'},{key:'BLOCKED_THREATS',t:'⛔ Blocked Threats'},{key:'GOOD_REFERERS',t:'🔗 Referers'},{key:'SEARCH_BOTS',t:'🤖 Search Bots'},{key:'AI_BOTS',t:'🧠 AI Agents'}]; s.forEach(x=>{md+=`## ${x.t}\n`;const i=this.editableLists[x.key].items;if(!i.length)md+='*No records.*\n\n';else{i.forEach(j=>{md+=`- \`${j.val}\`${j.note?` | 📝 ${j.note}`:''}\n`;});md+='\n';}}); const h=`## 📜 Threat History (Permanent Log)`; let ht=''; if(this.existingReadmeContent.includes(h))ht=this.existingReadmeContent.split(h)[1].trim(); if(this.sessionHistory.length){const nl=this.sessionHistory.map(x=>{let c='⚪';if(x.action.includes('ADDED')||x.action.includes('BLOCKED'))c='🔴';else c='🟢'; return `- ${c} [${x.date}] **${x.action}**: \`${x.val}\` | Reason: *${x.note || 'No reason'}*`;}).join('\n');ht=ht?ht+'\n'+nl:nl;} md+=`\n${h}\n${ht||'*No history yet.*'}\n`; return md; },
             async loadLog(t) { this.currentView=t+'-log'; this.activeLogContent=''; this.loadingLog=true; const octokit=new Octokit({auth:this.token}); try{const r=await octokit.request(`GET /repos/${TARGET_OWNER}/${TARGET_REPO}/contents/${LOGS[t]}`); this.activeLogContent=decodeURIComponent(escape(atob(r.data.content)));}catch(e){if(e.status!==404)this.activeLogContent=`Error: ${e.message}`;}finally{this.loadingLog=false;} }
         }
     }).mount('#app');
