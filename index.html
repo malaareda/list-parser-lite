@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v8.3.0</title>
+    <title>Security Manager v8.3.1</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -110,7 +110,7 @@
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v8.3.0</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v8.3.1</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -120,13 +120,12 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v8.3.0</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v8.3.1</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
                     <button @click="loadDashboard" :class="currentView === 'dashboard' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-bold transition-colors mb-2"><span>📊</span> Dashboard</button>
                 </div>
-
                 <div>
                     <h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Whitelist</h3>
                     <div class="space-y-1">
@@ -136,7 +135,6 @@
                         <button @click="loadLog('whitelist')" :class="currentView === 'whitelist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📜</span> Audit Logs</button>
                     </div>
                 </div>
-                
                 <div><h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Universal Firewall</h3><div class="space-y-1"><button @click="loadJson('universal')" :class="currentView === 'universal-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>🌐</span> JSON Source</button><button @click="loadLog('universal')" :class="currentView === 'universal-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>🏗️</span> Build Logs</button></div></div>
                 <div><h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Live Blacklist</h3><div class="space-y-1"><button @click="loadJson('livelist')" :class="currentView === 'livelist-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📦</span> JSON Source</button><button @click="loadLog('livelist')" :class="currentView === 'livelist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>⚡</span> Live Logs</button></div></div>
                 <div><h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Global Blacklist</h3><div class="space-y-1"><button @click="loadJson('blacklist')" :class="currentView === 'blacklist-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📦</span> JSON Source</button><button @click="loadLog('blacklist')" :class="currentView === 'blacklist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>⛔</span> Block Logs</button></div></div>
@@ -420,6 +418,7 @@
                     <div class="w-72 bg-slate-50 dark:bg-slate-900 border-l border-slate-200 dark:border-slate-800 flex flex-col" v-if="!showRawJson">
                         <div class="p-3 border-b border-slate-200 dark:border-slate-800 bg-slate-100 dark:bg-slate-950 font-bold text-xs text-slate-500 uppercase tracking-wider flex items-center gap-2">
                             <span>⚠️ Duplicate Inspector</span>
+                            <button v-if="jsonSearchQuery && sortedDuplicates.some(x => x[0] === jsonSearchQuery)" @click="jsonSearchQuery = ''" class="ml-2 text-[10px] bg-indigo-100 hover:bg-indigo-200 text-indigo-700 px-2 py-0.5 rounded transition-colors">Clear Selection</button>
                             <span class="ml-auto bg-slate-200 dark:bg-slate-800 px-1.5 py-0.5 rounded text-[10px] text-slate-600 dark:text-slate-400">{{ sortedDuplicates.length }}</span>
                         </div>
                         <div class="flex-1 overflow-y-auto custom-scrollbar p-0">
@@ -786,7 +785,10 @@
                     if (Array.isArray(obj)) { obj.forEach(i => this.calculateDuplicates(i)); } 
                     else { Object.values(obj).forEach(v => this.calculateDuplicates(v)); }
                 } else if (['string', 'number'].includes(typeof obj)) {
-                    const val = String(obj); this.duplicateMap.set(val, (this.duplicateMap.get(val) || 0) + 1);
+                    // NEW LOGIC: Only count strings as duplicates to avoid flagging numbers like 0/1 in stats
+                    if (typeof obj === 'string') {
+                        const val = String(obj); this.duplicateMap.set(val, (this.duplicateMap.get(val) || 0) + 1);
+                    }
                 }
             },
             async loadJson(t) { 
@@ -820,7 +822,11 @@
                     if(typeof data==='string') html = `<span class="j-str">"${data}"</span>`;
                     else if(typeof data==='number') html = `<span class="j-num">${data}</span>`;
                     else html = `<span class="j-bool">${data}</span>`;
-                    if (count > 1) { html += ` <span class="j-dup" title="This value appears ${count} times">⚠️ (x${count})</span>`; }
+                    
+                    // NEW LOGIC: Only show duplicate warning for strings
+                    if (count > 1 && typeof data === 'string') { 
+                        html += ` <span class="j-dup" title="This value appears ${count} times">⚠️ (x${count})</span>`; 
+                    }
                     return html;
                 }
                 const arr=Array.isArray(data); const k=Object.keys(data); 
