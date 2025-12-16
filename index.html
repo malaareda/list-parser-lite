@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v8.3.1</title>
+    <title>Security Manager v8.3.2</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -110,7 +110,7 @@
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v8.3.1</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v8.3.2</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -120,7 +120,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v8.3.1</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v8.3.2</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -681,17 +681,28 @@
                         breakdown: { 'BLOCKED_IPS': lIps, 'BAD_BOTS': lBots, 'BAD_REFERERS': lRefs }
                     };
 
-                    // 4. Universal Stats
+                    // 4. Universal Stats (UPDATED to 7-Key Schema)
                     const uData = u.data;
-                    const uBlock = (uData.UNIVERSAL_BLOCK_LIST||[]).length;
-                    const uBlack = (uData.UNIVERSAL_BLACK_LIST||[]).length;
-                    const uWhite = (uData.UNIVERSAL_WHITE_LIST||[]).length;
-                    const uSBots = (uData.UNIVERSAL_SEARCH_BOTS||[]).length;
-                    const uABots = (uData.UNIVERSAL_AI_BOTS||[]).length;
+                    const uBIps = (uData.UNIVERSAL_BLACK_LIST_IPS || []).length;
+                    const uBDoms = (uData.UNIVERSAL_BLACK_LIST_DOMAINS || []).length;
+                    const uBBots = (uData.UNIVERSAL_BLACK_LIST_BOTS || []).length;
+                    const uWIps = (uData.UNIVERSAL_WHITE_LIST_IPS || []).length;
+                    const uWDoms = (uData.UNIVERSAL_WHITE_LIST_DOMAINS || []).length;
+                    const uWSearch = (uData.UNIVERSAL_WHITE_LIST_SEARCH_BOTS || []).length;
+                    const uWAi = (uData.UNIVERSAL_WHITE_LIST_AI_BOTS || []).length;
+
                     this.stats.universal = {
-                        total: uBlock + uBlack + uWhite + uSBots + uABots,
+                        total: uBIps + uBDoms + uBBots + uWIps + uWDoms + uWSearch + uWAi,
                         size: this.formatFileSize(u.size),
-                        breakdown: { 'BLOCK_LIST (Global)': uBlock, 'BLACK_LIST (Live)': uBlack, 'WHITE_LIST': uWhite, 'SEARCH_BOTS': uSBots, 'AI_BOTS': uABots }
+                        breakdown: {
+                            'BLACK_IPS': uBIps,
+                            'BLACK_DOMAINS': uBDoms,
+                            'BLACK_BOTS': uBBots,
+                            'WHITE_IPS': uWIps,
+                            'WHITE_DOMAINS': uWDoms,
+                            'WHITE_SEARCH_BOTS': uWSearch,
+                            'WHITE_AI_BOTS': uWAi
+                        }
                     };
 
                     this.stats.totalSize = this.formatFileSize(totalBytes);
