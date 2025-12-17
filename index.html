@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v8.3.2</title>
+    <title>Security Manager v8.4.0</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -47,6 +47,8 @@
         .fade-enter-active, .fade-leave-active { transition: opacity 0.2s ease; } .fade-enter-from, .fade-leave-to { opacity: 0; }
         .tab-active { border-bottom: 2px solid #6366f1; color: #6366f1; font-weight: 700; background: rgba(99, 102, 241, 0.05); }
         .dark .tab-active { border-bottom: 2px solid #818cf8; color: #818cf8; background: rgba(129, 140, 248, 0.1); }
+        /* Badge for Binary Decoded Content */
+        .binary-badge { font-size: 10px; background: #8b5cf6; color: white; padding: 2px 6px; border-radius: 4px; margin-left: 6px; font-weight: bold; text-transform: uppercase; }
     </style>
 </head>
 <body class="bg-gray-100 dark:bg-darkbg text-slate-800 dark:text-slate-200 h-screen overflow-hidden flex flex-col transition-colors duration-300">
@@ -110,7 +112,7 @@
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v8.3.2</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v8.4.0</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -120,7 +122,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v8.3.2</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v8.4.0</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -135,7 +137,14 @@
                         <button @click="loadLog('whitelist')" :class="currentView === 'whitelist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📜</span> Audit Logs</button>
                     </div>
                 </div>
-                <div><h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Universal Firewall</h3><div class="space-y-1"><button @click="loadJson('universal')" :class="currentView === 'universal-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>🌐</span> JSON Source</button><button @click="loadLog('universal')" :class="currentView === 'universal-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>🏗️</span> Build Logs</button></div></div>
+                <div>
+                    <h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Universal Firewall</h3>
+                    <div class="space-y-1">
+                        <button @click="loadJson('universal')" :class="currentView === 'universal-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>🌐</span> JSON Source</button>
+                        <button @click="loadJson('binary')" :class="currentView === 'binary-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>🤖</span> Binary List</button>
+                        <button @click="loadLog('universal')" :class="currentView === 'universal-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>🏗️</span> Build Logs</button>
+                    </div>
+                </div>
                 <div><h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Live Blacklist</h3><div class="space-y-1"><button @click="loadJson('livelist')" :class="currentView === 'livelist-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📦</span> JSON Source</button><button @click="loadLog('livelist')" :class="currentView === 'livelist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>⚡</span> Live Logs</button></div></div>
                 <div><h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Global Blacklist</h3><div class="space-y-1"><button @click="loadJson('blacklist')" :class="currentView === 'blacklist-json' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>📦</span> JSON Source</button><button @click="loadLog('blacklist')" :class="currentView === 'blacklist-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>⛔</span> Block Logs</button></div></div>
                 <div><h3 class="px-3 text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">System</h3><div class="space-y-1"><button @click="loadLog('system')" :class="currentView === 'system-log' ? 'bg-indigo-50 dark:bg-indigo-600/10 text-indigo-600 dark:text-indigo-400' : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800/50'" class="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-xs font-medium transition-colors"><span>🖥️</span> System Reports</button></div></div>
@@ -167,7 +176,6 @@
                 </div>
                 <div v-else class="space-y-6">
                     <h2 class="text-xl font-bold text-slate-800 dark:text-white">Security Posture Overview</h2>
-                    
                     <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4">
                         <div class="bg-indigo-50 dark:bg-indigo-900/10 border border-indigo-200 dark:border-indigo-500/30 p-5 rounded-xl shadow-sm relative overflow-hidden group">
                             <div class="absolute right-0 top-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity"><span class="text-6xl">🌐</span></div>
@@ -194,7 +202,6 @@
                             <div class="mt-3 text-[10px] bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 px-2 py-0.5 rounded w-fit font-bold">Size: {{ stats.whitelist.size }}</div>
                         </div>
                     </div>
-
                     <div class="grid grid-cols-1 xl:grid-cols-2 gap-6">
                         <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden">
                             <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold text-xs text-indigo-600 dark:text-indigo-400">🌐 Universal Firewall Composition</div>
@@ -233,7 +240,6 @@
                             </div>
                         </div>
                     </div>
-
                     <div class="bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-xl overflow-hidden mt-6 flex flex-col h-[500px]">
                         <div class="px-4 py-3 border-b border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-950 font-bold text-xs text-slate-600 dark:text-slate-300 flex items-center justify-between">
                             <div class="flex items-center gap-2"><span>🤖 Automation Health Hub</span><span class="text-[10px] font-normal text-slate-400">(Auto-Refreshing)</span></div>
@@ -288,7 +294,6 @@
                             </div>
                         </div>
                     </div>
-
                 </div>
             </div>
 
@@ -455,7 +460,8 @@
         'whitelist': 'security-list-backup/security-whitelist-backup/security-whitelist-R.00.json', 
         'blacklist': 'security-list-backup/security-blacklist-backup/security-blacklist-R.00.json', 
         'livelist':  'security-list-backup/security-live-blacklist-backup/security-live-blacklist-R.00.json',
-        'universal': 'security-list-backup/security-universal-list-backup/security-Universal-list-R.00.json'
+        'universal': 'security-list-backup/security-universal-list-backup/security-Universal-list-R.00.json',
+        'binary':    'security-list-backup/security-universal-list-backup/security-universal-list-binary.json' // New Binary Map
     };
     
     const LOGS = { 
@@ -815,6 +821,43 @@
                     const c=decodeURIComponent(escape(rawContent)); 
                     this.activeLogContent=c; 
                     this.parsedActiveJson=JSON.parse(c);
+
+                    // BINARY DECODER LOGIC
+                    if (t === 'binary') {
+                        const decodedJson = { ...this.parsedActiveJson }; // Clone
+                        
+                        // Helper to convert Base64 Uint32 to Array of IPs
+                        const decodeIPs = (base64) => {
+                            if (!base64) return [];
+                            const binaryString = atob(base64);
+                            const len = binaryString.length;
+                            const bytes = new Uint8Array(len);
+                            for (let i = 0; i < len; i++) bytes[i] = binaryString.charCodeAt(i);
+                            const uint32 = new Uint32Array(bytes.buffer);
+                            
+                            const ips = [];
+                            for (let i = 0; i < uint32.length; i++) {
+                                const int = uint32[i];
+                                ips.push(
+                                    ((int >>> 24) & 0xFF) + "." +
+                                    ((int >>> 16) & 0xFF) + "." +
+                                    ((int >>> 8) & 0xFF) + "." +
+                                    (int & 0xFF)
+                                );
+                            }
+                            return ips;
+                        };
+
+                        if (decodedJson.UNIVERSAL_BLACK_LIST_IPS) {
+                            decodedJson.UNIVERSAL_BLACK_LIST_IPS = decodeIPs(decodedJson.UNIVERSAL_BLACK_LIST_IPS);
+                        }
+                        if (decodedJson.UNIVERSAL_WHITE_LIST_IPS) {
+                            decodedJson.UNIVERSAL_WHITE_LIST_IPS = decodeIPs(decodedJson.UNIVERSAL_WHITE_LIST_IPS);
+                        }
+                        
+                        this.parsedActiveJson = decodedJson; // Swap with decoded version for display
+                    }
+
                     this.duplicateMap = new Map();
                     this.calculateDuplicates(this.parsedActiveJson);
                 } catch(e) {
