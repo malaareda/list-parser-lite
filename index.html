@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Security Manager v8.4.0</title>
+    <title>Security Manager v8.5.0</title>
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛡️</text></svg>">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -112,7 +112,7 @@
         <div v-if="isInitializing" class="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-500 z-10"></div>
         <div v-else class="bg-white/80 dark:bg-white/10 backdrop-blur-md p-10 rounded-3xl shadow-2xl border border-white/20 dark:border-white/10 max-w-sm w-full text-center z-10">
             <div class="w-14 h-14 mx-auto mb-6 rounded-full bg-indigo-600 flex items-center justify-center text-2xl shadow-lg text-white">🛡️</div>
-            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v8.4.0</h2>
+            <h2 class="text-lg font-bold mb-6 text-slate-800 dark:text-white tracking-widest uppercase text-xs">Security Manager v8.5.0</h2>
             <input type="password" v-model="tokenInput" class="w-full p-3.5 rounded-xl bg-slate-50 dark:bg-slate-900/50 border border-slate-300 dark:border-slate-700 text-center font-mono text-sm mb-6 outline-none focus:border-indigo-500 text-slate-800 dark:text-white placeholder-slate-400 dark:placeholder-slate-500" placeholder="GitHub Token">
             <button @click="setToken" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3.5 rounded-xl transition-all active:scale-95 text-xs uppercase">Connect</button>
         </div>
@@ -122,7 +122,7 @@
         <aside class="w-64 bg-white dark:bg-slate-900 border-r border-slate-200 dark:border-slate-800 flex flex-col shrink-0 transition-all duration-300" :class="sidebarOpen ? 'translate-x-0' : '-translate-x-full absolute md:relative md:translate-x-0 z-50 h-full'">
             <div class="p-6 flex items-center gap-3 border-b border-slate-200 dark:border-slate-800">
                 <div class="w-8 h-8 rounded bg-gradient-to-br from-indigo-500 to-purple-600 flex items-center justify-center text-white text-sm">🛡️</div>
-                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v8.4.0</p></div>
+                <div><h1 class="font-bold text-slate-800 dark:text-white text-sm">Security Hub</h1><p class="text-[10px] text-slate-400 font-bold">System v8.5.0</p></div>
             </div>
             <nav class="flex-1 overflow-y-auto py-4 px-3 space-y-6">
                 <div>
@@ -652,67 +652,41 @@
                     const l = process(resLive);
                     const u = process(resUniv);
 
-                    // 1. Whitelist Stats
-                    const wData = w.data;
-                    const wIps = (wData.GOOD_IPS||[]).length;
-                    const wRefs = (wData.GOOD_REFERERS||[]).length;
-                    const wSBots = (wData.GOOD_BOTS?.SEARCH_BOTS||[]).length;
-                    const wABots = (wData.GOOD_BOTS?.AI_BOTS||[]).length;
-                    this.stats.whitelist = {
-                        total: wIps + wRefs + wSBots + wABots,
-                        size: this.formatFileSize(w.size),
-                        breakdown: { 'GOOD_IPS': wIps, 'GOOD_REFERERS': wRefs, 'SEARCH_BOTS': wSBots, 'AI_BOTS': wABots }
+                    // =========================================================================================
+                    // NEW DYNAMIC STATS LOGIC (Scans for Underscores)
+                    // =========================================================================================
+                    const calculateStats = (data) => {
+                        let total = 0;
+                        const breakdown = {};
+                        
+                        const scan = (obj, parentKey='') => {
+                            if (typeof obj === 'object' && obj !== null) {
+                                if (Array.isArray(obj)) {
+                                    if (parentKey && parentKey.includes('_')) {
+                                        total += obj.length;
+                                        breakdown[parentKey] = obj.length;
+                                    }
+                                } else {
+                                    Object.keys(obj).forEach(k => scan(obj[k], k));
+                                }
+                            }
+                        };
+                        scan(data);
+                        return { total, breakdown };
                     };
 
-                    // 2. Global Stats
-                    const bData = b.data;
-                    const bMal = (bData.MALICIOUS_IPS||[]).length;
-                    const bTor = (bData.TOR_IPS||[]).length;
-                    const bBots = (bData.BAD_BOTS||[]).length;
-                    const bRefs = (bData.BAD_REFERERS||[]).length; // Single R
-                    this.stats.global = {
-                        total: bMal + bTor + bBots + bRefs,
-                        size: this.formatFileSize(b.size),
-                        breakdown: { 'MALICIOUS_IPS': bMal, 'TOR_IPS': bTor, 'BAD_BOTS': bBots, 'BAD_REFERERS': bRefs }
-                    };
+                    const sW = calculateStats(w.data);
+                    const sB = calculateStats(b.data);
+                    const sL = calculateStats(l.data);
+                    const sU = calculateStats(u.data);
 
-                    // 3. Live Stats
-                    const lData = l.data;
-                    const lIps = (lData.BLOCKED_IPS||[]).length;
-                    const lBots = (lData.BAD_BOTS||[]).length;
-                    const lRefs = (lData.BAD_REFERERS||[]).length; // Double R
-                    this.stats.live = {
-                        total: lIps + lBots + lRefs,
-                        size: this.formatFileSize(l.size),
-                        breakdown: { 'BLOCKED_IPS': lIps, 'BAD_BOTS': lBots, 'BAD_REFERERS': lRefs }
-                    };
-
-                    // 4. Universal Stats (UPDATED to 7-Key Schema)
-                    const uData = u.data;
-                    const uBIps = (uData.UNIVERSAL_BLACK_LIST_IPS || []).length;
-                    const uBDoms = (uData.UNIVERSAL_BLACK_LIST_DOMAINS || []).length;
-                    const uBBots = (uData.UNIVERSAL_BLACK_LIST_BOTS || []).length;
-                    const uWIps = (uData.UNIVERSAL_WHITE_LIST_IPS || []).length;
-                    const uWDoms = (uData.UNIVERSAL_WHITE_LIST_DOMAINS || []).length;
-                    const uWSearch = (uData.UNIVERSAL_WHITE_LIST_SEARCH_BOTS || []).length;
-                    const uWAi = (uData.UNIVERSAL_WHITE_LIST_AI_BOTS || []).length;
-
-                    this.stats.universal = {
-                        total: uBIps + uBDoms + uBBots + uWIps + uWDoms + uWSearch + uWAi,
-                        size: this.formatFileSize(u.size),
-                        breakdown: {
-                            'BLACK_IPS': uBIps,
-                            'BLACK_DOMAINS': uBDoms,
-                            'BLACK_BOTS': uBBots,
-                            'WHITE_IPS': uWIps,
-                            'WHITE_DOMAINS': uWDoms,
-                            'WHITE_SEARCH_BOTS': uWSearch,
-                            'WHITE_AI_BOTS': uWAi
-                        }
-                    };
+                    this.stats.whitelist = { total: sW.total, size: this.formatFileSize(w.size), breakdown: sW.breakdown };
+                    this.stats.global = { total: sB.total, size: this.formatFileSize(b.size), breakdown: sB.breakdown };
+                    this.stats.live = { total: sL.total, size: this.formatFileSize(l.size), breakdown: sL.breakdown };
+                    this.stats.universal = { total: sU.total, size: this.formatFileSize(u.size), breakdown: sU.breakdown };
 
                     this.stats.totalSize = this.formatFileSize(totalBytes);
-                    this.stats.lastUpdate = bData.meta?.generatedAt ? new Date(bData.meta.generatedAt).toLocaleString() : 'Unknown';
+                    this.stats.lastUpdate = b.data.meta?.generatedAt ? new Date(b.data.meta.generatedAt).toLocaleString() : 'Unknown';
 
                 } catch (e) {
                     this.showToast('Stats Error', 'Failed to fetch global lists.', true);
@@ -797,14 +771,21 @@
                 }
                 this.markDirty(); this.closeModal(); 
             },
-            calculateDuplicates(obj) {
+            calculateDuplicates(obj, parentKey = '') {
                 if (typeof obj === 'object' && obj !== null) {
-                    if (Array.isArray(obj)) { obj.forEach(i => this.calculateDuplicates(i)); } 
-                    else { Object.values(obj).forEach(v => this.calculateDuplicates(v)); }
+                    if (Array.isArray(obj)) { 
+                        // Pass same parentKey down for array items
+                        obj.forEach(i => this.calculateDuplicates(i, parentKey)); 
+                    } else { 
+                        // Update parentKey for object properties
+                        Object.keys(obj).forEach(key => this.calculateDuplicates(obj[key], key)); 
+                    }
                 } else if (['string', 'number'].includes(typeof obj)) {
-                    // NEW LOGIC: Only count strings as duplicates to avoid flagging numbers like 0/1 in stats
-                    if (typeof obj === 'string') {
-                        const val = String(obj); this.duplicateMap.set(val, (this.duplicateMap.get(val) || 0) + 1);
+                    // NEW LOGIC: Only count if parentKey contains underscore '_'
+                    // This filters out metadata like 'source', 'version', 'generatedAt'
+                    if (parentKey && parentKey.includes('_') && typeof obj === 'string') {
+                        const val = String(obj); 
+                        this.duplicateMap.set(val, (this.duplicateMap.get(val) || 0) + 1);
                     }
                 }
             },
